@@ -1,12 +1,64 @@
+<!DOCTYPE html>
+
 <html>
 
 <head>
     <link data-trunk rel="scss" href="assets/index.scss" />
-    <link data-trunk rel="rust" />
+    <link data-trunk rel="rust" data-target-name="keplerian_sim_demo" />
+    <noscript>
+        <style>
+            .hide-noscript {
+                display: none;
+            }
+        </style>
+    </noscript>
 </head>
 
 <body>
-    Hello WASM!
+    <noscript>
+        <h1>
+            This demo requires JavaScript to run.
+        </h1>
+        <p>
+            For more information, refer to
+            <a href="https://www.enable-javascript.com/" target="_blank"
+                rel="noopener noreferrer">https://www.enable-javascript.com/</a>
+        </p>
+        <details>
+            <summary>See minimum requirements</summary>
+            <p>
+                We require a somewhat modern browser with these following features:
+            <ul>
+                <li>JavaScript support</li>
+                <li>WebGL support</li>
+                <li>WebAssembly support</li>
+            </ul>
+            </p>
+        </details>
+    </noscript>
+    <p class="hide-noscript">
+        Loading demo...
+    </p>
+    <p class="hide-noscript load-delay-1">
+        Loading is taking longer than expected.
+    </p>
+    <p class="hide-noscript load-delay-2">
+        If you're seeing this message, the demo has not loaded yet.
+        This may be caused by spurious network conditions, a slow computer, incompatibility,
+        or a bug. <br>
+        Consider checking the console for errors.
+    </p>
+    <details class="hide-noscript load-delay-2">
+        <summary>See minimum requirements</summary>
+        <p>
+            We require a somewhat modern browser with these following features:
+        <ul>
+            <li>JavaScript support</li>
+            <li>WebGL support</li>
+            <li>WebAssembly support</li>
+        </ul>
+        </p>
+    </details>
 </body>
 
 </html>

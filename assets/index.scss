@@ -1,0 +1,46 @@
+:root {
+    color-scheme: dark;
+    background-color: black;
+    color: white;
+    line-height: 1.5;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
+
+@keyframes showMessage {
+    0% {
+        opacity: 0;
+        scale: 0;
+        pointer-events: none;
+    }
+
+    100% {
+        opacity: 1;
+        scale: 1;
+        pointer-events: auto;
+    }
+}
+
+.load-delay-1 {
+    opacity: 0;
+    animation: showMessage 0s 5s forwards;
+}
+
+.load-delay-2 {
+    opacity: 0;
+    animation: showMessage 0s 15s forwards;
+}
+
+.panic {
+    position: fixed;
+    top: 1em;
+    left: 1em;
+    background-color: blue;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 1000;
+    padding: 1em;
+}

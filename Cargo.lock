@@ -456,8 +456,11 @@ dependencies = [
 name = "keplerian-sim-demo"
 version = "0.1.0"
 dependencies = [
+ "glow",
  "keplerian_sim",
  "three-d",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
