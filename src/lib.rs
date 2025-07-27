@@ -11,6 +11,9 @@ pub fn start() {
     let window = web_sys::window().expect("global `window` should exist");
     let document = window.document().expect("`window` should have `document`");
 
+    clear_dom(document.clone());
+
+    panic!("Hello!!!");
     let canvas = init_canvas(document);
 
     let _gl_context = canvas
@@ -20,7 +23,7 @@ pub fn start() {
         .dyn_into::<WebGl2RenderingContext>()
         .expect("cast to WebGl2RenderingContext should work");
 
-    todo!();
+    // todo!();
 }
 
 mod web_panic_handler {
@@ -37,7 +40,6 @@ mod web_panic_handler {
         GetBodyError,
         AttachDialogError(JsValue),
         CreateDialogError(JsValue),
-        CreatePreError(JsValue),
     }
 
     pub(super) fn init_panic_handler() {
@@ -130,6 +132,8 @@ mod web_panic_handler {
             .create_element("dialog")
             .map_err(|e| PanicDisplayError::CreateDialogError(e))?;
 
+        let _ = dialog.set_attribute("open", "true");
+
         let body = document.body().ok_or(PanicDisplayError::GetBodyError)?;
 
         body.append_child(&dialog)
@@ -147,9 +151,14 @@ mod web_panic_handler {
             let _ = dialog.append_child(&p);
         }
 
-        let pre = document
-            .create_element("pre")
-            .map_err(|e| PanicDisplayError::CreatePreError(e))?;
+        let pre = {
+            let pre = document.create_element("pre").ok();
+            if let Some(pre) = pre {
+                dialog.append_child(&pre).ok().map(|_| pre)
+            } else {
+                None
+            }
+        };
 
         let mut index = 0;
 
@@ -168,20 +177,53 @@ mod web_panic_handler {
             }
         }
 
+        let payload = info.payload();
+        if let Some(s) = payload.downcast_ref::<&str>() {
+            index = write_bytes(panic_buffer, index, b":\n");
+            index = write_bytes(panic_buffer, index, s.as_bytes());
+        } else if let Some(s) = payload.downcast_ref::<String>() {
+            index = write_bytes(panic_buffer, index, b":\n");
+            index = write_bytes(panic_buffer, index, s.as_bytes());
+        }
+
+        index = index.min(PANIC_BUFFER_LEN);
+
+        // Clean up all non-utf8 chars
+        loop {
+            let slice = &panic_buffer[0..index];
+            let res = core::str::from_utf8(&slice);
+
+            match res {
+                Ok(_) => break,
+                Err(e) => {
+                    panic_buffer[e.valid_up_to() + 1] = b'?';
+                }
+            }
+        }
+
+        let slice = &panic_buffer[0..index];
+        let message = unsafe { core::str::from_utf8_unchecked(&slice) };
+
+        if let Some(pre) = pre {
+            pre.set_text_content(Some(message));
+        } else {
+            dialog.set_text_content(Some(message));
+        }
+
         Ok(())
     }
 
     fn display_alert(
-        info: &PanicHookInfo<'_>,
-        panic_buffer: &mut [u8; PANIC_BUFFER_LEN],
+        _info: &PanicHookInfo<'_>,
+        _panic_buffer: &mut [u8; PANIC_BUFFER_LEN],
     ) -> Result<(), &'static str> {
         // TODO
         Ok(())
     }
 
     fn log_to_console(
-        info: &PanicHookInfo<'_>,
-        panic_buffer: &mut [u8; PANIC_BUFFER_LEN],
+        _info: &PanicHookInfo<'_>,
+        _panic_buffer: &mut [u8; PANIC_BUFFER_LEN],
     ) -> Result<(), &'static str> {
         // TODO
         Ok(())
