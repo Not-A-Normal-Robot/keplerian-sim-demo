@@ -13,7 +13,6 @@ pub fn start() {
 
     clear_dom(document.clone());
 
-    panic!("Hello!!!");
     let canvas = init_canvas(document);
 
     let _gl_context = canvas
@@ -47,28 +46,28 @@ mod web_panic_handler {
     }
 
     fn handle_panic(info: &PanicHookInfo<'_>) {
-        let panic_buffer = unsafe { &mut PANIC_BUFFER };
-        *panic_buffer = [0; PANIC_BUFFER_LEN];
+        let panic_buffer = &raw mut PANIC_BUFFER;
+        unsafe { *panic_buffer = [0; PANIC_BUFFER_LEN] };
 
         let _ = display_panic(info, panic_buffer);
-        *panic_buffer = [0; PANIC_BUFFER_LEN];
+        unsafe { *panic_buffer = [0; PANIC_BUFFER_LEN] };
 
         let _ = display_alert(info, panic_buffer);
-        *panic_buffer = [0; PANIC_BUFFER_LEN];
+        unsafe { *panic_buffer = [0; PANIC_BUFFER_LEN] };
 
         let _ = log_to_console(info, panic_buffer);
     }
 
     /// Returns the new index, or the first unused byte.
     #[must_use]
-    fn write_bytes(panic_buffer: &mut [u8; PANIC_BUFFER_LEN], index: usize, bytes: &[u8]) -> usize {
+    fn write_bytes(panic_buffer: *mut [u8; PANIC_BUFFER_LEN], index: usize, bytes: &[u8]) -> usize {
         if index >= PANIC_BUFFER_LEN {
             return PANIC_BUFFER_LEN;
         }
 
         let mut buf_idx = index;
         for original_idx in 0..bytes.len() {
-            match panic_buffer.get_mut(buf_idx) {
+            match unsafe { *panic_buffer }.get_mut(buf_idx) {
                 Some(byte) => *byte = bytes[original_idx],
                 None => return PANIC_BUFFER_LEN,
             }
@@ -84,13 +83,13 @@ mod web_panic_handler {
 
     /// Returns the new index, or the first unused byte.
     #[must_use]
-    fn write_num(panic_buffer: &mut [u8; PANIC_BUFFER_LEN], index: usize, mut num: u32) -> usize {
+    fn write_num(panic_buffer: *mut [u8; PANIC_BUFFER_LEN], index: usize, mut num: u32) -> usize {
         if index >= PANIC_BUFFER_LEN {
             return PANIC_BUFFER_LEN;
         }
 
         if num == 0 {
-            if let Some(byte) = panic_buffer.get_mut(index) {
+            if let Some(byte) = unsafe { *panic_buffer }.get_mut(index) {
                 *byte = b'0';
                 return index + 1;
             }
@@ -108,7 +107,7 @@ mod web_panic_handler {
         let mut write_index = index + digit_count;
         while num > 0 {
             write_index -= 1;
-            if let Some(byte) = panic_buffer.get_mut(write_index) {
+            if let Some(byte) = unsafe { *panic_buffer }.get_mut(write_index) {
                 *byte = b'0' + (num % 10) as u8;
             }
             num /= 10;
@@ -119,7 +118,7 @@ mod web_panic_handler {
 
     fn display_panic(
         info: &PanicHookInfo<'_>,
-        panic_buffer: &mut [u8; PANIC_BUFFER_LEN],
+        panic_buffer: *mut [u8; PANIC_BUFFER_LEN],
     ) -> Result<(), PanicDisplayError> {
         let window = web_sys::window().ok_or(PanicDisplayError::GetWindowError)?;
         let document = window
@@ -192,18 +191,18 @@ mod web_panic_handler {
 
         // Clean up all non-utf8 chars
         loop {
-            let slice = &panic_buffer[0..index];
+            let slice = &unsafe { *panic_buffer }[0..index];
             let res = core::str::from_utf8(&slice);
 
             match res {
                 Ok(_) => break,
                 Err(e) => {
-                    panic_buffer[e.valid_up_to() + 1] = b'?';
+                    (unsafe { *panic_buffer })[e.valid_up_to() + 1] = b'?';
                 }
             }
         }
 
-        let slice = &panic_buffer[0..index];
+        let slice = &unsafe { *panic_buffer }[0..index];
         let message = unsafe { core::str::from_utf8_unchecked(&slice) };
 
         if let Some(pre) = pre {
@@ -227,7 +226,7 @@ mod web_panic_handler {
 
     fn display_alert(
         _info: &PanicHookInfo<'_>,
-        _panic_buffer: &mut [u8; PANIC_BUFFER_LEN],
+        _panic_buffer: *mut [u8; PANIC_BUFFER_LEN],
     ) -> Result<(), &'static str> {
         // TODO
         Ok(())
@@ -235,7 +234,7 @@ mod web_panic_handler {
 
     fn log_to_console(
         _info: &PanicHookInfo<'_>,
-        _panic_buffer: &mut [u8; PANIC_BUFFER_LEN],
+        _panic_buffer: *mut [u8; PANIC_BUFFER_LEN],
     ) -> Result<(), &'static str> {
         // TODO
         Ok(())
@@ -255,6 +254,8 @@ fn init_canvas(document: Document) -> HtmlCanvasElement {
         .expect("Failed to cast to HtmlCanvasElement");
 
     document
+        .body()
+        .expect("body should exist")
         .append_child(&canvas)
         .expect("canvas element should be appendable");
 
