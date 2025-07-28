@@ -29,18 +29,3 @@
     opacity: 0;
     animation: showMessage 0s 15s forwards;
 }
-
-.panic {
-    position: fixed;
-    top: 1em;
-    left: 1em;
-    background-color: blue;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    z-index: 1000;
-    padding: 1em;
-}

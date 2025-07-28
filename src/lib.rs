@@ -68,17 +68,15 @@ mod web_panic_handler {
 
         let mut buf_idx = index;
         for original_idx in 0..bytes.len() {
-            buf_idx = match buf_idx.checked_add(original_idx) {
-                Some(i) => i,
-                None => return buf_idx,
-            };
-
             match panic_buffer.get_mut(buf_idx) {
                 Some(byte) => *byte = bytes[original_idx],
                 None => return PANIC_BUFFER_LEN,
             }
 
-            buf_idx += 1;
+            buf_idx = match buf_idx.checked_add(1) {
+                Some(i) => i,
+                None => return buf_idx,
+            };
         }
 
         PANIC_BUFFER_LEN.min(buf_idx)
@@ -147,7 +145,11 @@ mod web_panic_handler {
 
         // We don't care too much if this fails
         if let Ok(p) = document.create_element("p") {
-            p.set_text_content(Some("A catastrophic error occurred and the program cannot continue. Below are details on the error, which you can report to the developer."));
+            p.set_text_content(Some(
+                "A catastrophic error occurred and the program cannot continue. \
+                Below are details on the error, which you can report to the developer. \
+                Opening the console may reveal additional details.",
+            ));
             let _ = dialog.append_child(&p);
         }
 
@@ -208,6 +210,16 @@ mod web_panic_handler {
             pre.set_text_content(Some(message));
         } else {
             dialog.set_text_content(Some(message));
+        }
+
+        if let Ok(button) = document.create_element("button") {
+            button.set_text_content(Some("Dismiss"));
+            if button
+                .set_attribute("onclick", "this.parentElement.close()")
+                .is_ok()
+            {
+                let _ = dialog.append_child(&button);
+            }
         }
 
         Ok(())
