@@ -1,0 +1,5 @@
+[build]
+minify = "on_release"
+
+[serve]
+addresses = ["::1"]
