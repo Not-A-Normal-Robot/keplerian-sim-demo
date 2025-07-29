@@ -1,11 +1,14 @@
 use std::{
     panic::PanicHookInfo,
-    sync::{Mutex, MutexGuard},
+    sync::{LazyLock, Mutex, MutexGuard},
 };
 
 use js_sys::Reflect;
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
-use web_sys::js_sys;
+use web_sys::{
+    js_sys::{self, JsString},
+    Node,
+};
 
 extern crate wasm_bindgen;
 
@@ -19,7 +22,7 @@ extern "C" {
     fn new() -> Error;
 
     #[wasm_bindgen(structural, method, getter, catch)]
-    fn stack(error: &Error) -> Result<js_sys::JsString, JsValue>;
+    fn stack(error: &Error) -> Result<JsString, JsValue>;
 }
 /// Set the JavaScript Error.stackTraceLimit property via Reflect
 #[inline(always)]
@@ -32,6 +35,12 @@ fn set_stack_trace_limit(limit: f64) -> Result<(), JsValue> {
         &JsValue::from_f64(limit),
     )?;
     Ok(())
+}
+/// Set the JavaScript (instanceof Node).textContent property via Reflect
+#[inline(always)]
+fn set_text_content(node: &Node, content: &JsString) -> Result<bool, JsValue> {
+    let property_key = JsString::from("textContent");
+    Reflect::set(node, &property_key, content)
 }
 
 // We DO NOT want any allocations pushing the memory
@@ -84,6 +93,19 @@ impl PanicAlertError {
             Self::AlertError(_) => write_bytes(panic_buffer, index, b"error calling alert()"),
         }
     }
+}
+
+enum StackTrace {
+    Extended {
+        trace: JsString,
+    },
+    Partial {
+        trace: JsString,
+        extend_err: JsValue,
+    },
+    None {
+        err: JsValue,
+    },
 }
 
 pub(super) fn init_panic_handler() {
@@ -315,6 +337,24 @@ fn buf_to_str<'a>(
 }
 
 #[inline(always)]
+fn get_stack_trace() -> StackTrace {
+    let extend_result = set_stack_trace_limit(JS_STACK_TRACE_LIMIT);
+
+    let stack = Error::new().stack();
+
+    match stack {
+        Ok(s) => match extend_result {
+            Ok(_) => StackTrace::Extended { trace: s },
+            Err(e) => StackTrace::Partial {
+                trace: s,
+                extend_err: e,
+            },
+        },
+        Err(e) => StackTrace::None { err: e },
+    }
+}
+
+#[inline(always)]
 fn display_panic(
     info: &PanicHookInfo<'_>,
     panic_buffer: &mut PanicBufferGuard<'_>,
@@ -361,18 +401,43 @@ fn display_panic(
     };
 
     let mut index = 0;
-
     index = write_panic_info(panic_buffer, index, info);
+    index = write_bytes(panic_buffer, index, b"\n\n");
+
+    let stack_trace = get_stack_trace();
+
+    match stack_trace {
+        StackTrace::Extended { .. } => {
+            index = write_bytes(panic_buffer, index, b"stack trace available\n");
+        }
+        StackTrace::Partial { .. } => {
+            index = write_bytes(
+                panic_buffer,
+                index,
+                b"partial stack trace available (see console for error)\n",
+            );
+        }
+        StackTrace::None { .. } => {
+            index = write_bytes(
+                panic_buffer,
+                index,
+                b"no stack trace available (see console for error)\n",
+            );
+        }
+    }
 
     index = index.min(PANIC_BUFFER_LEN);
 
     let message = buf_to_str(panic_buffer, 0, index);
 
-    if let Some(pre) = pre {
-        pre.set_text_content(Some(message));
-    } else {
-        dialog.set_text_content(Some(message));
-    }
+    // Do the infallible set_text_content with &str, before
+    // using the fallible set_text_content with JsString.
+    let element = (&pre).as_ref().unwrap_or(&dialog);
+    element.set_text_content(Some(message));
+
+    // Converting to JsString lets us display stack trace
+    // without allocating a String in WASM linear memory
+    // TODO: Show stack trace
 
     if let Ok(button) = document.create_element("button") {
         button.set_text_content(Some("Dismiss"));
@@ -418,28 +483,19 @@ fn log_to_console(info: &PanicHookInfo<'_>, panic_buffer: &mut PanicBufferGuard<
     let js_str = JsValue::from_str(message);
     web_sys::console::error_1(&js_str);
 
-    let extend_result = set_stack_trace_limit(JS_STACK_TRACE_LIMIT);
-
-    if let Err(ref error) = extend_result {
-        let js_message = JsValue::from_str("failed to extend stack trace limit");
-        web_sys::console::error_2(&js_message, error);
-    }
-
-    let stack_trace_message = match extend_result {
-        Ok(_) => "stack trace available:",
-        Err(_) => "limited stack trace available:",
-    };
-
-    let stack = Error::new().stack();
-
-    match stack {
-        Ok(s) => {
-            let js_message = JsValue::from_str(stack_trace_message);
-            web_sys::console::error_2(&js_message, &s)
+    match get_stack_trace() {
+        StackTrace::Extended { trace } => {
+            let js_message = JsString::from("stack trace:\n");
+            web_sys::console::error_2(&js_message, &trace);
         }
-        Err(e) => {
-            let js_message = JsValue::from_str("failed to generate stack trace");
-            web_sys::console::error_2(&js_message, &e);
+        StackTrace::Partial { trace, extend_err } => {
+            let js_message_1 = JsString::from("failed to extend stack trace limit:\n");
+            let js_message_2 = JsString::from("limited stack trace:\n");
+            web_sys::console::error_4(&js_message_1, &trace, &js_message_2, &extend_err);
+        }
+        StackTrace::None { err } => {
+            let js_message = JsString::from("error getting stack trace:\n");
+            web_sys::console::error_2(&js_message, &err);
         }
     }
 }
