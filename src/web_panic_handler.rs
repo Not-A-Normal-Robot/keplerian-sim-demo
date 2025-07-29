@@ -1,6 +1,6 @@
 use std::{
     panic::PanicHookInfo,
-    sync::{LazyLock, Mutex, MutexGuard},
+    sync::{Mutex, MutexGuard},
 };
 
 use js_sys::Reflect;
@@ -151,7 +151,7 @@ fn handle_panic(info: &PanicHookInfo<'_>) {
 
         match additional_info {
             Some(val) => {
-                let len = write_bytes(&mut panic_buffer, 0, b"more info available:");
+                let len = write_bytes(&mut panic_buffer, 0, b"\nJS value returned:\n");
                 let message = buf_to_str(&mut panic_buffer, 0, len);
                 let js_message_2 = JsValue::from_str(message);
                 web_sys::console::error_3(&js_message, &js_message_2, &val)
@@ -182,7 +182,7 @@ fn handle_panic(info: &PanicHookInfo<'_>) {
 
             match additional_info {
                 Some(val) => {
-                    let len = write_bytes(&mut panic_buffer, 0, b"more info available:");
+                    let len = write_bytes(&mut panic_buffer, 0, b"\nJS value returned:\n");
                     let message = buf_to_str(&mut panic_buffer, 0, len);
                     let js_message_2 = JsValue::from_str(message);
                     *panic_buffer = [0; PANIC_BUFFER_LEN];
@@ -194,7 +194,7 @@ fn handle_panic(info: &PanicHookInfo<'_>) {
         }
     }
 
-    let _ = log_to_console(info, &mut panic_buffer);
+    log_to_console(info, &mut panic_buffer);
 }
 
 /// Returns the new index, or the first unused byte.
@@ -408,13 +408,17 @@ fn display_panic(
 
     match stack_trace {
         StackTrace::Extended { .. } => {
-            index = write_bytes(panic_buffer, index, b"stack trace available\n");
+            index = write_bytes(
+                panic_buffer,
+                index,
+                b"stack trace available\nif nothing below, see console\n",
+            );
         }
         StackTrace::Partial { .. } => {
             index = write_bytes(
                 panic_buffer,
                 index,
-                b"partial stack trace available (see console for error)\n",
+                b"partial stack trace available (see console)\n",
             );
         }
         StackTrace::None { .. } => {
@@ -437,7 +441,16 @@ fn display_panic(
 
     // Converting to JsString lets us display stack trace
     // without allocating a String in WASM linear memory
-    // TODO: Show stack trace
+    let js_message = JsString::from(message);
+    let js_message = js_message
+        + match stack_trace {
+            StackTrace::Extended { trace } => trace,
+            StackTrace::Partial {
+                trace,
+                extend_err: _,
+            } => trace,
+            StackTrace::None { err: _ } => JsString::from(""),
+        };
 
     if let Ok(button) = document.create_element("button") {
         button.set_text_content(Some("Dismiss"));
