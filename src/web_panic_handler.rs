@@ -3,6 +3,7 @@ use std::{
     sync::{Mutex, MutexGuard},
 };
 
+use js_sys::Reflect;
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 use web_sys::js_sys;
 
@@ -17,12 +18,20 @@ extern "C" {
     #[wasm_bindgen(constructor)]
     fn new() -> Error;
 
-    // FIXME: This does not work yet
-    #[wasm_bindgen(js_namespace = Error, setter, js_name = "stackTraceLimit", catch)]
-    fn set_stack_trace_limit(limit: f64) -> Result<(), JsValue>;
-
     #[wasm_bindgen(structural, method, getter, catch)]
     fn stack(error: &Error) -> Result<js_sys::JsString, JsValue>;
+}
+/// Set the JavaScript Error.stackTraceLimit property via Reflect
+#[inline(always)]
+fn set_stack_trace_limit(limit: f64) -> Result<(), JsValue> {
+    let global = js_sys::global();
+    let error_object = Reflect::get(&global, &JsValue::from_str("Error"))?;
+    Reflect::set(
+        &error_object,
+        &JsValue::from_str("stackTraceLimit"),
+        &JsValue::from_f64(limit),
+    )?;
+    Ok(())
 }
 
 // We DO NOT want any allocations pushing the memory
@@ -409,7 +418,7 @@ fn log_to_console(info: &PanicHookInfo<'_>, panic_buffer: &mut PanicBufferGuard<
     let js_str = JsValue::from_str(message);
     web_sys::console::error_1(&js_str);
 
-    let extend_result = Error::set_stack_trace_limit(JS_STACK_TRACE_LIMIT);
+    let extend_result = set_stack_trace_limit(JS_STACK_TRACE_LIMIT);
 
     if let Err(ref error) = extend_result {
         let js_message = JsValue::from_str("failed to extend stack trace limit");
@@ -417,7 +426,7 @@ fn log_to_console(info: &PanicHookInfo<'_>, panic_buffer: &mut PanicBufferGuard<
     }
 
     let stack_trace_message = match extend_result {
-        Ok(_) => "extended stack trace available:",
+        Ok(_) => "stack trace available:",
         Err(_) => "limited stack trace available:",
     };
 
