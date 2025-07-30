@@ -24,8 +24,6 @@ fn start() {
         .expect("WebGL should be supported")
         .dyn_into::<WebGl2RenderingContext>()
         .expect("cast to WebGl2RenderingContext should work");
-
-    todo!();
 }
 
 fn clear_dom(document: Document) {

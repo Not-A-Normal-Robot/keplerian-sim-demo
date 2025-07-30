@@ -10,8 +10,6 @@ use web_sys::{
     Node,
 };
 
-extern crate wasm_bindgen;
-
 const JS_STACK_TRACE_LIMIT: f64 = 256.0;
 
 // We DO NOT want any allocations pushing the memory
@@ -231,24 +229,11 @@ fn handle_panic(info: &PanicHookInfo<'_>) {
 #[must_use]
 #[inline(always)]
 fn write_bytes(panic_buffer: &mut PanicBufferGuard<'_>, index: usize, bytes: &[u8]) -> usize {
-    if index >= PANIC_BUFFER_LEN {
-        return PANIC_BUFFER_LEN;
-    }
+    let end = PANIC_BUFFER_LEN.min(index + bytes.len());
+    let len = end.saturating_sub(index);
+    panic_buffer[index..end].copy_from_slice(&bytes[..len]);
 
-    let mut buf_idx = index;
-    for original_idx in 0..bytes.len() {
-        match panic_buffer.get_mut(buf_idx) {
-            Some(byte) => *byte = bytes[original_idx],
-            None => return PANIC_BUFFER_LEN,
-        }
-
-        buf_idx = match buf_idx.checked_add(1) {
-            Some(i) => i,
-            None => return buf_idx,
-        };
-    }
-
-    PANIC_BUFFER_LEN.min(buf_idx)
+    end
 }
 
 /// Returns the new index, or the first unused byte.
