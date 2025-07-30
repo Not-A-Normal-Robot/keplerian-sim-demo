@@ -3,3 +3,15 @@ minify = "on_release"
 
 [serve]
 addresses = ["::1"]
+
+[[hooks]]
+stage = "pre_build"
+command = "bun"
+command_arguments = [
+    "build", "--production", "--minify", "--outfile=assets/watchdog.js", "assets/watchdog.ts"
+]
+
+[watch]
+ignore = [
+    "assets/watchdog.js"
+]

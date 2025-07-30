@@ -3,8 +3,8 @@ function nop() { }
 
 const document_create_element = document?.createElement?.bind(document) ?? nop;
 const set_timeout = globalThis?.setTimeout ?? nop;
-const alert = globalThis?.alert ?? nop;
 
+const console_debug = console?.debug?.bind(console) ?? nop;
 const console_log = console?.log?.bind(console) ?? nop;
 const console_warn = console?.warn?.bind(console) ?? nop;
 const console_error = console?.error?.bind(console) ?? nop;
@@ -15,6 +15,7 @@ type State = {
     watchdog_timeout_ms: number | null,
     watchdog_beat_misses: number,
     timeout_id: number | null,
+    tabbed_out: boolean,
 };
 
 const state = {
@@ -23,6 +24,7 @@ const state = {
     watchdog_timeout_ms: null,
     watchdog_beat_misses: 0,
     timeout_id: null,
+    tabbed_out: false,
 } as State;
 
 const WATCHDOG_MISS_THRESHOLDS = {
@@ -34,7 +36,7 @@ const WATCHDOG_MISS_THRESHOLDS = {
 /**
  * Initializes the watchdog with the specified interval and timeout.
  */
-export function init_watchdog(heartbeat_interval_ms: number, watchdog_timeout_ms: number)
+function init_watchdog(heartbeat_interval_ms: number, watchdog_timeout_ms: number)
 {
     state.last_heartbeat = Date.now();
     state.heartbeat_interval_ms = heartbeat_interval_ms;
@@ -45,10 +47,14 @@ export function init_watchdog(heartbeat_interval_ms: number, watchdog_timeout_ms
     console_log(`Watchdog initialized with interval: ${heartbeat_interval_ms} ms, timeout: ${watchdog_timeout_ms} ms`);
 }
 
-export function heartbeat()
+function heartbeat()
 {
     state.last_heartbeat = Date.now();
+    console_debug(`Heartbeat: ${Date.now()}`);
 }
+
+(globalThis as { [key: string]: unknown }).init_watchdog = init_watchdog;
+(globalThis as { [key: string]: unknown }).heartbeat = heartbeat;
 
 function watchdog_loop()
 {
@@ -62,7 +68,7 @@ function watchdog_loop()
         return;
     }
 
-    if (last_heartbeat + timeout < now)
+    if (last_heartbeat + timeout < now && !state.tabbed_out)
     {
         ++state.watchdog_beat_misses;
         on_beat_miss(state.watchdog_beat_misses, timeout);
@@ -138,3 +144,16 @@ function watchdog_dialog(total_time: number)
         // We don't care about failures here
     }
 }
+
+function handle_visibility_change()
+{
+    if (document?.visibilityState === "hidden")
+    {
+        state.tabbed_out = true;
+    } else if (document?.visibilityState === "visible")
+    {
+        state.tabbed_out = false;
+    }
+}
+
+document?.addEventListener("visibilitychange", handle_visibility_change);

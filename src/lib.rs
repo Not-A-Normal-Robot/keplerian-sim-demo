@@ -3,13 +3,18 @@ use three_d::core::Context as ThreeDContext;
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, HtmlCanvasElement, WebGl2RenderingContext};
 
-#[cfg(any(debug_assertions, target_family = "wasm"))]
+#[cfg(target_family = "wasm")]
+mod web_heartbeat;
+#[cfg(target_family = "wasm")]
 mod web_panic_handler;
 
 #[wasm_bindgen(start)]
 fn start() {
-    #[cfg(any(debug_assertions, target_family = "wasm"))]
-    web_panic_handler::init_panic_handler();
+    #[cfg(target_family = "wasm")]
+    {
+        web_panic_handler::init_panic_handler();
+        web_heartbeat::start_beating();
+    }
 
     let window = web_sys::window().expect("global `window` should exist");
     let document = window.document().expect("`window` should have `document`");
