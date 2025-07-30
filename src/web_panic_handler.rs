@@ -14,6 +14,21 @@ extern crate wasm_bindgen;
 
 const JS_STACK_TRACE_LIMIT: f64 = 256.0;
 
+// We DO NOT want any allocations pushing the memory
+// usage past the edge.
+// Pre-allocate a static sized buffer.
+
+const PANIC_BUFFER_LEN: usize = 65536;
+/// A panic buffer that gets reserved in static space and never gets freed.
+type PanicBuffer = [u8; PANIC_BUFFER_LEN];
+type PanicBufferGuard<'a> = MutexGuard<'a, PanicBuffer>;
+/// A panic buffer that gets reserved in static space and never gets freed.
+static PANIC_BUFFER: Mutex<PanicBuffer> = Mutex::new([0; PANIC_BUFFER_LEN]);
+
+const PANIC_RESERVE_MEM_LEN: usize = 65536;
+type PanicReserveMem = [u8; PANIC_RESERVE_MEM_LEN];
+static PANIC_RESERVE_MEM: Mutex<Option<Box<PanicReserveMem>>> = Mutex::new(None);
+
 #[wasm_bindgen]
 extern "C" {
     type Error;
@@ -49,21 +64,6 @@ fn set_text_content(node: &Node, content: &JsString) -> Result<(), Option<JsValu
         Err(e) => Err(Some(e)),
     }
 }
-
-// We DO NOT want any allocations pushing the memory
-// usage past the edge.
-// Pre-allocate a static sized buffer.
-
-const PANIC_BUFFER_LEN: usize = 65536;
-/// A panic buffer that gets reserved in static space and never gets freed.
-type PanicBuffer = [u8; PANIC_BUFFER_LEN];
-type PanicBufferGuard<'a> = MutexGuard<'a, PanicBuffer>;
-/// A panic buffer that gets reserved in static space and never gets freed.
-static PANIC_BUFFER: Mutex<PanicBuffer> = Mutex::new([0; PANIC_BUFFER_LEN]);
-
-const PANIC_RESERVE_MEM_LEN: usize = 65536;
-type PanicReserveMem = [u8; PANIC_RESERVE_MEM_LEN];
-static PANIC_RESERVE_MEM: Mutex<Option<Box<PanicReserveMem>>> = Mutex::new(None);
 
 enum PanicDisplayError {
     GetWindowError,
