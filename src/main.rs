@@ -21,7 +21,7 @@ pub async fn run() {
     let window = {
         let res = Window::new(WindowSettings {
             title: "Keplerian Orbital Simulator Demo".into(),
-            min_size: (1280, 720),
+            min_size: (64, 64),
             ..Default::default()
         });
         match res {
