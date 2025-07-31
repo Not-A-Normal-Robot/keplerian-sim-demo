@@ -50,7 +50,6 @@ function init_watchdog(heartbeat_interval_ms: number, watchdog_timeout_ms: numbe
 function heartbeat()
 {
     state.last_heartbeat = Date.now();
-    console_debug(`Heartbeat: ${Date.now()}`);
 }
 
 (globalThis as { [key: string]: unknown }).init_watchdog = init_watchdog;
