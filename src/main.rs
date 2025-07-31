@@ -3,9 +3,11 @@ use three_d::{
     // FrameOutput,
 };
 
-fn main() {
+pub fn main() {
     let window = {
         let res = Window::new(WindowSettings {
+            title: "Keplerian Orbital Simulator Demo".into(),
+            min_size: (1280, 720),
             ..Default::default()
         });
         match res {
@@ -17,7 +19,4 @@ fn main() {
         }
     };
     let context = window.gl();
-
-    // keplerian_sim_demo::render(context);
-    todo!();
 }
