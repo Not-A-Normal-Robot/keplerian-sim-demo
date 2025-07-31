@@ -1,6 +1,7 @@
 use three_d::{
     window::{Window, WindowSettings},
-    // FrameOutput,
+    AmbientLight, Axes, Camera, ClearState, CpuMaterial, CpuMesh, Degrees, DirectionalLight,
+    FrameOutput, Gm, Mesh, OrbitControl, PhysicalMaterial, Srgba, Vec3,
 };
 
 #[cfg(not(target_family = "wasm"))]
@@ -8,6 +9,12 @@ use three_d::{
     async fn main() {
         run().await;
     }
+}
+
+#[cfg(target_family = "wasm")]
+#[allow(dead_code)]
+fn main() {
+    unreachable!();
 }
 
 pub async fn run() {
@@ -26,4 +33,53 @@ pub async fn run() {
         }
     };
     let context = window.gl();
+
+    let mut camera = Camera::new_perspective(
+        window.viewport(),
+        Vec3::new(3.0, 2.5, 6.0),
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        Degrees { 0: 45.0 },
+        0.1,
+        1000.0,
+    );
+
+    let mut control = OrbitControl::new(camera.target(), 1.0, 1000.0);
+
+    let sphere = Gm::new(
+        Mesh::new(&context, &CpuMesh::sphere(16)),
+        PhysicalMaterial::new_opaque(
+            &context,
+            &CpuMaterial {
+                albedo: Srgba {
+                    r: 43,
+                    g: 89,
+                    b: 200,
+                    a: 200,
+                },
+                ..Default::default()
+            },
+        ),
+    );
+
+    let axes = Axes::new(&context, 0.1, 2.0);
+
+    let top_light = DirectionalLight::new(&context, 1.0, Srgba::WHITE, Vec3::new(0.0, -0.5, -0.5));
+    let ambient_light = AmbientLight::new(&context, 0.02, Srgba::WHITE);
+
+    window.render_loop(move |mut frame_input| {
+        camera.set_viewport(frame_input.viewport);
+        control.handle_events(&mut camera, &mut frame_input.events);
+
+        frame_input
+            .screen()
+            .clear(ClearState::color_and_depth(0.0, 0.0, 0.0, 1.0, 1.0))
+            .render(
+                &camera,
+                sphere.into_iter().chain(&axes),
+                &[&top_light, &ambient_light],
+            );
+
+        FrameOutput::default()
+    });
 }
