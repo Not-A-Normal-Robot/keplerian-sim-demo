@@ -1,4 +1,3 @@
-// use glow::Context as GlowContext;
 use three_d::core::Context as ThreeDContext;
 use wasm_bindgen::prelude::*;
 use web_sys::{Document, HtmlCanvasElement, WebGl2RenderingContext};

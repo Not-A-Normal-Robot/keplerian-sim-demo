@@ -16,12 +16,8 @@ fn main() {
             }
         }
     };
+    let context = window.gl();
 
-    window.render_loop(|_f| {
-        // keplerian_sim_demo::render(f.context);
-        todo!();
-        // FrameOutput {
-        //     ..Default::default()
-        // }
-    });
+    // keplerian_sim_demo::render(context);
+    todo!();
 }
