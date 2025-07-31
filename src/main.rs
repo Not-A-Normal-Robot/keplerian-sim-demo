@@ -3,7 +3,14 @@ use three_d::{
     // FrameOutput,
 };
 
-pub fn main() {
+#[cfg(not(target_family = "wasm"))]
+::smol_macros::main! {
+    async fn main() {
+        run().await;
+    }
+}
+
+pub async fn run() {
     let window = {
         let res = Window::new(WindowSettings {
             title: "Keplerian Orbital Simulator Demo".into(),

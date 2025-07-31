@@ -9,7 +9,7 @@ mod web_heartbeat;
 mod web_panic_handler;
 
 #[wasm_bindgen(start)]
-fn start() {
+async fn start() {
     web_panic_handler::init_panic_handler();
     web_heartbeat::start_beating();
 
@@ -19,7 +19,7 @@ fn start() {
     clear_dom(&document);
     init_canvas(&document);
 
-    main::main();
+    main::run().await;
 }
 
 fn clear_dom(document: &Document) {
