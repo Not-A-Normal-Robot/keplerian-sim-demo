@@ -29,3 +29,13 @@
     opacity: 0;
     animation: showMessage 0s 15s forwards;
 }
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    width: 100dvw;
+    height: 100vh;
+    height: 100dvh;
+}
