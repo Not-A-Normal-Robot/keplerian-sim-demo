@@ -7,7 +7,6 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-egui = "0.32.0"
 glow = "0.14.2"
 keplerian_sim = "0.4.0"
 three-d = { version = "0.18.2", features = ["egui-gui"] }
