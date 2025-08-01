@@ -1,8 +1,8 @@
 use three_d::{
-    egui::{self, Color32, FontId, Label, RichText},
-    window::{Window, WindowSettings},
     AmbientLight, Axes, Camera, ClearState, CpuMaterial, CpuMesh, Degrees, DirectionalLight,
     FrameOutput, Gm, Mesh, OrbitControl, PhysicalMaterial, Srgba, Vec3,
+    egui::{self, Color32, FontId, Label, RichText},
+    window::{Window, WindowSettings},
 };
 
 #[cfg(not(target_family = "wasm"))]
@@ -115,7 +115,7 @@ pub async fn run() {
 
         frame_input
             .screen()
-            .clear(ClearState::color_and_depth(0.0, 0.0, 0.0, 0.0, 100000.0))
+            .clear(ClearState::color_and_depth(0.0, 0.0, 0.0, 1.0, 100000.0))
             .render(
                 &camera,
                 sphere.into_iter().chain(&axes),
