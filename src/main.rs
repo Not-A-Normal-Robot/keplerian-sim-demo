@@ -73,9 +73,6 @@ pub async fn run() {
     let mut gui = three_d::GUI::new(&context);
 
     window.render_loop(move |mut frame_input| {
-        camera.set_viewport(frame_input.viewport);
-        control.handle_events(&mut camera, &mut frame_input.events);
-
         gui.update(
             &mut frame_input.events,
             frame_input.accumulated_time,
@@ -112,6 +109,9 @@ pub async fn run() {
                     });
             },
         );
+
+        camera.set_viewport(frame_input.viewport);
+        control.handle_events(&mut camera, &mut frame_input.events);
 
         frame_input
             .screen()
