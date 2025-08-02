@@ -5,6 +5,11 @@ use three_d::{
     window::{Window, WindowSettings},
 };
 
+#[path = "gui.rs"]
+mod gui;
+#[path = "scene.rs"]
+mod scene;
+
 #[cfg(not(target_family = "wasm"))]
 ::smol_macros::main! {
     async fn main() {
@@ -17,8 +22,6 @@ use three_d::{
 fn main() {
     unreachable!();
 }
-
-const FPS_AREA_ID: std::num::NonZeroU64 = std::num::NonZeroU64::new(19823659234).unwrap();
 
 pub async fn run() {
     let window = {
@@ -70,44 +73,16 @@ pub async fn run() {
     let top_light = DirectionalLight::new(&context, 1.0, Srgba::WHITE, Vec3::new(0.0, -0.5, -0.5));
     let ambient_light = AmbientLight::new(&context, 0.02, Srgba::WHITE);
 
-    let mut gui = three_d::GUI::new(&context);
+    let mut gui = gui::create(&context);
 
     window.render_loop(move |mut frame_input| {
-        gui.update(
+        gui::update(
+            &mut gui,
             &mut frame_input.events,
             frame_input.accumulated_time,
             frame_input.viewport,
             frame_input.device_pixel_ratio,
-            |ctx| {
-                use egui::{Area, Id};
-                Area::new(Id::new(FPS_AREA_ID))
-                    .constrain_to(ctx.screen_rect())
-                    .fixed_pos((12.0, 12.0))
-                    .default_width(1000.0)
-                    .show(&ctx, |ui| {
-                        ui.add(
-                            Label::new(
-                                RichText::new(format!("{:.0}", 1000.0 / frame_input.elapsed_time))
-                                    .background_color(Color32::from_rgba_premultiplied(
-                                        0, 0, 0, 128,
-                                    ))
-                                    .color(Color32::WHITE)
-                                    .font(FontId::monospace(11.0)),
-                            )
-                            .wrap_mode(egui::TextWrapMode::Extend)
-                            .selectable(false),
-                        );
-                    });
-
-                egui::Window::new("Debug Window")
-                    .movable(true)
-                    .collapsible(true)
-                    .resizable(true)
-                    .max_size((10000.0, 10000.0))
-                    .show(&ctx, |ui| {
-                        ui.label("Hello World!");
-                    });
-            },
+            frame_input.elapsed_time,
         );
 
         camera.set_viewport(frame_input.viewport);
@@ -115,7 +90,7 @@ pub async fn run() {
 
         frame_input
             .screen()
-            .clear(ClearState::color_and_depth(0.0, 0.0, 0.0, 1.0, 100000.0))
+            .clear(ClearState::color_and_depth(0.7, 0.7, 0.7, 1.0, 100000.0))
             .render(
                 &camera,
                 sphere.into_iter().chain(&axes),
