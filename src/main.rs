@@ -5,10 +5,14 @@ use three_d::{
     window::{Window, WindowSettings},
 };
 
+#[path = "body.rs"]
+mod body;
 #[path = "gui.rs"]
 mod gui;
 #[path = "scene.rs"]
 mod scene;
+#[path = "universe.rs"]
+mod universe;
 
 #[cfg(not(target_family = "wasm"))]
 ::smol_macros::main! {
