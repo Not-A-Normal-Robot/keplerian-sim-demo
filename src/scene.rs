@@ -1,6 +1,8 @@
 use std::sync::LazyLock;
 
-use three_d::CpuMesh;
+use three_d::{Context, CpuMesh, InstancedMesh};
+
+use crate::universe::Universe;
 
 pub const LOD_LEVEL_COUNT: usize = 8;
 
@@ -33,3 +35,7 @@ pub static SPHERE_MESHES: LazyLock<[CpuMesh; LOD_LEVEL_COUNT]> = LazyLock::new(|
 
     array
 });
+
+// pub fn generate_scene(context: &Context, universe: &Universe) -> Vec<InstancedMesh> {
+//     let meshes: InstancedMesh = InstancedMesh::new(context, universe.get_bodies().values().map(), SPHERE_MESHES[0])
+// }

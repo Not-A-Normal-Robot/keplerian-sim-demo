@@ -21,9 +21,6 @@ pub struct Universe {
     /// The time elapsed in the universe, in seconds.
     pub time: f64,
 
-    /// The time step of the simulation, in seconds.
-    pub time_step: f64,
-
     /// The gravitational constant, in m^3 kg^-1 s^-2.
     pub g: f64,
 }
@@ -206,7 +203,6 @@ impl Default for Universe {
         Universe {
             bodies: HashMap::new(),
             time: 0.0,
-            time_step: 3.6e3,
             g: GRAVITATIONAL_CONSTANT,
             next_id: 0,
         }

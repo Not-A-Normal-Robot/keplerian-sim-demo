@@ -1,9 +1,12 @@
 use three_d::{
-    AmbientLight, Axes, Camera, ClearState, CpuMaterial, CpuMesh, Degrees, DirectionalLight,
-    FrameOutput, Gm, Mesh, OrbitControl, PhysicalMaterial, Srgba, Vec3,
+    AmbientLight, Axes, Camera, ClearState, Context, CpuMaterial, CpuMesh, Degrees,
+    DirectionalLight, FrameOutput, GUI, Gm, Mesh, Object, OrbitControl, PhysicalMaterial, Srgba,
+    Vec3,
     egui::{self, Color32, FontId, Label, RichText},
     window::{Window, WindowSettings},
 };
+
+use crate::universe::Universe;
 
 #[path = "body.rs"]
 mod body;
@@ -27,6 +30,105 @@ fn main() {
     unreachable!();
 }
 
+pub(crate) struct Program {
+    window: Window,
+    context: Context,
+    camera: Camera,
+    control: OrbitControl,
+    gui: GUI,
+
+    top_light: DirectionalLight,
+    ambient_light: AmbientLight,
+
+    universe: Universe,
+}
+
+impl Program {
+    pub(crate) fn new() -> Self {
+        let window = {
+            let res = Window::new(WindowSettings {
+                title: "Keplerian Orbital Simulator Demo".into(),
+                min_size: (64, 64),
+                ..Default::default()
+            });
+            match res {
+                Ok(w) => w,
+                Err(e) => {
+                    if cfg!(target_family = "wasm") {
+                        panic!("Error when creating window: {e}");
+                    } else {
+                        println!("Error when creating window: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+        };
+        let context = window.gl();
+
+        let camera = Camera::new_perspective(
+            window.viewport(),
+            Vec3::new(3.0, 2.5, 6.0),
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.0),
+            Degrees { 0: 45.0 },
+            0.1,
+            1000.0,
+        );
+
+        let control = OrbitControl::new(camera.target(), 1.0, 1000.0);
+
+        let top_light =
+            DirectionalLight::new(&context, 1.0, Srgba::WHITE, Vec3::new(0.0, -0.5, -0.5));
+        let ambient_light = AmbientLight::new(&context, 0.02, Srgba::WHITE);
+
+        let gui = gui::create(&context);
+
+        let universe = Universe::default();
+
+        Self {
+            window,
+            context,
+            camera,
+            control,
+            gui,
+            top_light,
+            ambient_light,
+            universe,
+        }
+    }
+
+    pub(crate) fn run(mut self) {
+        self.window.render_loop(move |mut frame_input| {
+            gui::update(
+                &mut self.gui,
+                &mut frame_input.events,
+                frame_input.accumulated_time,
+                frame_input.viewport,
+                frame_input.device_pixel_ratio,
+                frame_input.elapsed_time,
+            );
+
+            self.camera.set_viewport(frame_input.viewport);
+            self.control
+                .handle_events(&mut self.camera, &mut frame_input.events);
+
+            frame_input
+                .screen()
+                .clear(ClearState::color_and_depth(0.7, 0.7, 0.7, 1.0, 100000.0))
+                .render(
+                    &self.camera,
+                    // sphere.into_iter().chain(&axes),
+                    Vec::<Axes>::new(),
+                    &[&self.top_light, &self.ambient_light],
+                )
+                .write(|| self.gui.render())
+                .unwrap();
+
+            FrameOutput::default()
+        });
+    }
+}
+
 pub async fn run() {
     let window = {
         let res = Window::new(WindowSettings {
@@ -37,8 +139,12 @@ pub async fn run() {
         match res {
             Ok(w) => w,
             Err(e) => {
-                println!("Error when creating window: {e}");
-                std::process::exit(1);
+                if cfg!(target_family = "wasm") {
+                    panic!("Error when creating window: {e}");
+                } else {
+                    println!("Error when creating window: {e}");
+                    std::process::exit(1);
+                }
             }
         }
     };
