@@ -2,7 +2,8 @@ use std::fmt::{self, Debug};
 use std::sync::Arc;
 use std::{collections::HashMap, error::Error};
 
-use crate::body::Body;
+use super::body::Body;
+use glam::DVec3;
 use keplerian_sim::{MuSetterMode, OrbitTrait};
 use three_d::{InstancedMesh, Line};
 type Id = u64;
@@ -84,7 +85,6 @@ impl Universe {
             bodies: HashMap::new(),
             next_id: 0,
             time: 0.0,
-            time_step,
             g,
         }
     }
@@ -194,6 +194,66 @@ impl Universe {
 
     pub fn tick(&mut self, dt: f64) {
         self.time += dt;
+    }
+
+    /// Gets the absolute position of a body in the universe.
+    ///
+    /// Each coordinate is in meters.
+    ///
+    /// `index`: The index of the body to get the position of.
+    ///
+    /// Returns: The absolute position of the body.  
+    /// The top ancestor of the body (i.e, the body with no parent) is at the origin (0, 0, 0).  
+    pub fn get_body_position(&self, index: Id) -> Option<DVec3> {
+        let wrapper = self.bodies.get(&index)?;
+        let (orbit, parent) = (&wrapper.body.orbit, wrapper.relations.parent);
+
+        let mut position = match orbit {
+            Some(orbit) => orbit.get_position_at_time(self.time),
+            None => DVec3::ZERO, // If the body is not in orbit, its position is the origin
+        };
+
+        if let Some(parent) = parent {
+            if let Some(parent_position) = self.get_body_position(parent) {
+                position += parent_position;
+            }
+        }
+
+        Some(position)
+    }
+
+    fn get_body_position_memoized(&self, index: Id, map: &mut HashMap<Id, DVec3>) -> Option<DVec3> {
+        if let Some(&v) = map.get(&index) {
+            return Some(v);
+        }
+
+        let wrapper = self.bodies.get(&index)?;
+        let (orbit, parent) = (&wrapper.body.orbit, wrapper.relations.parent);
+
+        let mut position = match orbit {
+            Some(orbit) => orbit.get_position_at_time(self.time),
+            None => DVec3::ZERO, // If the body is not in orbit, its position is the origin
+        };
+
+        if let Some(parent) = parent {
+            if let Some(parent_position) = self.get_body_position_memoized(parent, map) {
+                position += parent_position;
+            }
+        }
+
+        map.insert(index, position);
+
+        Some(position)
+    }
+
+    pub fn get_all_body_positions(&self) -> HashMap<Id, DVec3> {
+        let mut map = HashMap::with_capacity(self.bodies.len());
+
+        for &index in self.bodies.keys() {
+            self.get_body_position_memoized(index, &mut map);
+        }
+
+        map
     }
 }
 

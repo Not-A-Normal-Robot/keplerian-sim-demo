@@ -1,12 +1,10 @@
 use three_d::{
-    AmbientLight, Axes, Camera, ClearState, Context, CpuMaterial, CpuMesh, Degrees,
-    DirectionalLight, FrameOutput, GUI, Gm, Mesh, Object, OrbitControl, PhysicalMaterial, Srgba,
-    Vec3,
-    egui::{self, Color32, FontId, Label, RichText},
+    AmbientLight, Camera, ClearState, Context, Degrees, DirectionalLight, FrameInput, FrameOutput,
+    GUI, Gm, InstancedMesh, Line, OrbitControl, PhysicalMaterial, Srgba, Vec3, Viewport,
     window::{Window, WindowSettings},
 };
 
-use crate::universe::Universe;
+use self::universe::Universe;
 
 #[path = "body.rs"]
 mod body;
@@ -31,7 +29,7 @@ fn main() {
 }
 
 pub(crate) struct Program {
-    window: Window,
+    window: Option<Window>,
     context: Context,
     camera: Camera,
     control: OrbitControl,
@@ -44,93 +42,7 @@ pub(crate) struct Program {
 }
 
 impl Program {
-    pub(crate) fn new() -> Self {
-        let window = {
-            let res = Window::new(WindowSettings {
-                title: "Keplerian Orbital Simulator Demo".into(),
-                min_size: (64, 64),
-                ..Default::default()
-            });
-            match res {
-                Ok(w) => w,
-                Err(e) => {
-                    if cfg!(target_family = "wasm") {
-                        panic!("Error when creating window: {e}");
-                    } else {
-                        println!("Error when creating window: {e}");
-                        std::process::exit(1);
-                    }
-                }
-            }
-        };
-        let context = window.gl();
-
-        let camera = Camera::new_perspective(
-            window.viewport(),
-            Vec3::new(3.0, 2.5, 6.0),
-            Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(0.0, 1.0, 0.0),
-            Degrees { 0: 45.0 },
-            0.1,
-            1000.0,
-        );
-
-        let control = OrbitControl::new(camera.target(), 1.0, 1000.0);
-
-        let top_light =
-            DirectionalLight::new(&context, 1.0, Srgba::WHITE, Vec3::new(0.0, -0.5, -0.5));
-        let ambient_light = AmbientLight::new(&context, 0.02, Srgba::WHITE);
-
-        let gui = gui::create(&context);
-
-        let universe = Universe::default();
-
-        Self {
-            window,
-            context,
-            camera,
-            control,
-            gui,
-            top_light,
-            ambient_light,
-            universe,
-        }
-    }
-
-    pub(crate) fn run(mut self) {
-        self.window.render_loop(move |mut frame_input| {
-            gui::update(
-                &mut self.gui,
-                &mut frame_input.events,
-                frame_input.accumulated_time,
-                frame_input.viewport,
-                frame_input.device_pixel_ratio,
-                frame_input.elapsed_time,
-            );
-
-            self.camera.set_viewport(frame_input.viewport);
-            self.control
-                .handle_events(&mut self.camera, &mut frame_input.events);
-
-            frame_input
-                .screen()
-                .clear(ClearState::color_and_depth(0.7, 0.7, 0.7, 1.0, 100000.0))
-                .render(
-                    &self.camera,
-                    // sphere.into_iter().chain(&axes),
-                    Vec::<Axes>::new(),
-                    &[&self.top_light, &self.ambient_light],
-                )
-                .write(|| self.gui.render())
-                .unwrap();
-
-            FrameOutput::default()
-        });
-    }
-}
-
-pub async fn run() {
-    let window = {
+    fn new_window() -> Window {
         let res = Window::new(WindowSettings {
             title: "Keplerian Orbital Simulator Demo".into(),
             min_size: (64, 64),
@@ -147,47 +59,63 @@ pub async fn run() {
                 }
             }
         }
-    };
-    let context = window.gl();
+    }
+    fn new_camera(viewport: Viewport) -> Camera {
+        Camera::new_perspective(
+            viewport,
+            Vec3::new(3.0, 2.5, 6.0),
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.0),
+            Degrees { 0: 45.0 },
+            0.1,
+            1000.0,
+        )
+    }
+    fn new_control() -> OrbitControl {
+        OrbitControl::new(Vec3::new(0.0, 0.0, 0.0), 1.0, 1000.0)
+    }
+    fn new_dir_light(context: &Context) -> DirectionalLight {
+        DirectionalLight::new(&context, 1.0, Srgba::WHITE, Vec3::new(0.0, -0.5, -0.5))
+    }
+    fn new_ambient_light(context: &Context) -> AmbientLight {
+        AmbientLight::new(&context, 0.02, Srgba::WHITE)
+    }
 
-    let mut camera = Camera::new_perspective(
-        window.viewport(),
-        Vec3::new(3.0, 2.5, 6.0),
-        Vec3::new(0.0, 0.0, 0.0),
-        Vec3::new(0.0, 1.0, 0.0),
-        Degrees { 0: 45.0 },
-        0.1,
-        1000.0,
-    );
+    pub(crate) fn new() -> Self {
+        let window = Self::new_window();
+        let context = window.gl();
+        let camera = Self::new_camera(window.viewport());
+        let control = Self::new_control();
+        let gui = gui::create(&context);
 
-    let mut control = OrbitControl::new(camera.target(), 1.0, 1000.0);
+        let top_light = Self::new_dir_light(&context);
+        let ambient_light = Self::new_ambient_light(&context);
 
-    let sphere = Gm::new(
-        Mesh::new(&context, &CpuMesh::sphere(16)),
-        PhysicalMaterial::new_opaque(
-            &context,
-            &CpuMaterial {
-                albedo: Srgba {
-                    r: 43,
-                    g: 89,
-                    b: 200,
-                    a: 200,
-                },
-                ..Default::default()
-            },
-        ),
-    );
+        let universe = Universe::default();
 
-    let axes = Axes::new(&context, 0.1, 2.0);
+        Self {
+            window: Some(window),
+            context,
+            camera,
+            control,
+            gui,
+            top_light,
+            ambient_light,
+            universe,
+        }
+    }
 
-    let top_light = DirectionalLight::new(&context, 1.0, Srgba::WHITE, Vec3::new(0.0, -0.5, -0.5));
-    let ambient_light = AmbientLight::new(&context, 0.02, Srgba::WHITE);
+    pub(crate) fn run(mut self) {
+        if let Some(window) = self.window.take() {
+            window.render_loop(move |frame_input| self.tick(frame_input));
+        }
+    }
 
-    let mut gui = gui::create(&context);
+    fn tick(&mut self, mut frame_input: FrameInput) -> FrameOutput {
+        self.universe.tick(frame_input.elapsed_time);
 
-    window.render_loop(move |mut frame_input| {
         gui::update(
-            &mut gui,
+            &mut self.gui,
             &mut frame_input.events,
             frame_input.accumulated_time,
             frame_input.viewport,
@@ -195,20 +123,25 @@ pub async fn run() {
             frame_input.elapsed_time,
         );
 
-        camera.set_viewport(frame_input.viewport);
-        control.handle_events(&mut camera, &mut frame_input.events);
+        self.camera.set_viewport(frame_input.viewport);
+        self.control
+            .handle_events(&mut self.camera, &mut frame_input.events);
 
         frame_input
             .screen()
-            .clear(ClearState::color_and_depth(0.7, 0.7, 0.7, 1.0, 100000.0))
+            .clear(ClearState::color_and_depth(0.0, 0.0, 0.0, 1.0, 100000.0))
             .render(
-                &camera,
-                sphere.into_iter().chain(&axes),
-                &[&top_light, &ambient_light],
+                &self.camera,
+                Vec::<Gm<InstancedMesh, PhysicalMaterial>>::new(),
+                &[&self.top_light, &self.ambient_light],
             )
-            .write(|| gui.render())
+            .write(|| self.gui.render())
             .unwrap();
 
         FrameOutput::default()
-    });
+    }
+}
+
+pub async fn run() {
+    Program::new().run();
 }

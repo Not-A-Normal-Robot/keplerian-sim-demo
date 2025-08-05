@@ -1,8 +1,13 @@
 use std::sync::LazyLock;
 
-use three_d::{Context, CpuMesh, InstancedMesh};
+use glam::DVec3;
+use three_d::{
+    Axes, ColorMaterial, Context, CpuMesh, Geometry, Gm, InstancedMesh, Line, Material, Object,
+    PhysicalMaterial,
+};
 
-use crate::universe::Universe;
+use super::Program;
+use super::universe::Universe;
 
 pub const LOD_LEVEL_COUNT: usize = 8;
 
@@ -39,3 +44,65 @@ pub static SPHERE_MESHES: LazyLock<[CpuMesh; LOD_LEVEL_COUNT]> = LazyLock::new(|
 // pub fn generate_scene(context: &Context, universe: &Universe) -> Vec<InstancedMesh> {
 //     let meshes: InstancedMesh = InstancedMesh::new(context, universe.get_bodies().values().map(), SPHERE_MESHES[0])
 // }
+
+pub(crate) struct Scene {
+    bodies: Vec<Gm<InstancedMesh, PhysicalMaterial>>,
+    lines: Vec<Gm<InstancedMesh, ColorMaterial>>,
+}
+
+impl IntoIterator for Scene {
+    type Item = impl Object;
+    type IntoIter = core::iter::Chain<
+        std::vec::IntoIter<Gm<InstancedMesh, PhysicalMaterial>>,
+        std::vec::IntoIter<Gm<InstancedMesh, ColorMaterial>>,
+    >;
+    fn into_iter(self) -> Self::IntoIter {
+        self.bodies.into_iter().chain(self.lines.into_iter())
+    }
+}
+
+enum MyObject {
+    Physical(Gm<InstancedMesh, PhysicalMaterial>),
+    Color(Gm<InstancedMesh, ColorMaterial>),
+}
+
+impl Object for MyObject {
+//     fn material_type(&self) -> three_d::MaterialType {
+//         match self {
+//             MyObject::Physical(gm) => gm.material_type(),
+//             MyObject::Color(gm) => gm.material_type(),
+//         }
+//     }
+//     fn render(&self, viewer: &dyn three_d::Viewer, lights: &[&dyn three_d::Light]) {
+//         match self {
+//             MyObject::Physical(gm) => gm.render(viewer, lights),
+//             MyObject::Color(gm) => gm.render(viewer, lights),
+//         }
+//     }
+// }
+
+fn get_radial_size(radius: f64, distance: f64) -> f64 {
+    2.0 * radius / distance
+}
+
+impl Program {
+    pub(crate) fn generate_scene(&self, camera_pos: DVec3) -> Scene {
+        let position_map = self.universe.get_all_body_positions();
+    }
+
+    fn generate_body_tris(
+        &self,
+        camera_pos: DVec3,
+        position_map: &HashMap<u64, DVec3>,
+    ) -> Gm<InstancedMesh, PhysicalMaterial> {
+        let body_map = self.universe.get_bodies();
+    }
+
+    fn generate_orbit_lines(
+        &self,
+        camera_pos: DVec3,
+        position_map: &HashMap<u64, DVec3>,
+    ) -> Gm<InstancedMesh, PhysicalMaterial> {
+        Gm::new()
+    }
+}
