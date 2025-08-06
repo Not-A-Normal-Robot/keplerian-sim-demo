@@ -1,5 +1,8 @@
+use std::collections::HashMap;
+use std::iter::FusedIterator;
 use std::sync::LazyLock;
 
+use enum_dispatch::enum_dispatch;
 use glam::DVec3;
 use three_d::{
     Axes, ColorMaterial, Context, CpuMesh, Geometry, Gm, InstancedMesh, Line, Material, Object,
@@ -41,45 +44,51 @@ pub static SPHERE_MESHES: LazyLock<[CpuMesh; LOD_LEVEL_COUNT]> = LazyLock::new(|
     array
 });
 
-// pub fn generate_scene(context: &Context, universe: &Universe) -> Vec<InstancedMesh> {
-//     let meshes: InstancedMesh = InstancedMesh::new(context, universe.get_bodies().values().map(), SPHERE_MESHES[0])
-// }
-
 pub(crate) struct Scene {
     bodies: Vec<Gm<InstancedMesh, PhysicalMaterial>>,
     lines: Vec<Gm<InstancedMesh, ColorMaterial>>,
 }
 
-impl IntoIterator for Scene {
-    type Item = impl Object;
-    type IntoIter = core::iter::Chain<
-        std::vec::IntoIter<Gm<InstancedMesh, PhysicalMaterial>>,
-        std::vec::IntoIter<Gm<InstancedMesh, ColorMaterial>>,
+/// Converts a Gm into an abstract Object.
+///
+/// This uses the fact that `Gm::into_iter()` returns
+/// a `std::iter::Once<&dyn Object>`. We can then
+/// call `.next()` on it to get an `Option<&dyn Object>`,
+/// which in this case is always `Some`, which can be unwrapped.
+fn gm_to_object<G, M>(gm: &Gm<G, M>) -> &dyn Object
+where
+    G: three_d::Geometry,
+    M: three_d::Material,
+{
+    let mut iter: core::iter::Once<&dyn Object> = gm.into_iter();
+    iter.next().unwrap()
+}
+
+impl<'a> IntoIterator for &'a Scene {
+    type Item = &'a dyn Object;
+    type IntoIter = std::iter::Chain<
+        std::iter::Map<
+            core::slice::Iter<'a, Gm<InstancedMesh, PhysicalMaterial>>,
+            fn(&'a Gm<InstancedMesh, PhysicalMaterial>) -> &'a dyn Object,
+        >,
+        std::iter::Map<
+            core::slice::Iter<'a, Gm<InstancedMesh, ColorMaterial>>,
+            fn(&'a Gm<InstancedMesh, ColorMaterial>) -> &'a dyn Object,
+        >,
     >;
     fn into_iter(self) -> Self::IntoIter {
-        self.bodies.into_iter().chain(self.lines.into_iter())
+        self.bodies
+            .iter()
+            .map(
+                gm_to_object::<InstancedMesh, PhysicalMaterial>
+                    as fn(&Gm<InstancedMesh, PhysicalMaterial>) -> &dyn Object,
+            )
+            .chain(self.lines.iter().map(
+                gm_to_object::<InstancedMesh, ColorMaterial>
+                    as fn(&Gm<InstancedMesh, ColorMaterial>) -> &dyn Object,
+            ))
     }
 }
-
-enum MyObject {
-    Physical(Gm<InstancedMesh, PhysicalMaterial>),
-    Color(Gm<InstancedMesh, ColorMaterial>),
-}
-
-impl Object for MyObject {
-//     fn material_type(&self) -> three_d::MaterialType {
-//         match self {
-//             MyObject::Physical(gm) => gm.material_type(),
-//             MyObject::Color(gm) => gm.material_type(),
-//         }
-//     }
-//     fn render(&self, viewer: &dyn three_d::Viewer, lights: &[&dyn three_d::Light]) {
-//         match self {
-//             MyObject::Physical(gm) => gm.render(viewer, lights),
-//             MyObject::Color(gm) => gm.render(viewer, lights),
-//         }
-//     }
-// }
 
 fn get_radial_size(radius: f64, distance: f64) -> f64 {
     2.0 * radius / distance
@@ -88,14 +97,19 @@ fn get_radial_size(radius: f64, distance: f64) -> f64 {
 impl Program {
     pub(crate) fn generate_scene(&self, camera_pos: DVec3) -> Scene {
         let position_map = self.universe.get_all_body_positions();
+        Scene {
+            bodies: Vec::new(),
+            lines: Vec::new(),
+        }
     }
 
     fn generate_body_tris(
         &self,
         camera_pos: DVec3,
         position_map: &HashMap<u64, DVec3>,
-    ) -> Gm<InstancedMesh, PhysicalMaterial> {
+    ) -> [Gm<InstancedMesh, PhysicalMaterial>; LOD_LEVEL_COUNT] {
         let body_map = self.universe.get_bodies();
+        todo!();
     }
 
     fn generate_orbit_lines(
@@ -103,6 +117,6 @@ impl Program {
         camera_pos: DVec3,
         position_map: &HashMap<u64, DVec3>,
     ) -> Gm<InstancedMesh, PhysicalMaterial> {
-        Gm::new()
+        todo!();
     }
 }

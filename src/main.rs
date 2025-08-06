@@ -1,6 +1,6 @@
 use three_d::{
     AmbientLight, Camera, ClearState, Context, Degrees, DirectionalLight, FrameInput, FrameOutput,
-    GUI, Gm, InstancedMesh, Line, OrbitControl, PhysicalMaterial, Srgba, Vec3, Viewport,
+    GUI, Object, OrbitControl, Srgba, Vec3, Viewport,
     window::{Window, WindowSettings},
 };
 
@@ -132,7 +132,7 @@ impl Program {
             .clear(ClearState::color_and_depth(0.0, 0.0, 0.0, 1.0, 100000.0))
             .render(
                 &self.camera,
-                Vec::<Gm<InstancedMesh, PhysicalMaterial>>::new(),
+                Vec::<&dyn Object>::new(),
                 &[&self.top_light, &self.ambient_light],
             )
             .write(|| self.gui.render())
