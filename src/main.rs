@@ -1,8 +1,11 @@
+use keplerian_sim::Orbit;
 use three_d::{
     AmbientLight, Camera, ClearState, Context, Degrees, DirectionalLight, FrameInput, FrameOutput,
     GUI, Object, OrbitControl, Srgba, Vec3, Viewport,
     window::{Window, WindowSettings},
 };
+
+use crate::body::Body;
 
 use self::universe::Universe;
 
@@ -91,7 +94,31 @@ impl Program {
         let top_light = Self::new_dir_light(&context);
         let ambient_light = Self::new_ambient_light(&context);
 
-        let universe = Universe::default();
+        let mut universe = Universe::default();
+        let root_id = universe
+            .add_body(
+                Body {
+                    name: "Root".into(),
+                    mass: 1000.0,
+                    radius: 1000.0,
+                    color: Srgba::WHITE,
+                    orbit: None,
+                },
+                None,
+            )
+            .unwrap();
+        universe
+            .add_body(
+                Body {
+                    name: "Child".into(),
+                    mass: 1.0,
+                    radius: 10.0,
+                    color: Srgba::BLUE,
+                    orbit: Some(Orbit::new(0.0, 10000.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
+                },
+                Some(root_id),
+            )
+            .unwrap();
 
         Self {
             window: Some(window),

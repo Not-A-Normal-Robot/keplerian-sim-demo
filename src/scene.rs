@@ -5,8 +5,8 @@ use std::sync::LazyLock;
 use enum_dispatch::enum_dispatch;
 use glam::DVec3;
 use three_d::{
-    Axes, ColorMaterial, Context, CpuMesh, Geometry, Gm, InstancedMesh, Line, Material, Object,
-    PhysicalMaterial,
+    Axes, ColorMaterial, Context, CpuMaterial, CpuMesh, Geometry, Gm, InstancedMesh, Instances,
+    Line, Material, Object, PhysicalMaterial, RenderStates, Srgba,
 };
 
 use super::Program;
@@ -108,15 +108,45 @@ impl Program {
         camera_pos: DVec3,
         position_map: &HashMap<u64, DVec3>,
     ) -> [Gm<InstancedMesh, PhysicalMaterial>; LOD_LEVEL_COUNT] {
+        let mut instances: [Instances; LOD_LEVEL_COUNT] = core::array::from_fn(|_| Instances {
+            transformations: Vec::new(),
+            colors: Some(Vec::new()),
+            texture_transformations: None,
+        });
+
+        // TODO
+
         let body_map = self.universe.get_bodies();
-        todo!();
+        let material = PhysicalMaterial::new_opaque(&self.context, &CpuMaterial::default());
+
+        core::array::from_fn(|index| {
+            Gm::new(
+                InstancedMesh::new(&self.context, &instances[index], &SPHERE_MESHES[index]),
+                material.clone(),
+            )
+        })
     }
 
     fn generate_orbit_lines(
         &self,
         camera_pos: DVec3,
         position_map: &HashMap<u64, DVec3>,
-    ) -> Gm<InstancedMesh, PhysicalMaterial> {
-        todo!();
+    ) -> Gm<InstancedMesh, ColorMaterial> {
+        // TODO
+        Gm::new(
+            InstancedMesh::new(
+                &self.context,
+                &Instances {
+                    ..Default::default()
+                },
+                &CpuMesh::default(),
+            ),
+            ColorMaterial {
+                color: Srgba::new_opaque(0, 0, 0),
+                texture: None,
+                render_states: RenderStates::default(),
+                is_transparent: false,
+            },
+        )
     }
 }
