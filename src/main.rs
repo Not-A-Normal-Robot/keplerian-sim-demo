@@ -5,7 +5,7 @@ use three_d::{
     window::{Window, WindowSettings},
 };
 
-use crate::body::Body;
+use self::body::Body;
 
 use self::universe::Universe;
 
