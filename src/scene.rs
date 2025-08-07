@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
-use glam::DVec3;
+use glam::{DVec3, Vec3A};
 use three_d::{
     ColorMaterial, CpuMaterial, CpuMesh, Gm, InstancedMesh, Instances, Mat4, Object,
-    PhysicalMaterial, RenderStates, Srgba, Vec4,
+    PhysicalMaterial, Positions, RenderStates, SquareMatrix, Srgba, Vec4,
 };
 
 use super::universe::{BodyWrapper, Id};
@@ -53,6 +53,8 @@ pub static SPHERE_MESHES: LazyLock<[CpuMesh; LOD_LEVEL_COUNT]> = LazyLock::new(|
 
     array
 });
+
+pub static QUAD_MESH: LazyLock<CpuMesh> = LazyLock::new(|| CpuMesh::square());
 
 pub(crate) struct Scene {
     bodies: [Gm<InstancedMesh, PhysicalMaterial>; LOD_LEVEL_COUNT],
@@ -158,7 +160,7 @@ impl Program {
         let position_map = self.universe.get_all_body_positions();
         Scene {
             bodies: self.generate_body_tris(camera_offset, &position_map),
-            lines: Vec::new(),
+            lines: vec![self.generate_orbit_lines(camera_offset, &position_map)],
         }
     }
 
@@ -193,16 +195,42 @@ impl Program {
         position_map: &HashMap<u64, DVec3>,
     ) -> Gm<InstancedMesh, ColorMaterial> {
         // TODO
+        let orbit_points: Vec<DVec3> = vec![
+            DVec3::new(1e4, 0.0, 0.0),
+            DVec3::new(1e4, 1e4, 0.0),
+            DVec3::new(0.0, 1e4, 0.0),
+            DVec3::new(0.0, 0.0, 0.0),
+        ];
+
+        let positions: Vec<Vec3A> = orbit_points
+            .iter()
+            .map(|p| {
+                let p = *p - camera_offset;
+                Vec3A::new(p.x as f32, p.y as f32, p.z as f32)
+            })
+            .collect();
+
+        let mut indices = Vec::new();
+
+        let mesh = CpuMesh {
+            positions: Positions::F64(positions),
+            indices: three_d::Indices::U32(indices),
+
+            ..Default::default()
+        };
+
         Gm::new(
             InstancedMesh::new(
                 &self.context,
                 &Instances {
-                    ..Default::default()
+                    transformations: vec![Mat4::identity()],
+                    colors: None,
+                    texture_transformations: None,
                 },
-                &CpuMesh::default(),
+                &mesh,
             ),
             ColorMaterial {
-                color: Srgba::new_opaque(0, 0, 0),
+                color: Srgba::new_opaque(255, 255, 255),
                 texture: None,
                 render_states: RenderStates::default(),
                 is_transparent: false,
