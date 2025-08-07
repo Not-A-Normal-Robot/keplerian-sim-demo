@@ -6,7 +6,7 @@ use super::body::Body;
 use glam::DVec3;
 use keplerian_sim::{MuSetterMode, OrbitTrait};
 use three_d::{InstancedMesh, Line};
-type Id = u64;
+pub type Id = u64;
 
 const GRAVITATIONAL_CONSTANT: f64 = 6.6743e-11;
 

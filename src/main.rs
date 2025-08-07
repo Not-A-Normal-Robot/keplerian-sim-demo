@@ -1,7 +1,8 @@
+use glam::DVec3;
 use keplerian_sim::Orbit;
 use three_d::{
     AmbientLight, Camera, ClearState, Context, Degrees, DirectionalLight, FrameInput, FrameOutput,
-    GUI, Object, OrbitControl, Srgba, Vec3, Viewport,
+    GUI, OrbitControl, Srgba, Vec3, Viewport,
     window::{Window, WindowSettings},
 };
 
@@ -159,7 +160,7 @@ impl Program {
             .clear(ClearState::color_and_depth(0.0, 0.0, 0.0, 1.0, 100000.0))
             .render(
                 &self.camera,
-                Vec::<&dyn Object>::new(),
+                &self.generate_scene(DVec3::new(0.0, 0.0, 0.0)),
                 &[&self.top_light, &self.ambient_light],
             )
             .write(|| self.gui.render())
