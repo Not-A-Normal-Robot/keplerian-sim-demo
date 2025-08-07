@@ -1,8 +1,8 @@
 use glam::DVec3;
 use keplerian_sim::Orbit;
 use three_d::{
-    AmbientLight, Camera, ClearState, Context, Degrees, DirectionalLight, FrameInput, FrameOutput,
-    GUI, OrbitControl, Srgba, Vec3, Viewport,
+    AmbientLight, Axes, Camera, ClearState, Context, Degrees, DirectionalLight, FrameInput,
+    FrameOutput, GUI, OrbitControl, Srgba, Vec3, Viewport,
     window::{Window, WindowSettings},
 };
 
@@ -72,11 +72,11 @@ impl Program {
             Vec3::new(0.0, 1.0, 0.0),
             Degrees { 0: 45.0 },
             0.1,
-            1000.0,
+            1e30,
         )
     }
     fn new_control() -> OrbitControl {
-        OrbitControl::new(Vec3::new(0.0, 0.0, 0.0), 1.0, 1000.0)
+        OrbitControl::new(Vec3::new(0.0, 0.0, 0.0), 100.0, 1000.0)
     }
     fn new_dir_light(context: &Context) -> DirectionalLight {
         DirectionalLight::new(&context, 1.0, Srgba::WHITE, Vec3::new(0.0, -0.5, -0.5))
@@ -100,9 +100,9 @@ impl Program {
             .add_body(
                 Body {
                     name: "Root".into(),
-                    mass: 1000.0,
-                    radius: 1000.0,
-                    color: Srgba::WHITE,
+                    mass: 1e18,
+                    radius: 100.0,
+                    color: Srgba::BLUE,
                     orbit: None,
                 },
                 None,
@@ -113,9 +113,9 @@ impl Program {
                 Body {
                     name: "Child".into(),
                     mass: 1.0,
-                    radius: 10.0,
-                    color: Srgba::BLUE,
-                    orbit: Some(Orbit::new(0.0, 10000.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
+                    radius: 30.0,
+                    color: Srgba::new_opaque(196, 196, 196),
+                    orbit: Some(Orbit::new(0.0, 200.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
                 },
                 Some(root_id),
             )
@@ -140,7 +140,7 @@ impl Program {
     }
 
     fn tick(&mut self, mut frame_input: FrameInput) -> FrameOutput {
-        self.universe.tick(frame_input.elapsed_time);
+        self.universe.tick(frame_input.elapsed_time / 1000.0);
 
         gui::update(
             &mut self.gui,
@@ -155,12 +155,16 @@ impl Program {
         self.control
             .handle_events(&mut self.camera, &mut frame_input.events);
 
+        let axes = Axes::new(&self.context, 4.0, 200.0);
+
         frame_input
             .screen()
             .clear(ClearState::color_and_depth(0.0, 0.0, 0.0, 1.0, 100000.0))
             .render(
                 &self.camera,
-                &self.generate_scene(DVec3::new(0.0, 0.0, 0.0)),
+                (&self.generate_scene(DVec3::new(0.0, 0.0, 0.0)))
+                    .into_iter()
+                    .chain(axes.into_iter()),
                 &[&self.top_light, &self.ambient_light],
             )
             .write(|| self.gui.render())
