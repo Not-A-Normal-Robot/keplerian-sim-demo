@@ -1,4 +1,4 @@
-use glam::DVec3;
+use glam::{DVec3, Vec3A};
 use keplerian_sim::Orbit;
 use three_d::{
     AmbientLight, Axes, Camera, ClearState, Context, Degrees, DirectionalLight, FrameInput,
@@ -36,8 +36,10 @@ pub(crate) struct Program {
     window: Option<Window>,
     context: Context,
     camera: Camera,
+    camera_focus_pos: DVec3,
     control: OrbitControl,
     gui: GUI,
+    last_frame_input: FrameInput,
 
     top_light: DirectionalLight,
     ambient_light: AmbientLight,
@@ -85,6 +87,21 @@ impl Program {
         AmbientLight::new(&context, 0.02, Srgba::WHITE)
     }
 
+    pub(crate) fn get_camera_pos_64(&self) -> DVec3 {
+        let offset = self.camera.position();
+        self.camera_focus_pos
+            + DVec3 {
+                x: offset.x as f64,
+                y: offset.y as f64,
+                z: offset.z as f64,
+            }
+    }
+
+    pub(crate) fn get_camera_pos_32(&self) -> Vec3 {
+        let foc = self.camera_focus_pos;
+        self.camera.position() + Vec3::new(foc.x as f32, foc.y as f32, foc.z as f32)
+    }
+
     pub(crate) fn new() -> Self {
         let window = Self::new_window();
         let context = window.gl();
@@ -123,10 +140,27 @@ impl Program {
 
         Self {
             window: Some(window),
-            context,
+            context: context.clone(),
             camera,
+            camera_focus_pos: DVec3::default(),
             control,
             gui,
+            last_frame_input: FrameInput {
+                events: vec![],
+                elapsed_time: 1.0,
+                accumulated_time: 0.0,
+                viewport: Viewport {
+                    x: 1,
+                    y: 1,
+                    width: 1,
+                    height: 1,
+                },
+                window_width: 1,
+                window_height: 1,
+                device_pixel_ratio: 1.0,
+                first_frame: true,
+                context,
+            },
             top_light,
             ambient_light,
             universe,
@@ -140,6 +174,8 @@ impl Program {
     }
 
     fn tick(&mut self, mut frame_input: FrameInput) -> FrameOutput {
+        self.last_frame_input = frame_input.clone();
+
         self.universe.tick(frame_input.elapsed_time / 1000.0);
 
         gui::update(
@@ -162,9 +198,8 @@ impl Program {
             .clear(ClearState::color_and_depth(0.0, 0.0, 0.0, 1.0, 100000.0))
             .render(
                 &self.camera,
-                (&self.generate_scene(DVec3::new(0.0, 0.0, 0.0)))
-                    .into_iter()
-                    .chain(axes.into_iter()),
+                (&self.generate_scene(self.get_camera_pos_64())).into_iter(),
+                // .chain(axes.into_iter()),
                 &[&self.top_light, &self.ambient_light],
             )
             .write(|| self.gui.render())
