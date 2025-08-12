@@ -235,7 +235,7 @@ impl Program {
                         })
                         .map(|v| {
                             let distance = v.length();
-                            let r = calc_sprite_scale(1000.0, distance, sprite_scale_factor);
+                            let r = calc_sprite_scale(10.0, distance, sprite_scale_factor);
 
                             Mat4 {
                                 x: Vec4::new(r, 0.0, 0.0, 0.0),
