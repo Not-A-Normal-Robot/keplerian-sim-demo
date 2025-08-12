@@ -72,8 +72,8 @@ impl Program {
             Vec3::new(0.0, 0.0, 0.0),
             Vec3::new(0.0, 1.0, 0.0),
             Degrees { 0: 45.0 },
-            0.1,
-            1e30,
+            1.0,
+            5e16,
         )
     }
     fn new_control() -> OrbitControl {
@@ -101,7 +101,7 @@ impl Program {
             .add_body(
                 Body {
                     name: "Root".into(),
-                    mass: 1e20,
+                    mass: 1e18,
                     radius: 100.0,
                     color: Srgba::BLUE,
                     orbit: None,
@@ -116,7 +116,7 @@ impl Program {
                     mass: 1.0,
                     radius: 30.0,
                     color: Srgba::new_opaque(196, 43, 19),
-                    orbit: Some(Orbit::new(3.0, 200.0, 0.0, 0.0, 0.0, -1000.0, 1.0)),
+                    orbit: Some(Orbit::new(0.0, 200.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
                 },
                 Some(root_id),
             )
