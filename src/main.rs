@@ -101,9 +101,9 @@ impl Program {
                 let dist = dx.hypot(dy);
 
                 if dist >= RADIUS {
-                    vec.push([0, 0, 0]);
+                    vec.push([0, 0, 0, 0]);
                 } else {
-                    vec.push([255, 255, 255]);
+                    vec.push([255, 255, 255, 255]);
                 }
             }
         }
@@ -111,7 +111,7 @@ impl Program {
         let cpu_texture = CpuTexture {
             width: CIRCLE_TEX_SIZE as u32,
             height: CIRCLE_TEX_SIZE as u32,
-            data: TextureData::RgbU8(vec),
+            data: TextureData::RgbaU8(vec),
             ..Default::default()
         };
 
