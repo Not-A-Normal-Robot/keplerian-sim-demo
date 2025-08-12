@@ -101,7 +101,7 @@ impl Program {
                 let dist = dx.hypot(dy);
 
                 if dist >= RADIUS {
-                    vec.push([0, 0, 0, 0]);
+                    vec.push([255, 255, 255, 0]);
                 } else {
                     vec.push([255, 255, 255, 255]);
                 }
