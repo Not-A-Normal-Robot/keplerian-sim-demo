@@ -33,7 +33,7 @@ fn main() {
     unreachable!();
 }
 
-const CIRCLE_TEX_SIZE: usize = 32;
+const CIRCLE_TEX_SIZE: usize = 64;
 
 pub(crate) struct Program {
     window: Option<Window>,
@@ -96,8 +96,8 @@ impl Program {
         let mut vec = Vec::with_capacity(CIRCLE_TEX_SIZE * CIRCLE_TEX_SIZE);
         for y in 0..CIRCLE_TEX_SIZE {
             for x in 0..CIRCLE_TEX_SIZE {
-                let dx = x as f32 - CENTER;
-                let dy = y as f32 - CENTER;
+                let dx = 2.0 * x as f32 - CENTER;
+                let dy = 2.0 * y as f32 - CENTER;
                 let dist = dx.hypot(dy);
 
                 if dist >= RADIUS {

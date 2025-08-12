@@ -194,9 +194,9 @@ impl Program {
         })
     }
 
-    const POINTS_PER_ORBIT: usize = 128;
+    const POINTS_PER_ORBIT: usize = 16;
     const RAD_PER_POINT: f64 = TAU / Self::POINTS_PER_ORBIT as f64;
-    const POINT_SCALE: f32 = 0.003;
+    const POINT_SCALE: f32 = 0.012;
 
     fn generate_orbit_lines(
         &self,
@@ -253,7 +253,7 @@ impl Program {
             },
             // Might want to change this if texture is partially
             // transparent? Idk
-            is_transparent: false,
+            is_transparent: true,
         };
 
         // PERF: Maybe consider adding skipping if the entire orbit
