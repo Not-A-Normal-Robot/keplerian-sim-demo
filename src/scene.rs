@@ -188,16 +188,18 @@ impl Program {
         })
     }
 
+    const POINTS_PER_ORBIT: usize = 128;
+    const RAD_PER_POINT: f64 = TAU / Self::POINTS_PER_ORBIT as f64;
+    const POINT_SCALE: f32 = 0.003;
+
     fn generate_orbit_lines(
         &self,
         camera_offset: DVec3,
         _position_map: &HashMap<u64, DVec3>,
     ) -> Box<[Gm<AutoscalingSprites, ColorMaterial>]> {
         // TODO: Hook this onto the actual orbits
-        const POINTS_PER_ORBIT: usize = 128;
-        const MULTIPLIER: f64 = TAU / POINTS_PER_ORBIT as f64;
-        let orbit_points: Box<[[Vec3; POINTS_PER_ORBIT]]> = vec![core::array::from_fn(|i| {
-            let (sin, cos) = (i as f64 * MULTIPLIER).sin_cos();
+        let orbit_points: Box<[[Vec3; Self::POINTS_PER_ORBIT]]> = vec![core::array::from_fn(|i| {
+            let (sin, cos) = (i as f64 * Self::RAD_PER_POINT).sin_cos();
             let v = DVec3::new(sin * 200.0, cos * 200.0, 0.0) - camera_offset;
             Vec3::new(v.x as f32, v.y as f32, v.z as f32)
         })]
@@ -212,7 +214,7 @@ impl Program {
             .into_iter()
             .map(|arr| {
                 Gm::new(
-                    AutoscalingSprites::new(&self.context, &arr, None, 0.003),
+                    AutoscalingSprites::new(&self.context, &arr, None, POINT_SCALE),
                     mat.clone(),
                 )
             })
