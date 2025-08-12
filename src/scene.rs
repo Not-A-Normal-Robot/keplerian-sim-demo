@@ -194,10 +194,10 @@ impl Program {
         _position_map: &HashMap<u64, DVec3>,
     ) -> Box<[Gm<AutoscalingSprites, ColorMaterial>]> {
         // TODO: Hook this onto the actual orbits
-        const POINTS_PER_ORBIT: usize = 512;
+        const POINTS_PER_ORBIT: usize = 128;
         const MULTIPLIER: f64 = TAU / POINTS_PER_ORBIT as f64;
         let orbit_points: Box<[[Vec3; POINTS_PER_ORBIT]]> = vec![core::array::from_fn(|i| {
-            let (sin, cos) = (i as f64 / MULTIPLIER).sin_cos();
+            let (sin, cos) = (i as f64 * MULTIPLIER).sin_cos();
             let v = DVec3::new(sin * 200.0, cos * 200.0, 0.0) - camera_offset;
             Vec3::new(v.x as f32, v.y as f32, v.z as f32)
         })]
