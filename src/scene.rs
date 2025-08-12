@@ -194,9 +194,9 @@ impl Program {
         })
     }
 
-    const POINTS_PER_ORBIT: usize = 16;
+    const POINTS_PER_ORBIT: usize = 512;
     const RAD_PER_POINT: f64 = TAU / Self::POINTS_PER_ORBIT as f64;
-    const POINT_SCALE: f32 = 0.012;
+    const POINT_SCALE: f32 = 0.002;
 
     fn generate_orbit_lines(
         &self,
