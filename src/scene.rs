@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::f64::consts::TAU;
 use std::sync::{LazyLock, OnceLock};
@@ -5,8 +6,9 @@ use std::sync::{LazyLock, OnceLock};
 use glam::DVec3;
 use keplerian_sim::OrbitTrait;
 use three_d::{
-    Blend, ColorMaterial, Context, CpuMaterial, CpuMesh, CpuTexture, Cull, Gm, InstancedMesh,
-    Instances, Mat4, Object, PhysicalMaterial, RenderStates, Texture2DRef, Vec3, Vec4,
+    Blend, ColorMaterial, Context, CpuMaterial, CpuMesh, CpuTexture, Cull, Gm, InnerSpace as _,
+    InstancedMesh, Instances, Mat4, Object, PhysicalMaterial, RenderStates, Texture2DRef, Vec3,
+    Vec4,
 };
 
 use super::Program;
@@ -213,6 +215,7 @@ impl Program {
                     &self.context,
                     body_tuple,
                     camera_offset,
+                    self.camera.view_direction(),
                     position_map,
                     Some(circle_tex.clone()),
                     self.universe.time,
@@ -225,6 +228,7 @@ impl Program {
         context: &Context,
         body_tuple: (&Id, &BodyWrapper),
         camera_offset: DVec3,
+        view_direction: Vec3,
         position_map: &HashMap<u64, DVec3>,
         texture: Option<Texture2DRef>,
         time: f64,
@@ -257,12 +261,15 @@ impl Program {
             is_transparent: true,
         };
 
-        // PERF: Maybe consider adding skipping if the entire orbit
-        // is behind the camera?
+        let mut points: [Vec3; Self::POINTS_PER_ORBIT] = Self::poll_orbit(orbit, offset, time);
+        let points = points.as_mut_slice();
+        points.sort_unstable_by(|a, b| {
+            let dist_a = a.dot(view_direction);
+            let dist_b = b.dot(view_direction);
+            dist_b.partial_cmp(&dist_a).unwrap_or(Ordering::Equal)
+        });
 
-        let pts: [Vec3; Self::POINTS_PER_ORBIT] = Self::poll_orbit(orbit, offset, time);
-
-        let geometry = AutoscalingSprites::new(context, pts.as_slice(), None, Self::POINT_SCALE);
+        let geometry = AutoscalingSprites::new(context, points, None, Self::POINT_SCALE);
 
         Some(Gm::new(geometry, material))
     }
