@@ -5,8 +5,8 @@ use std::sync::{LazyLock, OnceLock};
 use glam::DVec3;
 use keplerian_sim::OrbitTrait;
 use three_d::{
-    ColorMaterial, Context, CpuMaterial, CpuMesh, CpuTexture, Gm, InstancedMesh, Instances, Mat4,
-    Object, PhysicalMaterial, RenderStates, Texture2DRef, Vec3, Vec4,
+    ColorMaterial, Context, CpuMaterial, CpuMesh, CpuTexture, Cull, Gm, InstancedMesh, Instances,
+    Mat4, Object, PhysicalMaterial, RenderStates, Texture2DRef, Vec3, Vec4,
 };
 
 use super::Program;
@@ -179,7 +179,12 @@ impl Program {
 
         add_body_instances(body_map, camera_offset, position_map, &mut instances_arr);
 
-        let material = PhysicalMaterial::new_opaque(&self.context, &CpuMaterial::default());
+        let mut material = PhysicalMaterial::new_opaque(&self.context, &CpuMaterial::default());
+
+        material.render_states = RenderStates {
+            cull: Cull::Back,
+            ..Default::default()
+        };
 
         core::array::from_fn(|index| {
             Gm::new(
@@ -242,7 +247,10 @@ impl Program {
         let material = ColorMaterial {
             color: body.color,
             texture,
-            render_states: RenderStates::default(),
+            render_states: RenderStates {
+                cull: Cull::Back,
+                ..Default::default()
+            },
             // Might want to change this if texture is partially
             // transparent? Idk
             is_transparent: false,
