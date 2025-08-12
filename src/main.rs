@@ -9,7 +9,8 @@ use three_d::{
 use self::body::Body;
 
 use self::universe::Universe;
-
+#[path = "autoscaling_sprites.rs"]
+mod autoscaling_sprites;
 #[path = "body.rs"]
 mod body;
 #[path = "gui.rs"]
