@@ -5,8 +5,8 @@ use std::sync::{LazyLock, OnceLock};
 use glam::DVec3;
 use keplerian_sim::OrbitTrait;
 use three_d::{
-    ColorMaterial, Context, CpuMaterial, CpuMesh, CpuTexture, Cull, Gm, InstancedMesh, Instances,
-    Mat4, Object, PhysicalMaterial, RenderStates, Texture2DRef, Vec3, Vec4,
+    Blend, ColorMaterial, Context, CpuMaterial, CpuMesh, CpuTexture, Cull, Gm, InstancedMesh,
+    Instances, Mat4, Object, PhysicalMaterial, RenderStates, Texture2DRef, Vec3, Vec4,
 };
 
 use super::Program;
@@ -249,6 +249,7 @@ impl Program {
             texture,
             render_states: RenderStates {
                 cull: Cull::Back,
+                blend: Blend::TRANSPARENCY,
                 ..Default::default()
             },
             // Might want to change this if texture is partially
