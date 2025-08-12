@@ -1,8 +1,8 @@
 use glam::DVec3;
 use keplerian_sim::Orbit;
 use three_d::{
-    AmbientLight, Axes, Camera, ClearState, Context, Degrees, DirectionalLight, FrameInput,
-    FrameOutput, GUI, OrbitControl, Srgba, Vec3, Viewport,
+    AmbientLight, Axes, Camera, ClearState, Context, CpuTexture, Degrees, DirectionalLight,
+    FrameInput, FrameOutput, GUI, OrbitControl, Srgba, Texture2DRef, TextureData, Vec3, Viewport,
     window::{Window, WindowSettings},
 };
 
@@ -33,6 +33,8 @@ fn main() {
     unreachable!();
 }
 
+const CIRCLE_TEX_SIZE: usize = 32;
+
 pub(crate) struct Program {
     window: Option<Window>,
     context: Context,
@@ -44,6 +46,8 @@ pub(crate) struct Program {
     ambient_light: AmbientLight,
 
     universe: Universe,
+
+    circle_tex: Texture2DRef,
 }
 
 impl Program {
@@ -85,6 +89,34 @@ impl Program {
     fn new_ambient_light(context: &Context) -> AmbientLight {
         AmbientLight::new(&context, 0.02, Srgba::WHITE)
     }
+    fn generate_circle_tex(context: &Context) -> Texture2DRef {
+        const CENTER: f32 = CIRCLE_TEX_SIZE as f32 - 1.0 / 4.0;
+        const RADIUS: f32 = CENTER;
+
+        let mut vec = Vec::with_capacity(CIRCLE_TEX_SIZE * CIRCLE_TEX_SIZE);
+        for y in 0..CIRCLE_TEX_SIZE {
+            for x in 0..CIRCLE_TEX_SIZE {
+                let dx = x as f32 - CENTER;
+                let dy = y as f32 - CENTER;
+                let dist = dx.hypot(dy);
+
+                if dist >= RADIUS {
+                    vec.push([0, 0, 0]);
+                } else {
+                    vec.push([255, 255, 255]);
+                }
+            }
+        }
+
+        let cpu_texture = CpuTexture {
+            width: CIRCLE_TEX_SIZE as u32,
+            height: CIRCLE_TEX_SIZE as u32,
+            data: TextureData::RgbU8(vec),
+            ..Default::default()
+        };
+
+        Texture2DRef::from_cpu_texture(context, &cpu_texture)
+    }
 
     pub(crate) fn new() -> Self {
         let window = Self::new_window();
@@ -115,12 +147,14 @@ impl Program {
                     name: "Child".into(),
                     mass: 1.0,
                     radius: 30.0,
-                    color: Srgba::new_opaque(196, 43, 19),
+                    color: Srgba::new_opaque(196, 196, 196),
                     orbit: Some(Orbit::new(0.0, 200.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
                 },
                 Some(root_id),
             )
             .unwrap();
+
+        let circle_tex = Self::generate_circle_tex(&context);
 
         Self {
             window: Some(window),
@@ -131,6 +165,7 @@ impl Program {
             top_light,
             ambient_light,
             universe,
+            circle_tex,
         }
     }
 

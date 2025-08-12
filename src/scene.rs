@@ -45,7 +45,6 @@ const _: () = {
         "LOD_SUBDIVS and LOD_CUTOFFS should have the same length"
     )
 };
-const CIRCLE_TEX_SIZE: usize = 32;
 
 pub static SPHERE_MESHES: LazyLock<[CpuMesh; LOD_LEVEL_COUNT]> = LazyLock::new(|| {
     let mut array = core::array::from_fn(|_| CpuMesh::default());
@@ -56,8 +55,6 @@ pub static SPHERE_MESHES: LazyLock<[CpuMesh; LOD_LEVEL_COUNT]> = LazyLock::new(|
 
     array
 });
-
-pub static CIRCLE_TEX: OnceLock<Texture2DRef> = OnceLock::new();
 
 pub(crate) struct Scene {
     bodies: [Gm<InstancedMesh, PhysicalMaterial>; LOD_LEVEL_COUNT],
@@ -158,35 +155,6 @@ fn add_body_instances(
     }
 }
 
-fn generate_circle_tex(context: &Context) -> Texture2DRef {
-    const CENTER: f32 = CIRCLE_TEX_SIZE as f32 - 1.0 / 4.0;
-    const RADIUS: f32 = CENTER;
-
-    let mut vec = Vec::with_capacity(CIRCLE_TEX_SIZE * CIRCLE_TEX_SIZE);
-    for y in 0..CIRCLE_TEX_SIZE {
-        for x in 0..CIRCLE_TEX_SIZE {
-            let dx = x as f32 - CENTER;
-            let dy = y as f32 - CENTER;
-            let dist = dx.hypot(dy);
-
-            if dist >= RADIUS {
-                vec.push(0);
-            } else {
-                vec.push(255);
-            }
-        }
-    }
-
-    let cpu_texture = CpuTexture {
-        width: CIRCLE_TEX_SIZE as u32,
-        height: CIRCLE_TEX_SIZE as u32,
-        data: three_d::TextureData::RU8(vec),
-        ..Default::default()
-    };
-
-    Texture2DRef::from_cpu_texture(context, &cpu_texture)
-}
-
 impl Program {
     pub(crate) fn generate_scene(&self, camera_offset: DVec3) -> Scene {
         let position_map = self.universe.get_all_body_positions();
@@ -230,7 +198,7 @@ impl Program {
         camera_offset: DVec3,
         position_map: &HashMap<u64, DVec3>,
     ) -> Box<[Gm<AutoscalingSprites, ColorMaterial>]> {
-        let circle_texture = CIRCLE_TEX.get_or_init(|| generate_circle_tex(&self.context));
+        let circle_tex = &self.circle_tex;
 
         self.universe
             .get_bodies()
@@ -241,7 +209,7 @@ impl Program {
                     body_tuple,
                     camera_offset,
                     position_map,
-                    Some(circle_texture.clone()),
+                    Some(circle_tex.clone()),
                     self.universe.time,
                 )
             })
