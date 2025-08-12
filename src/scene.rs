@@ -1,14 +1,13 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::f64::consts::TAU;
-use std::sync::{LazyLock, OnceLock};
+use std::sync::LazyLock;
 
 use glam::DVec3;
 use keplerian_sim::OrbitTrait;
 use three_d::{
-    Blend, ColorMaterial, Context, CpuMaterial, CpuMesh, CpuTexture, Cull, Gm, InnerSpace as _,
-    InstancedMesh, Instances, Mat4, Object, PhysicalMaterial, RenderStates, Texture2DRef, Vec3,
-    Vec4,
+    Blend, ColorMaterial, Context, CpuMaterial, CpuMesh, Cull, Gm, InnerSpace as _, InstancedMesh,
+    Instances, Mat4, Object, PhysicalMaterial, RenderStates, Texture2DRef, Vec3, Vec4,
 };
 
 use super::Program;
