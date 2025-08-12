@@ -101,7 +101,7 @@ impl Program {
             .add_body(
                 Body {
                     name: "Root".into(),
-                    mass: 1e18,
+                    mass: 1e20,
                     radius: 100.0,
                     color: Srgba::BLUE,
                     orbit: None,
@@ -115,8 +115,8 @@ impl Program {
                     name: "Child".into(),
                     mass: 1.0,
                     radius: 30.0,
-                    color: Srgba::new_opaque(196, 196, 196),
-                    orbit: Some(Orbit::new(0.0, 200.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
+                    color: Srgba::new_opaque(196, 43, 19),
+                    orbit: Some(Orbit::new(3.0, 200.0, 0.0, 0.0, 0.0, -1000.0, 1.0)),
                 },
                 Some(root_id),
             )

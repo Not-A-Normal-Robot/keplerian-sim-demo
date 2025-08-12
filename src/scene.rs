@@ -3,9 +3,10 @@ use std::f64::consts::TAU;
 use std::sync::LazyLock;
 
 use glam::DVec3;
+use keplerian_sim::OrbitTrait;
 use three_d::{
-    ColorMaterial, CpuMaterial, CpuMesh, Gm, InstancedMesh, Instances, Mat4, Object,
-    PhysicalMaterial, RenderStates, Srgba, Vec3, Vec4,
+    ColorMaterial, Context, CpuMaterial, CpuMesh, Gm, InstancedMesh, Instances, Mat4, Object,
+    PhysicalMaterial, RenderStates, Srgba, Texture2DRef, Vec3, Vec4,
 };
 
 use super::Program;
@@ -195,29 +196,101 @@ impl Program {
     fn generate_orbit_lines(
         &self,
         camera_offset: DVec3,
-        _position_map: &HashMap<u64, DVec3>,
+        position_map: &HashMap<u64, DVec3>,
     ) -> Box<[Gm<AutoscalingSprites, ColorMaterial>]> {
-        // TODO: Hook this onto the actual orbits
-        let orbit_points: Box<[[Vec3; Self::POINTS_PER_ORBIT]]> = vec![core::array::from_fn(|i| {
-            let (sin, cos) = (i as f64 * Self::RAD_PER_POINT).sin_cos();
-            let v = DVec3::new(sin * 200.0, cos * 200.0, 0.0) - camera_offset;
-            Vec3::new(v.x as f32, v.y as f32, v.z as f32)
-        })]
-        .into_boxed_slice();
-        let mat = ColorMaterial {
-            color: Srgba::new_opaque(255, 255, 255),
-            texture: None,
-            render_states: RenderStates::default(),
-            is_transparent: false,
-        };
-        orbit_points
-            .into_iter()
-            .map(|arr| {
-                Gm::new(
-                    AutoscalingSprites::new(&self.context, &arr, None, POINT_SCALE),
-                    mat.clone(),
+        self.universe
+            .get_bodies()
+            .iter()
+            .filter_map(|body_tuple| {
+                Self::generate_orbit_line(
+                    &self.context,
+                    body_tuple,
+                    camera_offset,
+                    position_map,
+                    None, // TODO: Circle texture
+                    self.universe.time,
                 )
             })
             .collect()
+    }
+
+    fn generate_orbit_line(
+        context: &Context,
+        body_tuple: (&Id, &BodyWrapper),
+        camera_offset: DVec3,
+        position_map: &HashMap<u64, DVec3>,
+        texture: Option<Texture2DRef>,
+        time: f64,
+    ) -> Option<Gm<AutoscalingSprites, ColorMaterial>> {
+        let wrapper = body_tuple.1;
+        let body = &wrapper.body;
+        let orbit = match &body.orbit {
+            Some(o) => o,
+            None => return None,
+        };
+
+        let parent_pos = wrapper
+            .relations
+            .parent
+            .map(|id| *position_map.get(&id).unwrap_or(&DVec3::default()))
+            .unwrap_or(DVec3::default());
+
+        let offset = parent_pos - camera_offset;
+
+        let material = ColorMaterial {
+            color: body.color,
+            texture,
+            render_states: RenderStates::default(),
+            // Might want to change this if texture is partially
+            // transparent? Idk
+            is_transparent: false,
+        };
+
+        // PERF: Maybe consider adding skipping if the entire orbit
+        // is behind the camera?
+
+        let pts: [Vec3; Self::POINTS_PER_ORBIT] = Self::poll_orbit(orbit, offset, time);
+
+        let geometry = AutoscalingSprites::new(context, pts.as_slice(), None, Self::POINT_SCALE);
+
+        Some(Gm::new(geometry, material))
+    }
+
+    fn poll_orbit(
+        orbit: &impl OrbitTrait,
+        offset: DVec3,
+        time: f64,
+    ) -> [Vec3; Self::POINTS_PER_ORBIT] {
+        if orbit.get_eccentricity() < 1.0 {
+            Self::poll_orbit_elliptic(orbit, offset)
+        } else {
+            Self::poll_orbit_hyperbolic(orbit, offset, time)
+        }
+    }
+
+    fn poll_orbit_elliptic(
+        orbit: &impl OrbitTrait,
+        offset: DVec3,
+    ) -> [Vec3; Self::POINTS_PER_ORBIT] {
+        core::array::from_fn(|i| {
+            let ecc_anom = i as f64 * Self::RAD_PER_POINT;
+            let v = orbit.get_position_at_eccentric_anomaly(ecc_anom) + offset;
+            Vec3::new(v.x as f32, v.y as f32, v.z as f32)
+        })
+    }
+
+    fn poll_orbit_hyperbolic(
+        orbit: &impl OrbitTrait,
+        offset: DVec3,
+        time: f64,
+    ) -> [Vec3; Self::POINTS_PER_ORBIT] {
+        let cur_ecc_anom = orbit.get_eccentric_anomaly_at_time(time);
+        core::array::from_fn(|i| {
+            let signed_index = i as f64 - 0.5 * Self::POINTS_PER_ORBIT as f64;
+            let ecc_anom = cur_ecc_anom + signed_index * Self::RAD_PER_POINT;
+
+            let v = orbit.get_position_at_eccentric_anomaly(ecc_anom) + offset;
+            Vec3::new(v.x as f32, v.y as f32, v.z as f32)
+        })
     }
 }
