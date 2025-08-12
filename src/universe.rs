@@ -1,11 +1,11 @@
+#![allow(dead_code)]
+
 use std::fmt::{self, Debug};
-use std::sync::Arc;
 use std::{collections::HashMap, error::Error};
 
 use super::body::Body;
 use glam::DVec3;
 use keplerian_sim::{MuSetterMode, OrbitTrait};
-use three_d::{InstancedMesh, Line};
 pub type Id = u64;
 
 const GRAVITATIONAL_CONSTANT: f64 = 6.6743e-11;
@@ -77,8 +77,7 @@ impl Error for BodyAddError {}
 
 impl Universe {
     /// Creates an empty universe.
-    pub fn new(time_step: Option<f64>, g: Option<f64>) -> Universe {
-        let time_step = time_step.unwrap_or(3.6e3);
+    pub fn new(g: Option<f64>) -> Universe {
         let g = g.unwrap_or(GRAVITATIONAL_CONSTANT);
 
         Universe {

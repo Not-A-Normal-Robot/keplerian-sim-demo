@@ -1,6 +1,6 @@
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
-    egui::{self, Area, Color32, Context as EguiContext, FontId, Id, Label, RichText},
+    egui::{self, Area, Color32, FontId, Id, Label, RichText},
 };
 
 const FPS_AREA_ID: std::num::NonZeroU64 = std::num::NonZeroU64::new(19823659234).unwrap();

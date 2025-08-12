@@ -6,7 +6,7 @@ use glam::DVec3;
 use keplerian_sim::OrbitTrait;
 use three_d::{
     ColorMaterial, Context, CpuMaterial, CpuMesh, Gm, InstancedMesh, Instances, Mat4, Object,
-    PhysicalMaterial, RenderStates, Srgba, Texture2DRef, Vec3, Vec4,
+    PhysicalMaterial, RenderStates, Texture2DRef, Vec3, Vec4,
 };
 
 use super::Program;

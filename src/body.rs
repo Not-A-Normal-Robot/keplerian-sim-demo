@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use keplerian_sim::Orbit;
 use three_d::Srgba;
 
