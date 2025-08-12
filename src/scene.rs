@@ -4,12 +4,12 @@ use std::sync::LazyLock;
 use glam::DVec3;
 use three_d::{
     ColorMaterial, CpuMaterial, CpuMesh, Gm, InstancedMesh, Instances, Mat4, Object,
-    PhysicalMaterial, RenderStates, Srgba, Vec4,
+    PhysicalMaterial, RenderStates, Srgba, Vec3, Vec4,
 };
 
-use super::universe::{BodyWrapper, Id};
-
 use super::Program;
+use super::autoscaling_sprites::AutoscalingSprites;
+use super::universe::{BodyWrapper, Id};
 
 pub const LOD_LEVEL_COUNT: usize = 8;
 
@@ -56,7 +56,7 @@ pub static SPHERE_MESHES: LazyLock<[CpuMesh; LOD_LEVEL_COUNT]> = LazyLock::new(|
 
 pub(crate) struct Scene {
     bodies: [Gm<InstancedMesh, PhysicalMaterial>; LOD_LEVEL_COUNT],
-    lines: Vec<Gm<InstancedMesh, ColorMaterial>>,
+    lines: Box<[Gm<AutoscalingSprites, ColorMaterial>]>,
 }
 
 /// Converts a Gm into an abstract Object.
@@ -82,8 +82,8 @@ impl<'a> IntoIterator for &'a Scene {
             fn(&'a Gm<InstancedMesh, PhysicalMaterial>) -> &'a dyn Object,
         >,
         std::iter::Map<
-            core::slice::Iter<'a, Gm<InstancedMesh, ColorMaterial>>,
-            fn(&'a Gm<InstancedMesh, ColorMaterial>) -> &'a dyn Object,
+            core::slice::Iter<'a, Gm<AutoscalingSprites, ColorMaterial>>,
+            fn(&'a Gm<AutoscalingSprites, ColorMaterial>) -> &'a dyn Object,
         >,
     >;
     fn into_iter(self) -> Self::IntoIter {
@@ -94,8 +94,8 @@ impl<'a> IntoIterator for &'a Scene {
                     as fn(&Gm<InstancedMesh, PhysicalMaterial>) -> &dyn Object,
             )
             .chain(self.lines.iter().map(
-                gm_to_object::<InstancedMesh, ColorMaterial>
-                    as fn(&Gm<InstancedMesh, ColorMaterial>) -> &dyn Object,
+                gm_to_object::<AutoscalingSprites, ColorMaterial>
+                    as fn(&Gm<AutoscalingSprites, ColorMaterial>) -> &dyn Object,
             ))
     }
 }
@@ -158,7 +158,7 @@ impl Program {
         let position_map = self.universe.get_all_body_positions();
         Scene {
             bodies: self.generate_body_tris(camera_offset, &position_map),
-            lines: Vec::new(),
+            lines: self.generate_orbit_lines(camera_offset, &position_map),
         }
     }
 
@@ -190,23 +190,30 @@ impl Program {
     fn generate_orbit_lines(
         &self,
         camera_offset: DVec3,
-        position_map: &HashMap<u64, DVec3>,
-    ) -> Gm<InstancedMesh, ColorMaterial> {
-        // TODO
-        Gm::new(
-            InstancedMesh::new(
-                &self.context,
-                &Instances {
-                    ..Default::default()
-                },
-                &CpuMesh::default(),
-            ),
-            ColorMaterial {
-                color: Srgba::new_opaque(0, 0, 0),
-                texture: None,
-                render_states: RenderStates::default(),
-                is_transparent: false,
-            },
-        )
+        _position_map: &HashMap<u64, DVec3>,
+    ) -> Box<[Gm<AutoscalingSprites, ColorMaterial>]> {
+        // TODO: Hook this onto the actual orbits
+        const POINTS_PER_ORBIT: usize = 32;
+        let orbit_points: Box<[[Vec3; POINTS_PER_ORBIT]]> = vec![core::array::from_fn(|i| {
+            let (sin, cos) = (i as f64).sin_cos();
+            let v = DVec3::new(sin * 200.0, cos * 200.0, 0.0) - camera_offset;
+            Vec3::new(v.x as f32, v.y as f32, v.z as f32)
+        })]
+        .into_boxed_slice();
+        let mat = ColorMaterial {
+            color: Srgba::new_opaque(255, 255, 255),
+            texture: None,
+            render_states: RenderStates::default(),
+            is_transparent: false,
+        };
+        orbit_points
+            .into_iter()
+            .map(|arr| {
+                Gm::new(
+                    AutoscalingSprites::new(&self.context, &arr, None, 0.01),
+                    mat.clone(),
+                )
+            })
+            .collect()
     }
 }
