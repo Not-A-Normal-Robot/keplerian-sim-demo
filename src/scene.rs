@@ -1,12 +1,10 @@
 use std::collections::HashMap;
-use std::f64::consts::TAU;
 use std::sync::LazyLock;
 
-use glam::{DVec3, Vec3A};
+use glam::DVec3;
 use three_d::{
     ColorMaterial, CpuMaterial, CpuMesh, Gm, InstancedMesh, Instances, Mat4, Object,
-    PhysicalMaterial, PointCloud, Positions, Rad, Radians, RenderStates, Sprites, SquareMatrix,
-    Srgba, Vec3, Vec4,
+    PhysicalMaterial, RenderStates, Srgba, Vec4,
 };
 
 use super::universe::{BodyWrapper, Id};
@@ -56,11 +54,9 @@ pub static SPHERE_MESHES: LazyLock<[CpuMesh; LOD_LEVEL_COUNT]> = LazyLock::new(|
     array
 });
 
-pub static QUAD_MESH: LazyLock<CpuMesh> = LazyLock::new(|| CpuMesh::square());
-
 pub(crate) struct Scene {
     bodies: [Gm<InstancedMesh, PhysicalMaterial>; LOD_LEVEL_COUNT],
-    lines: Gm<InstancedMesh, ColorMaterial>,
+    lines: Vec<Gm<InstancedMesh, ColorMaterial>>,
 }
 
 /// Converts a Gm into an abstract Object.
@@ -85,7 +81,10 @@ impl<'a> IntoIterator for &'a Scene {
             core::slice::Iter<'a, Gm<InstancedMesh, PhysicalMaterial>>,
             fn(&'a Gm<InstancedMesh, PhysicalMaterial>) -> &'a dyn Object,
         >,
-        std::iter::Once<&'a dyn Object>,
+        std::iter::Map<
+            core::slice::Iter<'a, Gm<InstancedMesh, ColorMaterial>>,
+            fn(&'a Gm<InstancedMesh, ColorMaterial>) -> &'a dyn Object,
+        >,
     >;
     fn into_iter(self) -> Self::IntoIter {
         self.bodies
@@ -94,7 +93,10 @@ impl<'a> IntoIterator for &'a Scene {
                 gm_to_object::<InstancedMesh, PhysicalMaterial>
                     as fn(&Gm<InstancedMesh, PhysicalMaterial>) -> &dyn Object,
             )
-            .chain(self.lines.into_iter())
+            .chain(self.lines.iter().map(
+                gm_to_object::<InstancedMesh, ColorMaterial>
+                    as fn(&Gm<InstancedMesh, ColorMaterial>) -> &dyn Object,
+            ))
     }
 }
 
@@ -151,40 +153,18 @@ fn add_body_instances(
     }
 }
 
-/// Calculates the sprite scale factor as used in
-/// [calc_sprite_scale].
-///
-/// Arguments:
-/// - `fov_y`: FOV in radians
-/// - `screen_height`: screen height in pixels
-fn calc_sprite_scale_factor(fov_y: Radians, screen_height: f32) -> f32 {
-    2.0 * (0.5 * fov_y.0).tan() / screen_height
-}
-
-/// Calculates the appropriate size of a sprite to make it
-/// have the same scrren-space size.
-///
-/// Arguments:
-/// - `pixel_size`: Pixel size of the sprite in pixels
-/// - `distance`: Distance of the sprite
-/// - `sprite_scale_factor`: the screen-based scale factor.
-/// You can get this through [calc_sprite_scale_factor]
-fn calc_sprite_scale(pixel_size: f32, distance: f32, sprite_scale_factor: f32) -> f32 {
-    pixel_size * distance * sprite_scale_factor
-}
-
 impl Program {
-    pub(crate) fn generate_scene(&self, camera_pos: DVec3) -> Scene {
+    pub(crate) fn generate_scene(&self, camera_offset: DVec3) -> Scene {
         let position_map = self.universe.get_all_body_positions();
         Scene {
-            bodies: self.generate_body_tris(camera_pos, &position_map),
-            lines: self.generate_orbit_lines(camera_pos),
+            bodies: self.generate_body_tris(camera_offset, &position_map),
+            lines: Vec::new(),
         }
     }
 
     fn generate_body_tris(
         &self,
-        camera_pos: DVec3,
+        camera_offset: DVec3,
         position_map: &HashMap<u64, DVec3>,
     ) -> [Gm<InstancedMesh, PhysicalMaterial>; LOD_LEVEL_COUNT] {
         let mut instances_arr: [Instances; LOD_LEVEL_COUNT] = core::array::from_fn(|_| Instances {
@@ -195,7 +175,7 @@ impl Program {
 
         let body_map = self.universe.get_bodies();
 
-        add_body_instances(body_map, camera_pos, position_map, &mut instances_arr);
+        add_body_instances(body_map, camera_offset, position_map, &mut instances_arr);
 
         let material = PhysicalMaterial::new_opaque(&self.context, &CpuMaterial::default());
 
@@ -207,51 +187,22 @@ impl Program {
         })
     }
 
-    fn generate_orbit_lines(&self, camera_pos: DVec3) -> Gm<InstancedMesh, ColorMaterial> {
+    fn generate_orbit_lines(
+        &self,
+        camera_offset: DVec3,
+        position_map: &HashMap<u64, DVec3>,
+    ) -> Gm<InstancedMesh, ColorMaterial> {
         // TODO
-        let mut orbit_points: Vec<DVec3> = Vec::new();
-        for i in 0..128 {
-            let theta = i as f64 * TAU / 128.0;
-            let (sin, cos) = theta.sin_cos();
-            orbit_points.push(DVec3::new(sin * 200.0, cos * 200.0, 0.0));
-        }
-        let sprite_scale_factor = calc_sprite_scale_factor(
-            match self.camera.projection_type() {
-                three_d_asset::ProjectionType::Perspective { field_of_view_y } => *field_of_view_y,
-                three_d_asset::ProjectionType::Orthographic { .. } => Rad(1.0),
-            },
-            self.last_frame_input.screen().height() as f32,
-        );
-
         Gm::new(
             InstancedMesh::new(
                 &self.context,
                 &Instances {
-                    transformations: orbit_points
-                        .iter()
-                        .map(|p| {
-                            let p = *p - camera_pos;
-                            Vec3A::new(p.x as f32, p.y as f32, p.z as f32)
-                        })
-                        .map(|v| {
-                            let distance = v.length();
-                            let r = calc_sprite_scale(10.0, distance, sprite_scale_factor);
-
-                            Mat4 {
-                                x: Vec4::new(r, 0.0, 0.0, 0.0),
-                                y: Vec4::new(0.0, r, 0.0, 0.0),
-                                z: Vec4::new(0.0, 0.0, r, 0.0),
-                                w: Vec4::new(v.x, v.y, v.z, 1.0),
-                            }
-                        })
-                        .collect(),
-                    colors: None,
-                    texture_transformations: None,
+                    ..Default::default()
                 },
-                &SPHERE_MESHES[7],
+                &CpuMesh::default(),
             ),
             ColorMaterial {
-                color: Srgba::new_opaque(255, 255, 255),
+                color: Srgba::new_opaque(0, 0, 0),
                 texture: None,
                 render_states: RenderStates::default(),
                 is_transparent: false,

@@ -723,7 +723,6 @@ dependencies = [
  "keplerian_sim",
  "smol-macros",
  "three-d",
- "three-d-asset",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
