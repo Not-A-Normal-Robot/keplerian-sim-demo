@@ -5,8 +5,8 @@ use super::universe::Universe;
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
-        self, Area, Color32, Context as EguiContext, FontId, Frame, Id, Image, ImageButton, Label,
-        Margin, RichText, Rounding, Sense, Stroke, TopBottomPanel, Ui, Vec2,
+        self, Area, Color32, Context as EguiContext, FontId, Frame, Grid, Id, Image, ImageButton,
+        Label, Margin, RichText, Rounding, Sense, Stroke, TextWrapMode, TopBottomPanel, Ui, Vec2,
     },
 };
 
@@ -17,7 +17,10 @@ use time::TimeDisplay;
 
 const FPS_AREA_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(0xFEED_A_DEFEA7ED_FAE).unwrap();
-const BOTTOM_PANEL_SALT: std::num::NonZeroU64 = std::num::NonZeroU64::new(0xA_BAD_FAC7).unwrap();
+const BOTTOM_PANEL_SALT: std::num::NonZeroU64 =
+    std::num::NonZeroU64::new(u64::from_be_bytes(*b"BluRigel")).unwrap();
+const BOTTOM_PANEL_GRID_SALT: std::num::NonZeroU64 =
+    std::num::NonZeroU64::new(u64::from_be_bytes(*b"Solstice")).unwrap();
 
 const FPS_AREA_ID: LazyLock<Id> = LazyLock::new(|| Id::new(FPS_AREA_SALT));
 const BOTTOM_PANEL_ID: LazyLock<Id> = LazyLock::new(|| Id::new(BOTTOM_PANEL_SALT));
@@ -120,6 +123,7 @@ fn fps_inner(ui: &mut Ui, device_pixel_ratio: f32, elapsed_time: f64) {
 
 fn bottom_panel(ctx: &EguiContext, device_pixel_ratio: f32, sim_state: &mut SimState) {
     let height = 64.0 * device_pixel_ratio;
+    // TODO: Bottom panel expansion using show_animated
     TopBottomPanel::bottom(*BOTTOM_PANEL_ID)
         .show_separator_line(false)
         .exact_height(height)
@@ -134,7 +138,12 @@ fn bottom_panel(ctx: &EguiContext, device_pixel_ratio: f32, sim_state: &mut SimS
 }
 
 fn bottom_panel_contents(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
-    pause_button(ui, device_pixel_ratio, sim_state);
+    ui.horizontal(|ui| {
+        ui.set_height(48.0 * device_pixel_ratio);
+        ui.spacing_mut().item_spacing = Vec2::new(24.0 * device_pixel_ratio, 0.0);
+        pause_button(ui, device_pixel_ratio, sim_state);
+        time_display(ui, device_pixel_ratio, sim_state);
+    });
 }
 
 fn pause_button(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
@@ -157,7 +166,6 @@ fn pause_button(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
         widget_styles.active.weak_bg_fill = Color32::from_white_alpha(32);
 
         let button = ImageButton::new(image.clone().max_size(min_touch_target))
-            // .frame(false)
             .rounding(Rounding::same(min_touch_size));
 
         let button_instance = ui.add(button);
@@ -165,4 +173,23 @@ fn pause_button(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
             sim_state.running = !sim_state.running;
         }
     });
+}
+
+fn time_display(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
+    let min_touch_size = 48.0 * device_pixel_ratio;
+    let _min_touch_target = Vec2::splat(min_touch_size);
+
+    let string = sim_state
+        .ui_state
+        .time_disp
+        .format_time(sim_state.universe.time);
+
+    let text = RichText::new(string)
+        .color(Color32::WHITE)
+        .size(16.0 * device_pixel_ratio);
+
+    let label = Label::new(text)
+        .wrap_mode(TextWrapMode::Extend)
+        .selectable(false);
+    ui.add(label);
 }
