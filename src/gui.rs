@@ -6,7 +6,7 @@ use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
         self, Area, Button, Color32, Context as EguiContext, FontId, Frame, Id, Image, ImageButton,
-        Label, Margin, RichText, Rounding, Stroke, TopBottomPanel, Ui, Vec2,
+        Label, Margin, RichText, Rounding, Slider, Stroke, TopBottomPanel, Ui, Vec2,
     },
 };
 
@@ -27,12 +27,14 @@ const BOTTOM_PANEL_ID: LazyLock<Id> = LazyLock::new(|| Id::new(BOTTOM_PANEL_SALT
 
 struct UiState {
     time_disp: TimeDisplay,
+    time_slider_pos: f64,
 }
 
 impl Default for UiState {
     fn default() -> Self {
         Self {
             time_disp: TimeDisplay::SingleUnit,
+            time_slider_pos: 1.0,
         }
     }
 }
@@ -95,7 +97,7 @@ fn handle_ui(
     sim_state: &mut SimState,
 ) {
     fps_area(ctx, device_pixel_ratio, elapsed_time);
-    bottom_panel(ctx, device_pixel_ratio, sim_state);
+    bottom_panel(ctx, device_pixel_ratio, sim_state, elapsed_time);
 }
 
 fn fps_area(ctx: &EguiContext, device_pixel_ratio: f32, elapsed_time: f64) {
@@ -121,7 +123,12 @@ fn fps_inner(ui: &mut Ui, device_pixel_ratio: f32, elapsed_time: f64) {
     ui.add(label);
 }
 
-fn bottom_panel(ctx: &EguiContext, device_pixel_ratio: f32, sim_state: &mut SimState) {
+fn bottom_panel(
+    ctx: &EguiContext,
+    device_pixel_ratio: f32,
+    sim_state: &mut SimState,
+    elapsed_time: f64,
+) {
     let height = 64.0 * device_pixel_ratio;
     // TODO: Bottom panel expansion using show_animated
     TopBottomPanel::bottom(*BOTTOM_PANEL_ID)
@@ -133,16 +140,22 @@ fn bottom_panel(ctx: &EguiContext, device_pixel_ratio: f32, sim_state: &mut SimS
             ..Default::default()
         })
         .show(ctx, |ui| {
-            bottom_panel_contents(ui, device_pixel_ratio, sim_state)
+            bottom_panel_contents(ui, device_pixel_ratio, sim_state, elapsed_time)
         });
 }
 
-fn bottom_panel_contents(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
+fn bottom_panel_contents(
+    ui: &mut Ui,
+    device_pixel_ratio: f32,
+    sim_state: &mut SimState,
+    elapsed_time: f64,
+) {
     ui.horizontal(|ui| {
         ui.set_height(48.0 * device_pixel_ratio);
         ui.spacing_mut().item_spacing = Vec2::new(24.0 * device_pixel_ratio, 0.0);
         pause_button(ui, device_pixel_ratio, sim_state);
         time_display(ui, device_pixel_ratio, sim_state);
+        time_control(ui, device_pixel_ratio, sim_state, elapsed_time);
     });
 }
 
@@ -224,4 +237,23 @@ fn time_display(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
             sim_state.ui_state.time_disp = sim_state.ui_state.time_disp.get_prev();
         }
     });
+}
+
+fn time_control(
+    ui: &mut Ui,
+    _device_pixel_ratio: f32,
+    sim_state: &mut SimState,
+    elapsed_time: f64,
+) {
+    let slider = Slider::new(&mut sim_state.ui_state.time_slider_pos, -1.0..=1.0).show_value(false);
+    let slider_instance = ui.add(slider);
+
+    if slider_instance.is_pointer_button_down_on() {
+        let base = 10.0f64.powf(sim_state.ui_state.time_slider_pos);
+        sim_state.sim_speed *= base.powf(elapsed_time / 1000.0);
+    } else {
+        sim_state.ui_state.time_slider_pos *= (-5.0 * elapsed_time / 1000.0).exp();
+    }
+
+    ui.label(format!("{}x speed", sim_state.sim_speed));
 }
