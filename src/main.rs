@@ -11,6 +11,8 @@ use gui::SimState;
 use self::body::Body;
 
 use self::universe::Universe;
+#[path = "assets/mod.rs"]
+mod assets;
 #[path = "autoscaling_sprites.rs"]
 mod autoscaling_sprites;
 #[path = "body.rs"]
@@ -123,7 +125,7 @@ impl Program {
     fn generate_sim_state() -> SimState {
         SimState {
             universe: Self::generate_universe(),
-            sim_speed: 1.0,
+            ..Default::default()
         }
     }
 
@@ -191,9 +193,11 @@ impl Program {
     }
 
     fn tick(&mut self, mut frame_input: FrameInput) -> FrameOutput {
-        self.sim_state
-            .universe
-            .tick(self.sim_state.sim_speed * frame_input.elapsed_time / 1000.0);
+        if self.sim_state.running {
+            self.sim_state
+                .universe
+                .tick(self.sim_state.sim_speed * frame_input.elapsed_time / 1000.0);
+        }
 
         gui::update(
             &mut self.gui,

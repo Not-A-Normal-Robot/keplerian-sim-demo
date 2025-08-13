@@ -8,8 +8,8 @@ license = "GPL-3.0-or-later"
 crate-type = ["cdylib"]
 
 [dependencies]
+egui_extras = { version = "0.29.1", features = ["svg"] }
 glam = "0.30.5"
-glow = "0.14.2"
 keplerian_sim = "0.4.0"
 three-d = { version = "0.18.2", features = ["egui-gui"] }
 
