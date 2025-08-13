@@ -10,6 +10,11 @@ use three_d::{
     },
 };
 
+#[path = "time.rs"]
+mod time;
+
+use time::TimeDisplay;
+
 const FPS_AREA_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(0xFEED_A_DEFEA7ED_FAE).unwrap();
 const BOTTOM_PANEL_SALT: std::num::NonZeroU64 = std::num::NonZeroU64::new(0xA_BAD_FAC7).unwrap();
@@ -18,15 +23,13 @@ const FPS_AREA_ID: LazyLock<Id> = LazyLock::new(|| Id::new(FPS_AREA_SALT));
 const BOTTOM_PANEL_ID: LazyLock<Id> = LazyLock::new(|| Id::new(BOTTOM_PANEL_SALT));
 
 struct UiState {
-    bottom_panel_expanded: bool,
-    bottom_panel_expansion: f32,
+    time_disp: TimeDisplay,
 }
 
 impl Default for UiState {
     fn default() -> Self {
         Self {
-            bottom_panel_expanded: true,
-            bottom_panel_expansion: 0.0,
+            time_disp: TimeDisplay::SingleUnit,
         }
     }
 }
