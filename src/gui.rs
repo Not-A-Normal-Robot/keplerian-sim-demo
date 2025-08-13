@@ -5,9 +5,8 @@ use super::universe::Universe;
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
-        self, Area, Button, Color32, Context as EguiContext, FontId, Frame, Grid, Id, Image,
-        ImageButton, Label, Margin, RichText, Rounding, Sense, Stroke, TextWrapMode,
-        TopBottomPanel, Ui, Vec2,
+        self, Area, Button, Color32, Context as EguiContext, FontId, Frame, Id, Image, ImageButton,
+        Label, Margin, RichText, Rounding, Stroke, TextWrapMode, TopBottomPanel, Ui, Vec2,
     },
 };
 
@@ -20,7 +19,7 @@ const FPS_AREA_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(0xFEED_A_DEFEA7ED_FAE).unwrap();
 const BOTTOM_PANEL_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"BluRigel")).unwrap();
-const BOTTOM_PANEL_GRID_SALT: std::num::NonZeroU64 =
+const _CURRENTLY_UNUSED_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"Solstice")).unwrap();
 
 const FPS_AREA_ID: LazyLock<Id> = LazyLock::new(|| Id::new(FPS_AREA_SALT));
@@ -157,6 +156,14 @@ fn pause_button(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
         &*assets::PLAY_IMAGE
     };
 
+    let hover_string = match sim_state.running {
+        true => "Currently running\nClick/tap to pause",
+        false => "Currently paused\nClick/tap to resume",
+    };
+    let hover_text = RichText::new(hover_string)
+        .color(Color32::WHITE)
+        .size(16.0 * device_pixel_ratio);
+
     ui.scope(|ui| {
         ui.spacing_mut().button_padding = Vec2::ZERO;
         let widget_styles = &mut ui.visuals_mut().widgets;
@@ -169,7 +176,7 @@ fn pause_button(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
         let button = ImageButton::new(image.clone().max_size(min_touch_target))
             .rounding(Rounding::same(min_touch_size));
 
-        let button_instance = ui.add(button);
+        let button_instance = ui.add(button).on_hover_text(hover_text);
         if button_instance.clicked {
             sim_state.running = !sim_state.running;
         }
