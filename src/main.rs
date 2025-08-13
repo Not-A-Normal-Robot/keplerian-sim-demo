@@ -6,6 +6,8 @@ use three_d::{
     window::{Window, WindowSettings},
 };
 
+use crate::gui::SimState;
+
 use self::body::Body;
 
 use self::universe::Universe;
@@ -45,7 +47,7 @@ pub(crate) struct Program {
     top_light: DirectionalLight,
     ambient_light: AmbientLight,
 
-    universe: Universe,
+    sim_state: SimState,
 
     circle_tex: Texture2DRef,
 }
@@ -118,16 +120,14 @@ impl Program {
         Texture2DRef::from_cpu_texture(context, &cpu_texture)
     }
 
-    pub(crate) fn new() -> Self {
-        let window = Self::new_window();
-        let context = window.gl();
-        let camera = Self::new_camera(window.viewport());
-        let control = Self::new_control();
-        let gui = gui::create(&context);
+    fn generate_sim_state() -> SimState {
+        SimState {
+            universe: Self::generate_universe(),
+            sim_speed: 1.0,
+        }
+    }
 
-        let top_light = Self::new_dir_light(&context);
-        let ambient_light = Self::new_ambient_light(&context);
-
+    fn generate_universe() -> Universe {
         let mut universe = Universe::default();
         let root_id = universe
             .add_body(
@@ -154,6 +154,21 @@ impl Program {
             )
             .unwrap();
 
+        universe
+    }
+
+    pub(crate) fn new() -> Self {
+        let window = Self::new_window();
+        let context = window.gl();
+        let camera = Self::new_camera(window.viewport());
+        let control = Self::new_control();
+        let gui = gui::create(&context);
+
+        let top_light = Self::new_dir_light(&context);
+        let ambient_light = Self::new_ambient_light(&context);
+
+        let sim_state = Self::generate_sim_state();
+
         let circle_tex = Self::generate_circle_tex(&context);
 
         Self {
@@ -164,7 +179,7 @@ impl Program {
             gui,
             top_light,
             ambient_light,
-            universe,
+            sim_state,
             circle_tex,
         }
     }
@@ -176,7 +191,9 @@ impl Program {
     }
 
     fn tick(&mut self, mut frame_input: FrameInput) -> FrameOutput {
-        self.universe.tick(frame_input.elapsed_time / 1000.0);
+        self.sim_state
+            .universe
+            .tick(self.sim_state.sim_speed * frame_input.elapsed_time / 1000.0);
 
         gui::update(
             &mut self.gui,

@@ -158,7 +158,7 @@ fn add_body_instances(
 
 impl Program {
     pub(crate) fn generate_scene(&self, camera_offset: DVec3) -> Scene {
-        let position_map = self.universe.get_all_body_positions();
+        let position_map = self.sim_state.universe.get_all_body_positions();
         Scene {
             bodies: self.generate_body_tris(camera_offset, &position_map),
             lines: self.generate_orbit_lines(camera_offset, &position_map),
@@ -176,7 +176,7 @@ impl Program {
             texture_transformations: None,
         });
 
-        let body_map = self.universe.get_bodies();
+        let body_map = self.sim_state.universe.get_bodies();
 
         add_body_instances(body_map, camera_offset, position_map, &mut instances_arr);
 
@@ -206,7 +206,8 @@ impl Program {
     ) -> Box<[Gm<AutoscalingSprites, ColorMaterial>]> {
         let circle_tex = &self.circle_tex;
 
-        self.universe
+        self.sim_state
+            .universe
             .get_bodies()
             .iter()
             .filter_map(|body_tuple| {
@@ -217,7 +218,7 @@ impl Program {
                     self.camera.view_direction(),
                     position_map,
                     Some(circle_tex.clone()),
-                    self.universe.time,
+                    self.sim_state.universe.time,
                 )
             })
             .collect()

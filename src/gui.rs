@@ -1,9 +1,15 @@
+use super::universe::Universe;
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{self, Area, Color32, FontId, Id, Label, RichText},
 };
 
 const FPS_AREA_ID: std::num::NonZeroU64 = std::num::NonZeroU64::new(19823659234).unwrap();
+
+pub(crate) struct SimState {
+    pub universe: Universe,
+    pub sim_speed: f64,
+}
 
 pub(super) fn create(context: &ThreeDContext) -> GUI {
     GUI::new(context)
