@@ -104,11 +104,14 @@ fn bottom_panel_contents(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut S
     let _min_touch_target: Vec2 = (min_touch_length, min_touch_length).into();
 
     let image: &Image<'static> = if sim_state.running {
-        &*assets::PLAY_IMAGE
-    } else {
         &*assets::PAUSED_IMAGE
+    } else {
+        &*assets::PLAY_IMAGE
     };
 
     let button = ImageButton::new(image.clone());
-    ui.add(button);
+    let button_instance = ui.add(button);
+    if button_instance.clicked {
+        sim_state.running = !sim_state.running;
+    }
 }
