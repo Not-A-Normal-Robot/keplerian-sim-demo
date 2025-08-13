@@ -166,3 +166,13 @@ impl TimeDisplay {
         }
     }
 }
+
+impl Display for TimeDisplay {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TimeDisplay::SecondsOnly => write!(f, "seconds-only"),
+            TimeDisplay::MultiUnit => write!(f, "multi-unit"),
+            TimeDisplay::SingleUnit => write!(f, "single-unit"),
+        }
+    }
+}

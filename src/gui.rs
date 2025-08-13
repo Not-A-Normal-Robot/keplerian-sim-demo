@@ -5,8 +5,9 @@ use super::universe::Universe;
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
-        self, Area, Color32, Context as EguiContext, FontId, Frame, Grid, Id, Image, ImageButton,
-        Label, Margin, RichText, Rounding, Sense, Stroke, TextWrapMode, TopBottomPanel, Ui, Vec2,
+        self, Area, Button, Color32, Context as EguiContext, FontId, Frame, Grid, Id, Image,
+        ImageButton, Label, Margin, RichText, Rounding, Sense, Stroke, TextWrapMode,
+        TopBottomPanel, Ui, Vec2,
     },
 };
 
@@ -177,7 +178,7 @@ fn pause_button(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
 
 fn time_display(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
     let min_touch_size = 48.0 * device_pixel_ratio;
-    let _min_touch_target = Vec2::splat(min_touch_size);
+    let display_size = Vec2::new(200.0 * device_pixel_ratio, min_touch_size);
 
     let string = sim_state
         .ui_state
@@ -188,14 +189,31 @@ fn time_display(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
         .color(Color32::WHITE)
         .size(16.0 * device_pixel_ratio);
 
-    let label = Label::new(text)
-        .wrap_mode(TextWrapMode::Extend)
-        .selectable(false)
-        .sense(Sense::click());
-    // TODO: Label hover feedback
-    let label_instance = ui.add(label);
+    let hover_string = format!(
+        "Currently in {} mode\nLeft click to cycle, right click to cycle backwards",
+        sim_state.ui_state.time_disp
+    );
 
-    if label_instance.clicked() {
-        sim_state.ui_state.time_disp = sim_state.ui_state.time_disp.get_next();
-    }
+    let hover_text = RichText::new(hover_string)
+        .color(Color32::WHITE)
+        .size(16.0 * device_pixel_ratio);
+
+    ui.scope(|ui| {
+        ui.spacing_mut().button_padding = Vec2::ZERO;
+        let widget_styles = &mut ui.visuals_mut().widgets;
+        widget_styles.inactive.weak_bg_fill = Color32::TRANSPARENT;
+        widget_styles.inactive.bg_stroke = Stroke::NONE;
+        widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(8);
+        widget_styles.hovered.bg_stroke = Stroke::NONE;
+        widget_styles.active.weak_bg_fill = Color32::from_white_alpha(32);
+
+        let button = Button::new(text)
+            .wrap_mode(TextWrapMode::Extend)
+            .min_size(display_size);
+        let button_instance = ui.add(button).on_hover_text(hover_text);
+
+        if button_instance.clicked() {
+            sim_state.ui_state.time_disp = sim_state.ui_state.time_disp.get_next();
+        }
+    });
 }
