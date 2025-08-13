@@ -197,6 +197,7 @@ impl Program {
 
         gui::update(
             &mut self.gui,
+            &mut self.sim_state,
             &mut frame_input.events,
             frame_input.accumulated_time,
             frame_input.viewport,
