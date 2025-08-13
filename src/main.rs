@@ -6,7 +6,7 @@ use three_d::{
     window::{Window, WindowSettings},
 };
 
-use crate::gui::SimState;
+use gui::SimState;
 
 use self::body::Body;
 
