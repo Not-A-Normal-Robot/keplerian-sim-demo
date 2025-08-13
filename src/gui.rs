@@ -190,6 +190,12 @@ fn time_display(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
 
     let label = Label::new(text)
         .wrap_mode(TextWrapMode::Extend)
-        .selectable(false);
-    ui.add(label);
+        .selectable(false)
+        .sense(Sense::click());
+    // TODO: Label hover feedback
+    let label_instance = ui.add(label);
+
+    if label_instance.clicked() {
+        sim_state.ui_state.time_disp = sim_state.ui_state.time_disp.get_next();
+    }
 }

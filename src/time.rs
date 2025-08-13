@@ -109,7 +109,7 @@ impl TimeDisplay {
     }
 
     fn format_secs_only(seconds: f64) -> String {
-        format!("{:12.12} {}", PrettyPrintFloat(seconds), TimeUnit::Seconds)
+        format!("{:15.15} {}", PrettyPrintFloat(seconds), TimeUnit::Seconds)
     }
 
     fn format_secs_to_years(mut seconds: f64) -> String {
@@ -156,5 +156,13 @@ impl TimeDisplay {
         let amount = seconds / unit.get_value();
 
         format!("{:15.15} {unit}", PrettyPrintFloat(amount))
+    }
+
+    pub(crate) fn get_next(self) -> Self {
+        match self {
+            Self::SecondsOnly => Self::MultiUnit,
+            Self::MultiUnit => Self::SingleUnit,
+            Self::SingleUnit => Self::SecondsOnly,
+        }
     }
 }
