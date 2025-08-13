@@ -76,7 +76,7 @@ impl Program {
             viewport,
             Vec3::new(3.0, 2.5, 6.0),
             Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(0.0, 1.0, 0.0),
+            Vec3::new(0.0, 0.0, 1.0),
             Degrees { 0: 45.0 },
             1.0,
             5e16,
