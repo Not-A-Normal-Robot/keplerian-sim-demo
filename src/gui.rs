@@ -6,7 +6,7 @@ use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
         self, Area, Button, Color32, Context as EguiContext, FontId, Frame, Id, Image, ImageButton,
-        Label, Margin, RichText, Rounding, Stroke, TextWrapMode, TopBottomPanel, Ui, Vec2,
+        Label, Margin, RichText, Rounding, Stroke, TopBottomPanel, Ui, Vec2,
     },
 };
 
@@ -214,13 +214,14 @@ fn time_display(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
         widget_styles.hovered.bg_stroke = Stroke::NONE;
         widget_styles.active.weak_bg_fill = Color32::from_white_alpha(32);
 
-        let button = Button::new(text)
-            .wrap_mode(TextWrapMode::Extend)
-            .min_size(display_size);
+        let button = Button::new(text).wrap().min_size(display_size);
         let button_instance = ui.add(button).on_hover_text(hover_text);
 
         if button_instance.clicked() {
             sim_state.ui_state.time_disp = sim_state.ui_state.time_disp.get_next();
+        }
+        if button_instance.secondary_clicked() {
+            sim_state.ui_state.time_disp = sim_state.ui_state.time_disp.get_prev();
         }
     });
 }

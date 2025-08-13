@@ -36,18 +36,6 @@ impl TimeUnit {
             Self::Years => Some(Self::Days),
         }
     }
-    const fn get_next_larger(self) -> Option<Self> {
-        match self {
-            Self::Nanos => Some(Self::Micros),
-            Self::Micros => Some(Self::Millis),
-            Self::Millis => Some(Self::Seconds),
-            Self::Seconds => Some(Self::Minutes),
-            Self::Minutes => Some(Self::Hours),
-            Self::Hours => Some(Self::Days),
-            Self::Days => Some(Self::Years),
-            Self::Years => None,
-        }
-    }
     const fn get_value(self) -> f64 {
         match self {
             TimeUnit::Nanos => NANO,
@@ -89,7 +77,7 @@ impl Display for TimeUnit {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub(crate) enum TimeDisplay {
     /// e.g. `1755069111.3 s`,
     SecondsOnly,
@@ -141,6 +129,11 @@ impl TimeDisplay {
 
             string += &format!("{quo} {unit}");
 
+            if string.len() >= 30 {
+                // Too long!
+                break;
+            }
+
             if idx + 1 < units.len() {
                 string.push_str(", ");
             }
@@ -165,6 +158,14 @@ impl TimeDisplay {
             Self::SingleUnit => Self::SecondsOnly,
         }
     }
+
+    pub(crate) fn get_prev(self) -> Self {
+        match self {
+            Self::SecondsOnly => Self::SingleUnit,
+            Self::MultiUnit => Self::SecondsOnly,
+            Self::SingleUnit => Self::MultiUnit,
+        }
+    }
 }
 
 impl Display for TimeDisplay {
@@ -173,6 +174,32 @@ impl Display for TimeDisplay {
             TimeDisplay::SecondsOnly => write!(f, "seconds-only"),
             TimeDisplay::MultiUnit => write!(f, "multi-unit"),
             TimeDisplay::SingleUnit => write!(f, "single-unit"),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    const TIME_DISPLAY_ENUM_VARIANTS: usize = 3;
+
+    #[test]
+    fn test_next() {
+        let mut cur = TimeDisplay::SecondsOnly;
+        let mut encountered = HashSet::new();
+
+        while encountered.insert(cur) {
+            cur = cur.get_next();
+        }
+
+        assert_eq!(encountered.len(), TIME_DISPLAY_ENUM_VARIANTS);
+
+        for variant in encountered {
+            let next = variant.get_next();
+            let next_prev = next.get_prev();
+            assert_eq!(variant, next_prev);
         }
     }
 }
