@@ -132,7 +132,7 @@ impl Program {
             .add_body(
                 Body {
                     name: "Root".into(),
-                    mass: 1e12,
+                    mass: 1e15,
                     radius: 100.0,
                     color: Srgba::BLUE,
                     orbit: None,
