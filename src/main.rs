@@ -123,10 +123,7 @@ impl Program {
     }
 
     fn generate_sim_state() -> SimState {
-        SimState {
-            universe: Self::generate_universe(),
-            ..Default::default()
-        }
+        SimState::new(Self::generate_universe())
     }
 
     fn generate_universe() -> Universe {

@@ -5,8 +5,8 @@ use super::universe::Universe;
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
-        self, Area, Color32, Context as EguiContext, FontId, Id, Image, ImageButton, Label,
-        RichText, TopBottomPanel, Ui, Vec2,
+        self, Area, Color32, Context as EguiContext, FontId, Frame, Id, Image, ImageButton, Label,
+        Margin, RichText, Rounding, Sense, Stroke, TopBottomPanel, Ui, Vec2,
     },
 };
 
@@ -17,10 +17,34 @@ const BOTTOM_PANEL_SALT: std::num::NonZeroU64 = std::num::NonZeroU64::new(0xA_BA
 const FPS_AREA_ID: LazyLock<Id> = LazyLock::new(|| Id::new(FPS_AREA_SALT));
 const BOTTOM_PANEL_ID: LazyLock<Id> = LazyLock::new(|| Id::new(BOTTOM_PANEL_SALT));
 
+struct UiState {
+    bottom_panel_expanded: bool,
+    bottom_panel_expansion: f32,
+}
+
+impl Default for UiState {
+    fn default() -> Self {
+        Self {
+            bottom_panel_expanded: true,
+            bottom_panel_expansion: 0.0,
+        }
+    }
+}
+
 pub(crate) struct SimState {
     pub universe: Universe,
     pub sim_speed: f64,
     pub running: bool,
+    ui_state: UiState,
+}
+
+impl SimState {
+    pub(crate) fn new(universe: Universe) -> Self {
+        Self {
+            universe,
+            ..Default::default()
+        }
+    }
 }
 
 impl Default for SimState {
@@ -29,6 +53,7 @@ impl Default for SimState {
             universe: Universe::default(),
             sim_speed: 1.0,
             running: true,
+            ui_state: UiState::default(),
         }
     }
 }
@@ -91,17 +116,27 @@ fn fps_inner(ui: &mut Ui, device_pixel_ratio: f32, elapsed_time: f64) {
 }
 
 fn bottom_panel(ctx: &EguiContext, device_pixel_ratio: f32, sim_state: &mut SimState) {
-    // let height = 56.0 * device_pixel_ratio;
+    let height = 64.0 * device_pixel_ratio;
     TopBottomPanel::bottom(*BOTTOM_PANEL_ID)
-        // .exact_height(height)
+        .show_separator_line(false)
+        .exact_height(height)
+        .frame(Frame {
+            inner_margin: Margin::symmetric(16.0, 8.0),
+            fill: Color32::from_black_alpha(128),
+            ..Default::default()
+        })
         .show(ctx, |ui| {
             bottom_panel_contents(ui, device_pixel_ratio, sim_state)
         });
 }
 
 fn bottom_panel_contents(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
-    let min_touch_length = 48.0 * device_pixel_ratio;
-    let _min_touch_target: Vec2 = (min_touch_length, min_touch_length).into();
+    pause_button(ui, device_pixel_ratio, sim_state);
+}
+
+fn pause_button(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
+    let min_touch_size = 48.0 * device_pixel_ratio;
+    let min_touch_target = Vec2::splat(min_touch_size);
 
     let image: &Image<'static> = if sim_state.running {
         &*assets::PAUSED_IMAGE
@@ -109,9 +144,22 @@ fn bottom_panel_contents(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut S
         &*assets::PLAY_IMAGE
     };
 
-    let button = ImageButton::new(image.clone());
-    let button_instance = ui.add(button);
-    if button_instance.clicked {
-        sim_state.running = !sim_state.running;
-    }
+    ui.scope(|ui| {
+        ui.spacing_mut().button_padding = Vec2::ZERO;
+        let widget_styles = &mut ui.visuals_mut().widgets;
+        widget_styles.inactive.weak_bg_fill = Color32::TRANSPARENT;
+        widget_styles.inactive.bg_stroke = Stroke::NONE;
+        widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(8);
+        widget_styles.hovered.bg_stroke = Stroke::NONE;
+        widget_styles.active.weak_bg_fill = Color32::from_white_alpha(32);
+
+        let button = ImageButton::new(image.clone().max_size(min_touch_target))
+            // .frame(false)
+            .rounding(Rounding::same(min_touch_size));
+
+        let button_instance = ui.add(button);
+        if button_instance.clicked {
+            sim_state.running = !sim_state.running;
+        }
+    });
 }
