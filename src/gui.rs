@@ -429,7 +429,6 @@ fn time_unit_box(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState)
     ui.spacing_mut().button_padding.x = 16.0 * device_pixel_ratio;
     ComboBox::from_id_salt(TIME_CONTROL_COMBO_BOX_SALT)
         .selected_text(unit_text)
-        .truncate()
         .height(f32::INFINITY)
         .show_ui(ui, |ui| {
             time_unit_box_inner(ui, device_pixel_ratio, sim_state)
