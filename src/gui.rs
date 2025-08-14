@@ -1,14 +1,19 @@
-use std::sync::{Arc, LazyLock};
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, VecDeque},
+    sync::{Arc, LazyLock},
+};
 
 use super::assets;
 use super::universe::Universe;
+use ordered_float::NotNan;
 use strum::IntoEnumIterator;
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
-        self, Align, Area, Button, Color32, ComboBox, Context as EguiContext, DragValue, FontId,
-        Frame, Id, Image, ImageButton, Label, Layout, Margin, Response, RichText, Rounding,
-        ScrollArea, SelectableLabel, Slider, Stroke, TextEdit, TopBottomPanel, Ui, Vec2,
+        self, Area, Button, Color32, ComboBox, Context as EguiContext, DragValue, FontId, Frame,
+        Id, Image, ImageButton, Label, Margin, Response, RichText, Rounding, ScrollArea,
+        SelectableLabel, Slider, Stroke, TopBottomPanel, Ui, Vec2,
     },
 };
 
@@ -28,12 +33,61 @@ const FPS_AREA_ID: LazyLock<Id> = LazyLock::new(|| Id::new(FPS_AREA_SALT));
 const BOTTOM_PANEL_ID: LazyLock<Id> = LazyLock::new(|| Id::new(BOTTOM_PANEL_SALT));
 const TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME: &'static str = "TSDVF";
 
+struct FrameData {
+    frame_len_secs: VecDeque<NotNan<f64>>,
+}
+
+impl FrameData {
+    const WINDOW_SIZE: usize = 1200;
+
+    fn new() -> Self {
+        Self {
+            frame_len_secs: VecDeque::with_capacity(Self::WINDOW_SIZE),
+        }
+    }
+
+    /// Returns NaN if no frames recorded yet
+    fn get_average_fps(&self) -> f64 {
+        self.frame_len_secs.len() as f64 / *self.frame_len_secs.iter().copied().sum::<NotNan<f64>>()
+    }
+
+    /// Gets the 1% lows of FPS in the sliding window
+    /// Returns NaN if no frames recorded yet
+    fn get_low_average(&self) -> f64 {
+        let data_amount = self.frame_len_secs.len() / 100;
+        if data_amount == 0 {
+            return f64::NAN;
+        }
+
+        let mut heap = BinaryHeap::with_capacity(data_amount + 1);
+
+        for &time in &self.frame_len_secs {
+            heap.push(Reverse(time));
+
+            if heap.len() > data_amount {
+                heap.pop();
+            }
+        }
+
+        heap.len() as f64 / *heap.iter().map(|&x| x.0).sum::<NotNan<f64>>()
+    }
+
+    fn insert_frame_data(&mut self, frame_duration: NotNan<f64>) {
+        if self.frame_len_secs.capacity() == self.frame_len_secs.len() {
+            self.frame_len_secs.pop_front();
+        }
+
+        self.frame_len_secs.push_back(frame_duration);
+    }
+}
+
 struct UiState {
     time_disp: TimeDisplay,
     time_slider_pos: f64,
     time_speed_amount: f64,
     time_speed_unit: TimeUnit,
     time_speed_unit_auto: bool,
+    frame_data: FrameData,
 }
 
 impl Default for UiState {
@@ -44,6 +98,7 @@ impl Default for UiState {
             time_speed_amount: 1.0,
             time_speed_unit: TimeUnit::Seconds,
             time_speed_unit_auto: true,
+            frame_data: FrameData::new(),
         }
     }
 }
@@ -96,6 +151,11 @@ pub(super) fn update(
     device_pixel_ratio: f32,
     elapsed_time: f64,
 ) -> bool {
+    if let Ok(frame_duration) = NotNan::new(elapsed_time / 1000.0)
+        && frame_duration.is_finite()
+    {
+        sim_state.ui.frame_data.insert_frame_data(frame_duration);
+    }
     gui.update(
         events,
         accumulated_time_ms,
@@ -111,21 +171,28 @@ fn handle_ui(
     elapsed_time: f64,
     sim_state: &mut SimState,
 ) {
-    fps_area(ctx, device_pixel_ratio, elapsed_time);
+    fps_area(ctx, device_pixel_ratio, &sim_state.ui.frame_data);
     bottom_panel(ctx, device_pixel_ratio, sim_state, elapsed_time);
 }
 
-fn fps_area(ctx: &EguiContext, device_pixel_ratio: f32, elapsed_time: f64) {
+fn fps_area(ctx: &EguiContext, device_pixel_ratio: f32, frame_data: &FrameData) {
     let pos = 12.0 * device_pixel_ratio;
     Area::new(*FPS_AREA_ID)
         .constrain_to(ctx.screen_rect())
         .fixed_pos((pos, pos))
         .default_width(1000.0)
-        .show(&ctx, |ui| fps_inner(ui, device_pixel_ratio, elapsed_time));
+        .show(&ctx, |ui| fps_inner(ui, device_pixel_ratio, frame_data));
 }
 
-fn fps_inner(ui: &mut Ui, device_pixel_ratio: f32, elapsed_time: f64) {
-    let string = format!("{:.0}", 1000.0 / elapsed_time);
+fn fps_inner(ui: &mut Ui, device_pixel_ratio: f32, frame_data: &FrameData) {
+    let fps = frame_data.get_average_fps();
+    let low = frame_data.get_low_average();
+
+    let string = if low.is_nan() {
+        format!("FPS: {fps:.0}")
+    } else {
+        format!("FPS: {fps:.0}\n1%L: {low:.0}")
+    };
     const BACKGROUND_COLOR: Color32 = Color32::from_rgba_premultiplied(0, 0, 0, 128);
     let font = FontId::monospace(11.0 * device_pixel_ratio);
     let text = RichText::new(string)
