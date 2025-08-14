@@ -2,12 +2,13 @@ use std::sync::{Arc, LazyLock};
 
 use super::assets;
 use super::universe::Universe;
+use strum::IntoEnumIterator;
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
-        self, Align, Area, Button, Color32, Context as EguiContext, DragValue, FontId, Frame, Id,
-        Image, ImageButton, Label, Layout, Margin, RichText, Rounding, ScrollArea, Slider, Stroke,
-        TextEdit, TopBottomPanel, Ui, Vec2,
+        self, Align, Area, Button, Color32, ComboBox, Context as EguiContext, DragValue, FontId,
+        Frame, Id, Image, ImageButton, Label, Layout, Margin, Response, RichText, Rounding,
+        ScrollArea, SelectableLabel, Slider, Stroke, TextEdit, TopBottomPanel, Ui, Vec2,
     },
 };
 
@@ -20,7 +21,7 @@ const FPS_AREA_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(0xFEED_A_DEFEA7ED_FAE).unwrap();
 const BOTTOM_PANEL_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"BluRigel")).unwrap();
-const _CURRENTLY_UNUSED_SALT: std::num::NonZeroU64 =
+const TIME_CONTROL_COMBO_BOX_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"Solstice")).unwrap();
 
 const FPS_AREA_ID: LazyLock<Id> = LazyLock::new(|| Id::new(FPS_AREA_SALT));
@@ -153,7 +154,7 @@ fn bottom_panel(
                 top: 8.0 * device_pixel_ratio,
                 ..Default::default()
             },
-            fill: Color32::from_black_alpha(128),
+            fill: Color32::from_black_alpha(192),
             ..Default::default()
         })
         .show(ctx, |ui| {
@@ -173,9 +174,11 @@ fn bottom_panel_contents(
             ui.set_height(48.0 * device_pixel_ratio);
             ui.add_space(16.0 * device_pixel_ratio);
             pause_button(ui, device_pixel_ratio, sim_state);
-            ui.add_space(24.0 * device_pixel_ratio);
+            // ui.add_space(12.0 * device_pixel_ratio);
             time_display(ui, device_pixel_ratio, sim_state);
-            ui.add_space(24.0 * device_pixel_ratio);
+            ui.add_space(12.0 * device_pixel_ratio);
+            ui.separator();
+            ui.add_space(12.0 * device_pixel_ratio);
             time_control(ui, device_pixel_ratio, sim_state, elapsed_time);
             ui.add_space(16.0 * device_pixel_ratio);
         })
@@ -261,9 +264,26 @@ fn time_display(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
 }
 
 fn time_control(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, elapsed_time: f64) {
-    let slider = Slider::new(&mut sim_state.ui.time_slider_pos, -1.0..=1.0).show_value(false);
-    let slider_instance = ui.add(slider);
-    ui.add_space(24.0 * device_pixel_ratio);
+    ui.scope(|ui| {
+        time_slider(ui, device_pixel_ratio, sim_state, elapsed_time);
+        time_drag_value(ui, device_pixel_ratio, sim_state);
+        time_unit_box(ui, device_pixel_ratio, sim_state);
+    });
+}
+
+fn time_slider(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, elapsed_time: f64) {
+    let hover_text = RichText::new(
+        "Move the slider left to decelerate time.\n\
+        Move the slider right to accelerate time.\n\
+        Let go to stop changing time.",
+    )
+    .color(Color32::WHITE)
+    .size(16.0 * device_pixel_ratio);
+    ui.spacing_mut().interact_size.y = 48.0;
+    let slider = Slider::new(&mut sim_state.ui.time_slider_pos, -1.0..=1.0)
+        .show_value(false)
+        .handle_shape(egui::style::HandleShape::Rect { aspect_ratio: 0.3 });
+    let slider_instance = ui.add(slider).on_hover_text(hover_text);
 
     if slider_instance.is_pointer_button_down_on() {
         let base = 10.0f64.powf(sim_state.ui.time_slider_pos);
@@ -271,26 +291,23 @@ fn time_control(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, 
     } else {
         sim_state.ui.time_slider_pos *= (-5.0 * elapsed_time / 1000.0).exp();
     }
-
+}
+fn time_drag_value(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
     sim_state.ui.time_speed_amount = sim_state.sim_speed / sim_state.ui.time_speed_unit.get_value();
     let prev_speed_amt = sim_state.ui.time_speed_amount;
 
-    let mut dv_instance = None;
-    ui.scope(|ui| {
-        let min_vec = Vec2::new(48.0 * device_pixel_ratio, 48.0 * device_pixel_ratio);
-        let style_name: Arc<str> = TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME.into();
-        ui.style_mut().text_styles.insert(
-            egui::TextStyle::Name(style_name.clone()),
-            FontId::monospace(16.0 * device_pixel_ratio),
-        );
-        ui.style_mut().drag_value_text_style = egui::TextStyle::Name(style_name);
-        ui.spacing_mut().button_padding =
-            Vec2::new(16.0 * device_pixel_ratio, 8.0 * device_pixel_ratio);
-        let drag_value =
-            DragValue::new(&mut sim_state.ui.time_speed_amount).update_while_editing(false);
-        dv_instance = Some(ui.add_sized(min_vec, drag_value));
-    });
-    let dv_instance = dv_instance.unwrap();
+    let dv_instance = ui
+        .scope(|ui| time_drag_value_inner(ui, device_pixel_ratio, sim_state))
+        .inner;
+
+    let hover_text = RichText::new(
+        "Drag left to slow down time.\n\
+        Drag right to speed up time.\n\
+        Click/tap to enter in an amount manually.",
+    )
+    .color(Color32::WHITE)
+    .size(16.0 * device_pixel_ratio);
+    let dv_instance = dv_instance.on_hover_text(hover_text);
 
     if prev_speed_amt != sim_state.ui.time_speed_amount {
         sim_state.sim_speed =
@@ -302,17 +319,81 @@ fn time_control(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, 
         sim_state.ui.time_speed_amount =
             sim_state.sim_speed / sim_state.ui.time_speed_unit.get_value();
     }
+}
+fn time_drag_value_inner(
+    ui: &mut Ui,
+    device_pixel_ratio: f32,
+    sim_state: &mut SimState,
+) -> Response {
+    let dv_size = Vec2::new(96.0 * device_pixel_ratio, 48.0 * device_pixel_ratio);
+    let style_name: Arc<str> = TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME.into();
+    ui.style_mut().text_styles.insert(
+        egui::TextStyle::Name(style_name.clone()),
+        FontId::monospace(16.0 * device_pixel_ratio),
+    );
+    ui.style_mut().drag_value_text_style = egui::TextStyle::Name(style_name);
+    ui.spacing_mut().button_padding =
+        Vec2::new(16.0 * device_pixel_ratio, 8.0 * device_pixel_ratio);
+    let widget_styles = &mut ui.visuals_mut().widgets;
+    widget_styles.inactive.weak_bg_fill = Color32::TRANSPARENT;
+    widget_styles.inactive.bg_stroke = Stroke::NONE;
+    widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(8);
+    widget_styles.hovered.bg_stroke = Stroke::NONE;
+    widget_styles.active.weak_bg_fill = Color32::from_white_alpha(32);
 
-    let unit_string = if sim_state.ui.time_speed_unit == TimeUnit::Seconds {
-        "x speed".to_string()
-    } else {
-        format!("{}/s", sim_state.ui.time_speed_unit)
-    };
+    let drag_value =
+        DragValue::new(&mut sim_state.ui.time_speed_amount).update_while_editing(false);
+    ui.add_sized(dv_size, drag_value)
+}
+fn time_unit_box(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
+    let min_touch_len = 48.0 * device_pixel_ratio;
+    let unit_string = format!("{}/s", sim_state.ui.time_speed_unit);
 
     let unit_text = RichText::new(unit_string)
-        .monospace()
         .color(Color32::WHITE)
         .size(16.0 * device_pixel_ratio);
 
-    ui.label(unit_text);
+    let hover_text =
+        RichText::new("Pick a different time speed unit or disable automatic unit selection")
+            .color(Color32::WHITE)
+            .size(16.0 * device_pixel_ratio);
+
+    ui.spacing_mut().interact_size.y = min_touch_len;
+    ui.spacing_mut().button_padding.x = 16.0 * device_pixel_ratio;
+    ComboBox::from_id_salt(TIME_CONTROL_COMBO_BOX_SALT)
+        .selected_text(unit_text)
+        .truncate()
+        .height(f32::INFINITY)
+        .show_ui(ui, |ui| {
+            time_unit_box_inner(ui, device_pixel_ratio, sim_state)
+        })
+        .response
+        .on_hover_text(hover_text);
+}
+fn time_unit_box_inner(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
+    let min_touch_len = 48.0 * device_pixel_ratio;
+    let min_touch_vec = Vec2::splat(min_touch_len);
+    let font = FontId::proportional(16.0 * device_pixel_ratio);
+
+    for unit in TimeUnit::iter() {
+        let string = format!("{unit}/s");
+        let text = RichText::new(string).font(font.clone());
+
+        let label = SelectableLabel::new(sim_state.ui.time_speed_unit == unit, text);
+        let label = ui.add_sized(min_touch_vec, label);
+
+        if label.clicked() {
+            sim_state.ui.time_speed_unit_auto = false;
+            sim_state.ui.time_speed_unit = unit;
+        }
+    }
+
+    ui.separator();
+
+    let text = RichText::new("Auto-pick").font(font);
+    let label = SelectableLabel::new(sim_state.ui.time_speed_unit_auto, text);
+    let auto = ui.add_sized(min_touch_vec, label);
+    if auto.clicked() {
+        sim_state.ui.time_speed_unit_auto = !sim_state.ui.time_speed_unit_auto;
+    }
 }
