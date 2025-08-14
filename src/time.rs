@@ -70,7 +70,7 @@ impl Display for TimeUnit {
             TimeUnit::Micros => write!(f, "µs"),
             TimeUnit::Millis => write!(f, "ms"),
             TimeUnit::Seconds => write!(f, "s"),
-            TimeUnit::Minutes => write!(f, "m"),
+            TimeUnit::Minutes => write!(f, "min"),
             TimeUnit::Hours => write!(f, "h"),
             TimeUnit::Days => write!(f, "d"),
             TimeUnit::Years => write!(f, "y"),
