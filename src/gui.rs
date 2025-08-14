@@ -6,6 +6,7 @@ use std::{
 
 use super::assets;
 use super::universe::Universe;
+use egui::{PopupCloseBehavior, popup};
 use ordered_float::NotNan;
 use strum::IntoEnumIterator;
 use three_d::{
@@ -28,9 +29,12 @@ const BOTTOM_PANEL_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"BluRigel")).unwrap();
 const TIME_CONTROL_COMBO_BOX_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"Solstice")).unwrap();
+const TIME_CONTROL_POPUP_SALT: std::num::NonZeroU64 =
+    std::num::NonZeroU64::new(u64::from_be_bytes(*b"TimeIsUp")).unwrap();
 
 const FPS_AREA_ID: LazyLock<Id> = LazyLock::new(|| Id::new(FPS_AREA_SALT));
 const BOTTOM_PANEL_ID: LazyLock<Id> = LazyLock::new(|| Id::new(BOTTOM_PANEL_SALT));
+const TIME_CONTROL_POPUP_ID: LazyLock<Id> = LazyLock::new(|| Id::new(TIME_CONTROL_POPUP_SALT));
 const TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME: &'static str = "TSDVF";
 
 struct FrameData {
@@ -225,7 +229,13 @@ fn bottom_panel(
             ..Default::default()
         })
         .show(ctx, |ui| {
-            bottom_panel_contents(ui, device_pixel_ratio, sim_state, elapsed_time)
+            ScrollArea::horizontal()
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        bottom_panel_contents(ui, device_pixel_ratio, sim_state, elapsed_time)
+                    })
+                })
         });
 }
 
@@ -235,21 +245,73 @@ fn bottom_panel_contents(
     sim_state: &mut SimState,
     elapsed_time: f64,
 ) {
-    let scroll_area = ScrollArea::horizontal().auto_shrink([false, false]);
-    scroll_area.show(ui, |ui| {
-        ui.horizontal(|ui| {
-            ui.set_height(48.0 * device_pixel_ratio);
-            ui.add_space(16.0 * device_pixel_ratio);
-            pause_button(ui, device_pixel_ratio, sim_state);
-            // ui.add_space(12.0 * device_pixel_ratio);
-            time_display(ui, device_pixel_ratio, sim_state);
-            ui.add_space(12.0 * device_pixel_ratio);
-            ui.separator();
-            ui.add_space(12.0 * device_pixel_ratio);
-            time_control(ui, device_pixel_ratio, sim_state, elapsed_time);
-            ui.add_space(16.0 * device_pixel_ratio);
-        })
+    ui.set_height(48.0 * device_pixel_ratio);
+    ui.add_space(16.0 * device_pixel_ratio);
+    pause_button(ui, device_pixel_ratio, sim_state);
+
+    if ui.available_width() > 900.0 * device_pixel_ratio {
+        time_display(ui, device_pixel_ratio, sim_state);
+        ui.add_space(12.0 * device_pixel_ratio);
+        ui.separator();
+        ui.add_space(12.0 * device_pixel_ratio);
+        time_control(ui, device_pixel_ratio, sim_state, elapsed_time, false);
+        ui.add_space(16.0 * device_pixel_ratio);
+    } else {
+        time_manager(ui, device_pixel_ratio, sim_state, elapsed_time);
+    }
+}
+
+fn time_manager(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, elapsed_time: f64) {
+    let min_touch_size = 48.0 * device_pixel_ratio;
+    let min_touch_target = Vec2::splat(min_touch_size);
+
+    let image: &Image<'static> = &*assets::TIME_IMAGE;
+
+    let hover_text = RichText::new("Manage time")
+        .color(Color32::WHITE)
+        .size(16.0 * device_pixel_ratio);
+
+    ui.scope(|ui| {
+        ui.spacing_mut().button_padding = Vec2::ZERO;
+        let widget_styles = &mut ui.visuals_mut().widgets;
+        widget_styles.inactive.weak_bg_fill = Color32::TRANSPARENT;
+        widget_styles.inactive.bg_stroke = Stroke::NONE;
+        widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(8);
+        widget_styles.hovered.bg_stroke = Stroke::NONE;
+        widget_styles.active.weak_bg_fill = Color32::from_white_alpha(32);
+
+        let button = ImageButton::new(image.clone().max_size(min_touch_target))
+            .rounding(Rounding::same(min_touch_size));
+
+        let button_instance = ui.add(button).on_hover_text(hover_text);
+
+        if button_instance.clicked() {
+            ui.memory_mut(|m| m.toggle_popup(*TIME_CONTROL_POPUP_ID));
+        }
+
+        popup::popup_above_or_below_widget(
+            ui,
+            *TIME_CONTROL_POPUP_ID,
+            &button_instance,
+            egui::AboveOrBelow::Above,
+            PopupCloseBehavior::IgnoreClicks,
+            |ui| {
+                time_display(ui, device_pixel_ratio, sim_state);
+                ui.add_space(12.0 * device_pixel_ratio);
+                ui.separator();
+                ui.add_space(12.0 * device_pixel_ratio);
+                time_control(ui, device_pixel_ratio, sim_state, elapsed_time, true);
+                ui.add_space(16.0 * device_pixel_ratio);
+            },
+        );
     });
+
+    let string = format!(
+        "{:.2}\n{}",
+        sim_state.ui.time_speed_amount, sim_state.ui.time_speed_unit
+    );
+    let text = RichText::new(string).monospace().color(Color32::WHITE);
+    ui.label(text);
 }
 
 fn pause_button(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
@@ -330,15 +392,27 @@ fn time_display(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
     });
 }
 
-fn time_control(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, elapsed_time: f64) {
+fn time_control(
+    ui: &mut Ui,
+    device_pixel_ratio: f32,
+    sim_state: &mut SimState,
+    elapsed_time: f64,
+    column_mode: bool,
+) {
     ui.scope(|ui| {
-        time_slider(ui, device_pixel_ratio, sim_state, elapsed_time);
+        time_slider(ui, device_pixel_ratio, sim_state, elapsed_time, column_mode);
         time_drag_value(ui, device_pixel_ratio, sim_state);
-        time_unit_box(ui, device_pixel_ratio, sim_state);
+        time_unit_box(ui, device_pixel_ratio, sim_state, column_mode);
     });
 }
 
-fn time_slider(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, elapsed_time: f64) {
+fn time_slider(
+    ui: &mut Ui,
+    device_pixel_ratio: f32,
+    sim_state: &mut SimState,
+    elapsed_time: f64,
+    column_mode: bool,
+) {
     let hover_text = RichText::new(
         "Move the slider left to decelerate time.\n\
         Move the slider right to accelerate time.\n\
@@ -346,10 +420,15 @@ fn time_slider(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, e
     )
     .color(Color32::WHITE)
     .size(16.0 * device_pixel_ratio);
-    ui.spacing_mut().interact_size.y = 48.0;
+    ui.spacing_mut().interact_size.y = 48.0 * device_pixel_ratio;
     let slider = Slider::new(&mut sim_state.ui.time_slider_pos, -1.0..=1.0)
         .show_value(false)
         .handle_shape(egui::style::HandleShape::Rect { aspect_ratio: 0.3 });
+
+    if column_mode {
+        ui.spacing_mut().slider_width = ui.available_width();
+    }
+
     let slider_instance = ui.add(slider).on_hover_text(hover_text);
 
     if slider_instance.is_pointer_button_down_on() {
@@ -412,7 +491,12 @@ fn time_drag_value_inner(
         DragValue::new(&mut sim_state.ui.time_speed_amount).update_while_editing(false);
     ui.add_sized(dv_size, drag_value)
 }
-fn time_unit_box(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
+fn time_unit_box(
+    ui: &mut Ui,
+    device_pixel_ratio: f32,
+    sim_state: &mut SimState,
+    column_mode: bool,
+) {
     let min_touch_len = 48.0 * device_pixel_ratio;
     let unit_string = format!("{}/s", sim_state.ui.time_speed_unit);
 
@@ -425,8 +509,12 @@ fn time_unit_box(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState)
             .color(Color32::WHITE)
             .size(16.0 * device_pixel_ratio);
 
+    if column_mode {
+        ui.spacing_mut().combo_width = ui.available_width();
+    }
     ui.spacing_mut().interact_size.y = min_touch_len;
     ui.spacing_mut().button_padding.x = 16.0 * device_pixel_ratio;
+
     ComboBox::from_id_salt(TIME_CONTROL_COMBO_BOX_SALT)
         .selected_text(unit_text)
         .height(f32::INFINITY)

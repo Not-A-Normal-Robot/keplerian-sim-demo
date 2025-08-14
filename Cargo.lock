@@ -788,6 +788,7 @@ dependencies = [
 name = "keplerian-sim-demo"
 version = "0.1.0"
 dependencies = [
+ "egui",
  "egui_extras",
  "float-pretty-print",
  "glam",
