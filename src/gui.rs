@@ -6,15 +6,14 @@ use std::{
 
 use super::assets;
 use super::universe::Universe;
-use egui::{PopupCloseBehavior, popup};
 use ordered_float::NotNan;
 use strum::IntoEnumIterator;
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
         self, Area, Button, Color32, ComboBox, Context as EguiContext, DragValue, FontId, Frame,
-        Id, Image, ImageButton, Label, Margin, Response, RichText, Rounding, ScrollArea,
-        SelectableLabel, Slider, Stroke, TopBottomPanel, Ui, Vec2,
+        Id, Image, ImageButton, Label, Margin, PopupCloseBehavior, Response, RichText, Rounding,
+        ScrollArea, SelectableLabel, Slider, Stroke, TopBottomPanel, Ui, Vec2, popup,
     },
 };
 
