@@ -1,19 +1,20 @@
-use std::sync::LazyLock;
+use std::sync::{Arc, LazyLock};
 
 use super::assets;
 use super::universe::Universe;
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
-        self, Area, Button, Color32, Context as EguiContext, FontId, Frame, Id, Image, ImageButton,
-        Label, Margin, RichText, Rounding, Slider, Stroke, TopBottomPanel, Ui, Vec2,
+        self, Align, Area, Button, Color32, Context as EguiContext, DragValue, FontId, Frame, Id,
+        Image, ImageButton, Label, Layout, Margin, RichText, Rounding, ScrollArea, Slider, Stroke,
+        TextEdit, TopBottomPanel, Ui, Vec2,
     },
 };
 
 #[path = "time.rs"]
 mod time;
 
-use time::TimeDisplay;
+use time::{TimeDisplay, TimeUnit};
 
 const FPS_AREA_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(0xFEED_A_DEFEA7ED_FAE).unwrap();
@@ -24,10 +25,14 @@ const _CURRENTLY_UNUSED_SALT: std::num::NonZeroU64 =
 
 const FPS_AREA_ID: LazyLock<Id> = LazyLock::new(|| Id::new(FPS_AREA_SALT));
 const BOTTOM_PANEL_ID: LazyLock<Id> = LazyLock::new(|| Id::new(BOTTOM_PANEL_SALT));
+const TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME: &'static str = "TSDVF";
 
 struct UiState {
     time_disp: TimeDisplay,
     time_slider_pos: f64,
+    time_speed_amount: f64,
+    time_speed_unit: TimeUnit,
+    time_speed_unit_auto: bool,
 }
 
 impl Default for UiState {
@@ -35,6 +40,9 @@ impl Default for UiState {
         Self {
             time_disp: TimeDisplay::SingleUnit,
             time_slider_pos: 0.0,
+            time_speed_amount: 1.0,
+            time_speed_unit: TimeUnit::Seconds,
+            time_speed_unit_auto: true,
         }
     }
 }
@@ -43,7 +51,7 @@ pub(crate) struct SimState {
     pub universe: Universe,
     pub sim_speed: f64,
     pub running: bool,
-    ui_state: UiState,
+    ui: UiState,
 }
 
 impl SimState {
@@ -61,7 +69,7 @@ impl Default for SimState {
             universe: Universe::default(),
             sim_speed: 1.0,
             running: true,
-            ui_state: UiState::default(),
+            ui: UiState::default(),
         }
     }
 }
@@ -69,6 +77,12 @@ impl Default for SimState {
 pub(super) fn create(context: &ThreeDContext) -> GUI {
     let gui = GUI::new(context);
     egui_extras::install_image_loaders(gui.context());
+    gui.context().style_mut(|styles| {
+        styles.text_styles.insert(
+            egui::TextStyle::Name(TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME.into()),
+            FontId::monospace(16.0),
+        );
+    });
     gui
 }
 
@@ -135,7 +149,10 @@ fn bottom_panel(
         .show_separator_line(false)
         .exact_height(height)
         .frame(Frame {
-            inner_margin: Margin::symmetric(16.0, 8.0),
+            inner_margin: Margin {
+                top: 8.0 * device_pixel_ratio,
+                ..Default::default()
+            },
             fill: Color32::from_black_alpha(128),
             ..Default::default()
         })
@@ -150,12 +167,18 @@ fn bottom_panel_contents(
     sim_state: &mut SimState,
     elapsed_time: f64,
 ) {
-    ui.horizontal(|ui| {
-        ui.set_height(48.0 * device_pixel_ratio);
-        ui.spacing_mut().item_spacing = Vec2::new(24.0 * device_pixel_ratio, 0.0);
-        pause_button(ui, device_pixel_ratio, sim_state);
-        time_display(ui, device_pixel_ratio, sim_state);
-        time_control(ui, device_pixel_ratio, sim_state, elapsed_time);
+    let scroll_area = ScrollArea::horizontal().auto_shrink([false, false]);
+    scroll_area.show(ui, |ui| {
+        ui.horizontal(|ui| {
+            ui.set_height(48.0 * device_pixel_ratio);
+            ui.add_space(16.0 * device_pixel_ratio);
+            pause_button(ui, device_pixel_ratio, sim_state);
+            ui.add_space(24.0 * device_pixel_ratio);
+            time_display(ui, device_pixel_ratio, sim_state);
+            ui.add_space(24.0 * device_pixel_ratio);
+            time_control(ui, device_pixel_ratio, sim_state, elapsed_time);
+            ui.add_space(16.0 * device_pixel_ratio);
+        })
     });
 }
 
@@ -200,18 +223,16 @@ fn time_display(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
     let min_touch_size = 48.0 * device_pixel_ratio;
     let display_size = Vec2::new(200.0 * device_pixel_ratio, min_touch_size);
 
-    let string = sim_state
-        .ui_state
-        .time_disp
-        .format_time(sim_state.universe.time);
+    let string = sim_state.ui.time_disp.format_time(sim_state.universe.time);
 
     let text = RichText::new(string)
+        .monospace()
         .color(Color32::WHITE)
         .size(16.0 * device_pixel_ratio);
 
     let hover_string = format!(
         "Currently in {} mode\nLeft click to cycle, right click to cycle backwards",
-        sim_state.ui_state.time_disp
+        sim_state.ui.time_disp
     );
 
     let hover_text = RichText::new(hover_string)
@@ -231,29 +252,67 @@ fn time_display(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
         let button_instance = ui.add(button).on_hover_text(hover_text);
 
         if button_instance.clicked() {
-            sim_state.ui_state.time_disp = sim_state.ui_state.time_disp.get_next();
+            sim_state.ui.time_disp = sim_state.ui.time_disp.get_next();
         }
         if button_instance.secondary_clicked() {
-            sim_state.ui_state.time_disp = sim_state.ui_state.time_disp.get_prev();
+            sim_state.ui.time_disp = sim_state.ui.time_disp.get_prev();
         }
     });
 }
 
-fn time_control(
-    ui: &mut Ui,
-    _device_pixel_ratio: f32,
-    sim_state: &mut SimState,
-    elapsed_time: f64,
-) {
-    let slider = Slider::new(&mut sim_state.ui_state.time_slider_pos, -1.0..=1.0).show_value(false);
+fn time_control(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, elapsed_time: f64) {
+    let slider = Slider::new(&mut sim_state.ui.time_slider_pos, -1.0..=1.0).show_value(false);
     let slider_instance = ui.add(slider);
+    ui.add_space(24.0 * device_pixel_ratio);
 
     if slider_instance.is_pointer_button_down_on() {
-        let base = 10.0f64.powf(sim_state.ui_state.time_slider_pos);
+        let base = 10.0f64.powf(sim_state.ui.time_slider_pos);
         sim_state.sim_speed *= base.powf(elapsed_time / 1000.0);
     } else {
-        sim_state.ui_state.time_slider_pos *= (-5.0 * elapsed_time / 1000.0).exp();
+        sim_state.ui.time_slider_pos *= (-5.0 * elapsed_time / 1000.0).exp();
     }
 
-    ui.label(format!("{}x speed", sim_state.sim_speed));
+    sim_state.ui.time_speed_amount = sim_state.sim_speed / sim_state.ui.time_speed_unit.get_value();
+    let prev_speed_amt = sim_state.ui.time_speed_amount;
+
+    let mut dv_instance = None;
+    ui.scope(|ui| {
+        let min_vec = Vec2::new(48.0 * device_pixel_ratio, 48.0 * device_pixel_ratio);
+        let style_name: Arc<str> = TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME.into();
+        ui.style_mut().text_styles.insert(
+            egui::TextStyle::Name(style_name.clone()),
+            FontId::monospace(16.0 * device_pixel_ratio),
+        );
+        ui.style_mut().drag_value_text_style = egui::TextStyle::Name(style_name);
+        ui.spacing_mut().button_padding =
+            Vec2::new(16.0 * device_pixel_ratio, 8.0 * device_pixel_ratio);
+        let drag_value =
+            DragValue::new(&mut sim_state.ui.time_speed_amount).update_while_editing(false);
+        dv_instance = Some(ui.add_sized(min_vec, drag_value));
+    });
+    let dv_instance = dv_instance.unwrap();
+
+    if prev_speed_amt != sim_state.ui.time_speed_amount {
+        sim_state.sim_speed =
+            sim_state.ui.time_speed_amount * sim_state.ui.time_speed_unit.get_value();
+    }
+
+    if sim_state.ui.time_speed_unit_auto && !dv_instance.dragged() {
+        sim_state.ui.time_speed_unit = TimeUnit::largest_unit_from_seconds(sim_state.sim_speed);
+        sim_state.ui.time_speed_amount =
+            sim_state.sim_speed / sim_state.ui.time_speed_unit.get_value();
+    }
+
+    let unit_string = if sim_state.ui.time_speed_unit == TimeUnit::Seconds {
+        "x speed".to_string()
+    } else {
+        format!("{}/s", sim_state.ui.time_speed_unit)
+    };
+
+    let unit_text = RichText::new(unit_string)
+        .monospace()
+        .color(Color32::WHITE)
+        .size(16.0 * device_pixel_ratio);
+
+    ui.label(unit_text);
 }

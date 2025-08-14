@@ -1,8 +1,9 @@
-use std::fmt::Display;
+use std::{fmt::Display, str::FromStr};
 
 use float_pretty_print::PrettyPrintFloat;
+use strum_macros::{EnumCount, EnumIter};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, EnumCount, EnumIter)]
 pub(crate) enum TimeUnit {
     Nanos,
     Micros,
@@ -24,7 +25,7 @@ const DAY: f64 = 24.0 * HOUR;
 const YEAR: f64 = 365.25 * DAY;
 
 impl TimeUnit {
-    const fn get_next_smaller(self) -> Option<Self> {
+    pub(crate) const fn get_next_smaller(self) -> Option<Self> {
         match self {
             Self::Nanos => None,
             Self::Micros => Some(Self::Nanos),
@@ -36,7 +37,7 @@ impl TimeUnit {
             Self::Years => Some(Self::Days),
         }
     }
-    const fn get_value(self) -> f64 {
+    pub(crate) const fn get_value(self) -> f64 {
         match self {
             TimeUnit::Nanos => NANO,
             TimeUnit::Micros => MICRO,
@@ -48,7 +49,7 @@ impl TimeUnit {
             TimeUnit::Years => YEAR,
         }
     }
-    const fn largest_unit_from_seconds(seconds: f64) -> Self {
+    pub(crate) const fn largest_unit_from_seconds(seconds: f64) -> Self {
         match seconds {
             x if x.abs() >= YEAR => TimeUnit::Years,
             x if x.abs() >= DAY => TimeUnit::Days,
@@ -66,7 +67,7 @@ impl Display for TimeUnit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             TimeUnit::Nanos => write!(f, "ns"),
-            TimeUnit::Micros => write!(f, "us"),
+            TimeUnit::Micros => write!(f, "µs"),
             TimeUnit::Millis => write!(f, "ms"),
             TimeUnit::Seconds => write!(f, "s"),
             TimeUnit::Minutes => write!(f, "m"),
@@ -77,7 +78,25 @@ impl Display for TimeUnit {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+impl FromStr for TimeUnit {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "ns" => Ok(TimeUnit::Nanos),
+            "us" => Ok(TimeUnit::Micros),
+            "ms" => Ok(TimeUnit::Millis),
+            "s" => Ok(TimeUnit::Seconds),
+            "m" => Ok(TimeUnit::Minutes),
+            "h" => Ok(TimeUnit::Hours),
+            "d" => Ok(TimeUnit::Days),
+            "y" => Ok(TimeUnit::Years),
+            _ => Err(()),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumCount, EnumIter)]
 pub(crate) enum TimeDisplay {
     /// e.g. `1755069111.3 s`,
     SecondsOnly,
