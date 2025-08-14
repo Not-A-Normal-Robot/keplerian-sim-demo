@@ -352,7 +352,7 @@ fn pause_button(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
 
 fn time_display(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
     let min_touch_size = 48.0 * device_pixel_ratio;
-    let display_size = Vec2::new(200.0 * device_pixel_ratio, min_touch_size);
+    let display_size = Vec2::new(220.0 * device_pixel_ratio, min_touch_size);
 
     let string = sim_state.ui.time_disp.format_time(sim_state.universe.time);
 

@@ -100,7 +100,7 @@ impl FromStr for TimeUnit {
 pub(crate) enum TimeDisplay {
     /// e.g. `1755069111.3 s`,
     SecondsOnly,
-    /// Top 4 units, e.g. `14 y, 211 d, 16 h, 49 m`
+    /// Top 3 units, e.g. `14 y, 211 d, 16 h`
     MultiUnit,
     /// e.g. `84.602259283 d`
     SingleUnit,
@@ -120,7 +120,7 @@ impl TimeDisplay {
     }
 
     fn format_secs_to_years(mut seconds: f64) -> String {
-        const MAX_UNIT_AMOUNT: usize = 4;
+        const MAX_UNIT_AMOUNT: usize = 3;
         let mut unit = TimeUnit::largest_unit_from_seconds(seconds);
         let mut units = Vec::with_capacity(MAX_UNIT_AMOUNT);
 
