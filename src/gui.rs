@@ -34,7 +34,7 @@ impl Default for UiState {
     fn default() -> Self {
         Self {
             time_disp: TimeDisplay::SingleUnit,
-            time_slider_pos: 1.0,
+            time_slider_pos: 0.0,
         }
     }
 }
