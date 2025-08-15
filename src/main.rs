@@ -76,7 +76,7 @@ impl Program {
     fn new_camera(viewport: Viewport) -> Camera {
         Camera::new_perspective(
             viewport,
-            Vec3::new(3.0, 2.5, 6.0),
+            Vec3::new(3000.0, 2500.0, 6000.0),
             Vec3::new(0.0, 0.0, 0.0),
             Vec3::new(0.0, 0.0, 1.0),
             Degrees { 0: 45.0 },
@@ -85,7 +85,7 @@ impl Program {
         )
     }
     fn new_control() -> OrbitControl {
-        OrbitControl::new(Vec3::new(0.0, 0.0, 0.0), 100.0, 1000.0)
+        OrbitControl::new(Vec3::new(0.0, 0.0, 0.0), 100.0, 1e10)
     }
     fn new_dir_light(context: &Context) -> DirectionalLight {
         DirectionalLight::new(&context, 1.0, Srgba::WHITE, Vec3::new(0.0, -0.5, -0.5))
