@@ -13,8 +13,8 @@ use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
         self, Area, Button, Color32, ComboBox, Context as EguiContext, CornerRadius, DragValue,
-        FontId, Frame, Id, Image, ImageButton, Label, Margin, Response, RichText, ScrollArea,
-        Slider, Stroke, TopBottomPanel, Ui, Vec2,
+        FontId, Frame, Id, Image, ImageButton, Label, Margin, Popup, PopupCloseBehavior, Response,
+        RichText, ScrollArea, Slider, Stroke, TopBottomPanel, Ui, Vec2,
     },
 };
 
@@ -296,7 +296,11 @@ fn time_manager(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, 
         widget_styles.active.weak_bg_fill = Color32::from_white_alpha(64);
         widget_styles.active.corner_radius = CornerRadius::same(min_touch_size as u8);
 
-        ui.menu_image_button(image.clone().fit_to_exact_size(min_touch_target), |ui| {
+        let button = ImageButton::new(image.clone().fit_to_exact_size(min_touch_target));
+        let button = ui.add(button).on_hover_text(hover_text);
+
+        let popup = Popup::menu(&button).close_behavior(PopupCloseBehavior::CloseOnClickOutside);
+        popup.show(|ui| {
             ui.set_max_width(200.0 * device_pixel_ratio);
             time_display(ui, device_pixel_ratio, sim_state);
             ui.add_space(12.0 * device_pixel_ratio);
@@ -304,13 +308,11 @@ fn time_manager(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, 
             ui.add_space(12.0 * device_pixel_ratio);
             time_control(ui, device_pixel_ratio, sim_state, elapsed_time, true);
             ui.add_space(16.0 * device_pixel_ratio);
-        })
-        .response
-        .on_hover_text(hover_text);
+        });
     });
 
     let string = format!(
-        "{time:6.6}{unit}\n{rate:5.5}/s  ",
+        "{time:5.5}{unit}\n{rate:6.6}/s",
         time = PrettyPrintFloat(sim_state.universe.time / sim_state.ui.time_speed_unit.get_value()),
         unit = sim_state.ui.time_speed_unit,
         rate = PrettyPrintFloat(sim_state.sim_speed / sim_state.ui.time_speed_unit.get_value()),
