@@ -12,8 +12,8 @@ use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
         self, Area, Button, Color32, ComboBox, Context as EguiContext, DragValue, FontId, Frame,
-        Id, Image, ImageButton, Label, Margin, PopupCloseBehavior, Response, RichText, Rounding,
-        ScrollArea, SelectableLabel, Slider, Stroke, TopBottomPanel, Ui, Vec2, popup,
+        Id, Image, ImageButton, Label, Margin, Response, RichText, Rounding, ScrollArea,
+        SelectableLabel, Slider, Stroke, TopBottomPanel, Ui, Vec2,
     },
 };
 
@@ -28,12 +28,12 @@ const BOTTOM_PANEL_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"BluRigel")).unwrap();
 const TIME_CONTROL_COMBO_BOX_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"Solstice")).unwrap();
-const TIME_CONTROL_POPUP_SALT: std::num::NonZeroU64 =
+const _UNUSED_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"TimeIsUp")).unwrap();
 
 const FPS_AREA_ID: LazyLock<Id> = LazyLock::new(|| Id::new(FPS_AREA_SALT));
 const BOTTOM_PANEL_ID: LazyLock<Id> = LazyLock::new(|| Id::new(BOTTOM_PANEL_SALT));
-const TIME_CONTROL_POPUP_ID: LazyLock<Id> = LazyLock::new(|| Id::new(TIME_CONTROL_POPUP_SALT));
+const _UNUSED_ID: LazyLock<Id> = LazyLock::new(|| Id::new(_UNUSED_SALT));
 const TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME: &'static str = "TSDVF";
 
 struct FrameData {
@@ -277,32 +277,21 @@ fn time_manager(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, 
         widget_styles.inactive.bg_stroke = Stroke::NONE;
         widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(8);
         widget_styles.hovered.bg_stroke = Stroke::NONE;
+        widget_styles.hovered.rounding = Rounding::same(min_touch_size);
         widget_styles.active.weak_bg_fill = Color32::from_white_alpha(32);
+        widget_styles.active.rounding = Rounding::same(min_touch_size);
 
-        let button = ImageButton::new(image.clone().max_size(min_touch_target))
-            .rounding(Rounding::same(min_touch_size));
-
-        let button_instance = ui.add(button).on_hover_text(hover_text);
-
-        if button_instance.clicked() {
-            ui.memory_mut(|m| m.toggle_popup(*TIME_CONTROL_POPUP_ID));
-        }
-
-        popup::popup_above_or_below_widget(
-            ui,
-            *TIME_CONTROL_POPUP_ID,
-            &button_instance,
-            egui::AboveOrBelow::Above,
-            PopupCloseBehavior::IgnoreClicks,
-            |ui| {
-                time_display(ui, device_pixel_ratio, sim_state);
-                ui.add_space(12.0 * device_pixel_ratio);
-                ui.separator();
-                ui.add_space(12.0 * device_pixel_ratio);
-                time_control(ui, device_pixel_ratio, sim_state, elapsed_time, true);
-                ui.add_space(16.0 * device_pixel_ratio);
-            },
-        );
+        ui.menu_image_button(image.clone().max_size(min_touch_target), |ui| {
+            ui.set_max_width(200.0 * device_pixel_ratio);
+            time_display(ui, device_pixel_ratio, sim_state);
+            ui.add_space(12.0 * device_pixel_ratio);
+            ui.separator();
+            ui.add_space(12.0 * device_pixel_ratio);
+            time_control(ui, device_pixel_ratio, sim_state, elapsed_time, true);
+            ui.add_space(16.0 * device_pixel_ratio);
+        })
+        .response
+        .on_hover_text(hover_text);
     });
 
     let string = format!(
