@@ -320,5 +320,5 @@
     <circle class="a" cx="0" cy="0" r="0.1" fill="#f22" />
     <circle class="b" r="0.1" fill="#44f" />
     <circle r="1" fill="none" stroke="white" stroke-width="0.02" stroke-opacity="0.4" stroke-dasharray="0.1012" stroke-linecap="round"/>
-    <ellipse cx="1.080083823051904" rx="4.16016764610380822906" ry="3.5553720739769604" fill="none" stroke="white" stroke-width="0.02" stroke-opacity="0.4"/>
+    <!-- <ellipse cx="1.080083823051904" rx="4.16016764610380822906" ry="3.5553720739769604" fill="none" stroke="white" stroke-width="0.02" stroke-opacity="0.4"/> -->
 </svg>
