@@ -296,7 +296,7 @@ fn time_manager(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, 
         widget_styles.active.weak_bg_fill = Color32::from_white_alpha(32);
         widget_styles.active.corner_radius = CornerRadius::same(min_touch_size as u8);
 
-        ui.menu_image_button(image.clone().max_size(min_touch_target), |ui| {
+        ui.menu_image_button(image.clone().fit_to_exact_size(min_touch_target), |ui| {
             ui.set_max_width(200.0 * device_pixel_ratio);
             time_display(ui, device_pixel_ratio, sim_state);
             ui.add_space(12.0 * device_pixel_ratio);
