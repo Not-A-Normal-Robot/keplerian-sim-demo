@@ -255,9 +255,12 @@ fn bottom_panel_contents(
         ui.separator();
         ui.add_space(12.0 * device_pixel_ratio);
         time_control(ui, device_pixel_ratio, sim_state, elapsed_time, false);
-        ui.add_space(16.0 * device_pixel_ratio);
+        ui.add_space(12.0 * device_pixel_ratio);
+        ui.separator();
+        ui.add_space(12.0 * device_pixel_ratio);
     } else {
         time_manager(ui, device_pixel_ratio, sim_state, elapsed_time);
+        ui.separator();
     }
 }
 
