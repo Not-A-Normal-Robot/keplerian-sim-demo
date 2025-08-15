@@ -401,7 +401,11 @@ fn time_control(
     ui.scope(|ui| {
         time_slider(ui, device_pixel_ratio, sim_state, elapsed_time, column_mode);
         time_drag_value(ui, device_pixel_ratio, sim_state);
-        time_unit_box(ui, device_pixel_ratio, sim_state, column_mode);
+        if column_mode {
+            time_unit_box_popup(ui, device_pixel_ratio, sim_state);
+        } else {
+            time_unit_box(ui, device_pixel_ratio, sim_state);
+        }
     });
 }
 
@@ -490,12 +494,7 @@ fn time_drag_value_inner(
         DragValue::new(&mut sim_state.ui.time_speed_amount).update_while_editing(false);
     ui.add_sized(dv_size, drag_value)
 }
-fn time_unit_box(
-    ui: &mut Ui,
-    device_pixel_ratio: f32,
-    sim_state: &mut SimState,
-    column_mode: bool,
-) {
+fn time_unit_box(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
     let min_touch_len = 48.0 * device_pixel_ratio;
     let unit_string = format!("{}/s", sim_state.ui.time_speed_unit);
 
@@ -508,9 +507,6 @@ fn time_unit_box(
             .color(Color32::WHITE)
             .size(16.0 * device_pixel_ratio);
 
-    if column_mode {
-        ui.spacing_mut().combo_width = ui.available_width();
-    }
     ui.spacing_mut().interact_size.y = min_touch_len;
     ui.spacing_mut().button_padding.x = 16.0 * device_pixel_ratio;
 
@@ -549,4 +545,22 @@ fn time_unit_box_inner(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut Sim
     if auto.clicked() {
         sim_state.ui.time_speed_unit_auto = !sim_state.ui.time_speed_unit_auto;
     }
+}
+fn time_unit_box_popup(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
+    let font = FontId::proportional(16.0 * device_pixel_ratio);
+
+    let unit = sim_state.ui.time_speed_unit;
+    let title_string = if sim_state.ui.time_speed_unit_auto {
+        format!("Select unit ({unit}/s; auto)")
+    } else {
+        format!("Select unit ({unit}/s)")
+    };
+
+    let title_text = RichText::new(title_string)
+        .color(Color32::WHITE)
+        .font(font.clone());
+
+    ui.menu_button(title_text, |ui| {
+        time_unit_box_inner(ui, device_pixel_ratio, sim_state);
+    });
 }
