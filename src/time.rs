@@ -146,7 +146,12 @@ impl TimeDisplay {
             let unit_value = unit.get_value();
             let (quo, rem) = ((seconds / unit_value).trunc(), seconds % unit_value);
 
-            string += &format!("{quo} {unit}");
+            if quo < 1000.0 {
+                string += &format!("{quo} {unit}");
+            } else {
+                let amount = PrettyPrintFloat(quo);
+                string += &format!("{amount:5.3} {unit}");
+            }
 
             if string.len() >= 30 {
                 // Too long!
