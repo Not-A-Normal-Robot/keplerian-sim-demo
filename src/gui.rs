@@ -37,6 +37,17 @@ const BOTTOM_PANEL_ID: LazyLock<Id> = LazyLock::new(|| Id::new(BOTTOM_PANEL_SALT
 const _UNUSED_ID: LazyLock<Id> = LazyLock::new(|| Id::new(_UNUSED_SALT));
 const TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME: &'static str = "TSDVF";
 
+mod fmt {
+    use std::ops::RangeInclusive;
+
+    use float_pretty_print::PrettyPrintFloat;
+
+    pub(super) fn format_dv_number(number: f64, _: RangeInclusive<usize>) -> String {
+        let number = PrettyPrintFloat(number);
+        format!("{number:5.1}")
+    }
+}
+
 struct FrameData {
     frame_len_secs: VecDeque<NotNan<f64>>,
 }
@@ -485,8 +496,9 @@ fn time_drag_value_inner(
     widget_styles.hovered.bg_stroke = Stroke::NONE;
     widget_styles.active.weak_bg_fill = Color32::from_white_alpha(32);
 
-    let drag_value =
-        DragValue::new(&mut sim_state.ui.time_speed_amount).update_while_editing(false);
+    let drag_value = DragValue::new(&mut sim_state.ui.time_speed_amount)
+        .update_while_editing(false)
+        .custom_formatter(fmt::format_dv_number);
     ui.add_sized(dv_size, drag_value)
 }
 fn time_unit_box(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
