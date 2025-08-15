@@ -8,7 +8,7 @@ license = "GPL-3.0-or-later"
 crate-type = ["cdylib"]
 
 [dependencies]
-egui_extras = { version = "0.29.1", features = ["svg"] }
+egui_extras = { version = "0.32", features = ["svg"] }
 float-pretty-print = "0.1.1"
 glam = "0.30.5"
 keplerian_sim = "0.4.0"
@@ -33,3 +33,6 @@ opt-level = "z"
 opt-level = 3
 lto = "fat"
 codegen-units = 1
+
+[patch.crates-io]
+three-d = { version = "0.18.2", git = "https://github.com/Not-A-Normal-Robot/three-d.git", branch = "updated-egui" }
