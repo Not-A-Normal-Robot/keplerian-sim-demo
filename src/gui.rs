@@ -6,6 +6,7 @@ use std::{
 
 use super::assets;
 use super::universe::Universe;
+use float_pretty_print::PrettyPrintFloat;
 use ordered_float::NotNan;
 use strum::IntoEnumIterator;
 use three_d::{
@@ -295,8 +296,10 @@ fn time_manager(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, 
     });
 
     let string = format!(
-        "{:.2}\n{}",
-        sim_state.ui.time_speed_amount, sim_state.ui.time_speed_unit
+        "{time:6.6}{unit}\n{rate:5.5}/s",
+        time = PrettyPrintFloat(sim_state.universe.time / sim_state.ui.time_speed_unit.get_value()),
+        unit = sim_state.ui.time_speed_unit,
+        rate = PrettyPrintFloat(sim_state.sim_speed / sim_state.ui.time_speed_unit.get_value()),
     );
     let text = RichText::new(string).monospace().color(Color32::WHITE);
     ui.label(text);
@@ -503,18 +506,27 @@ fn time_unit_box(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState)
         .selected_text(unit_text)
         .height(f32::INFINITY)
         .show_ui(ui, |ui| {
-            time_unit_box_inner(ui, device_pixel_ratio, sim_state)
+            time_unit_box_inner(ui, device_pixel_ratio, sim_state, true)
         })
         .response
         .on_hover_text(hover_text);
 }
-fn time_unit_box_inner(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
+fn time_unit_box_inner(
+    ui: &mut Ui,
+    device_pixel_ratio: f32,
+    sim_state: &mut SimState,
+    per_second: bool,
+) {
     let min_touch_len = 48.0 * device_pixel_ratio;
     let min_touch_vec = Vec2::splat(min_touch_len);
     let font = FontId::proportional(16.0 * device_pixel_ratio);
 
     for unit in TimeUnit::iter() {
-        let string = format!("{unit}/s");
+        let string = if per_second {
+            format!("{unit}/s")
+        } else {
+            unit.to_string()
+        };
         let text = RichText::new(string).font(font.clone());
 
         let label = SelectableLabel::new(sim_state.ui.time_speed_unit == unit, text);
@@ -540,9 +552,9 @@ fn time_unit_box_popup(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut Sim
 
     let unit = sim_state.ui.time_speed_unit;
     let title_string = if sim_state.ui.time_speed_unit_auto {
-        format!("Select unit ({unit}/s; auto)")
+        format!("Select unit ({unit}; auto)")
     } else {
-        format!("Select unit ({unit}/s)")
+        format!("Select unit ({unit})")
     };
 
     let title_text = RichText::new(title_string)
@@ -550,6 +562,6 @@ fn time_unit_box_popup(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut Sim
         .font(font.clone());
 
     ui.menu_button(title_text, |ui| {
-        time_unit_box_inner(ui, device_pixel_ratio, sim_state);
+        time_unit_box_inner(ui, device_pixel_ratio, sim_state, false);
     });
 }
