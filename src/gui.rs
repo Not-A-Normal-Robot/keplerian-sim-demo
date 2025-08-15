@@ -290,10 +290,10 @@ fn time_manager(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, 
         let widget_styles = &mut ui.visuals_mut().widgets;
         widget_styles.inactive.weak_bg_fill = Color32::TRANSPARENT;
         widget_styles.inactive.bg_stroke = Stroke::NONE;
-        widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(8);
+        widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(16);
         widget_styles.hovered.bg_stroke = Stroke::NONE;
         widget_styles.hovered.corner_radius = CornerRadius::same(min_touch_size as u8);
-        widget_styles.active.weak_bg_fill = Color32::from_white_alpha(32);
+        widget_styles.active.weak_bg_fill = Color32::from_white_alpha(64);
         widget_styles.active.corner_radius = CornerRadius::same(min_touch_size as u8);
 
         ui.menu_image_button(image.clone().fit_to_exact_size(min_touch_target), |ui| {
@@ -310,7 +310,7 @@ fn time_manager(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, 
     });
 
     let string = format!(
-        "{time:6.6}{unit}\n{rate:5.5}/s",
+        "{time:6.6}{unit}\n{rate:5.5}/s  ",
         time = PrettyPrintFloat(sim_state.universe.time / sim_state.ui.time_speed_unit.get_value()),
         unit = sim_state.ui.time_speed_unit,
         rate = PrettyPrintFloat(sim_state.sim_speed / sim_state.ui.time_speed_unit.get_value()),
@@ -342,9 +342,9 @@ fn pause_button(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
         let widget_styles = &mut ui.visuals_mut().widgets;
         widget_styles.inactive.weak_bg_fill = Color32::TRANSPARENT;
         widget_styles.inactive.bg_stroke = Stroke::NONE;
-        widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(8);
+        widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(16);
         widget_styles.hovered.bg_stroke = Stroke::NONE;
-        widget_styles.active.weak_bg_fill = Color32::from_white_alpha(32);
+        widget_styles.active.weak_bg_fill = Color32::from_white_alpha(64);
 
         let button = ImageButton::new(image.clone().max_size(min_touch_target))
             .corner_radius(CornerRadius::same(min_touch_size as u8));
@@ -381,9 +381,9 @@ fn time_display(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
         let widget_styles = &mut ui.visuals_mut().widgets;
         widget_styles.inactive.weak_bg_fill = Color32::TRANSPARENT;
         widget_styles.inactive.bg_stroke = Stroke::NONE;
-        widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(8);
+        widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(16);
         widget_styles.hovered.bg_stroke = Stroke::NONE;
-        widget_styles.active.weak_bg_fill = Color32::from_white_alpha(32);
+        widget_styles.active.weak_bg_fill = Color32::from_white_alpha(64);
 
         let button = Button::new(text).wrap().min_size(display_size);
         let button_instance = ui.add(button).on_hover_text(hover_text);
@@ -492,9 +492,9 @@ fn time_drag_value_inner(
     let widget_styles = &mut ui.visuals_mut().widgets;
     widget_styles.inactive.weak_bg_fill = Color32::TRANSPARENT;
     widget_styles.inactive.bg_stroke = Stroke::NONE;
-    widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(8);
+    widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(16);
     widget_styles.hovered.bg_stroke = Stroke::NONE;
-    widget_styles.active.weak_bg_fill = Color32::from_white_alpha(32);
+    widget_styles.active.weak_bg_fill = Color32::from_white_alpha(64);
 
     let drag_value = DragValue::new(&mut sim_state.ui.time_speed_amount)
         .update_while_editing(false)
