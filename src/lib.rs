@@ -12,6 +12,7 @@ mod web_panic_handler;
 async fn start() {
     web_panic_handler::init_panic_handler();
     web_heartbeat::start_beating();
+    return;
 
     let window = web_sys::window().expect("global `window` should exist");
     let document = window.document().expect("`window` should have `document`");
