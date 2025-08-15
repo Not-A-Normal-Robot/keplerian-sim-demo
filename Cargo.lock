@@ -1669,7 +1669,7 @@ dependencies = [
 [[package]]
 name = "three-d"
 version = "0.18.2"
-source = "git+https://github.com/Not-A-Normal-Robot/three-d.git?branch=updated-egui#3ffe1eccb0322b8464638c852165db466ebc8e34"
+source = "git+https://github.com/Not-A-Normal-Robot/three-d.git?branch=updated-egui#75872e68b630e1d8b7d35bebc91805c66368985f"
 dependencies = [
  "cgmath",
  "egui",

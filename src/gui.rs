@@ -12,9 +12,9 @@ use strum::IntoEnumIterator;
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
-        self, Area, Button, Color32, ComboBox, Context as EguiContext, DragValue, FontId, Frame,
-        Id, Image, ImageButton, Label, Margin, Response, RichText, Rounding, ScrollArea,
-        SelectableLabel, Slider, Stroke, TopBottomPanel, Ui, Vec2,
+        self, Area, Button, Color32, ComboBox, Context as EguiContext, CornerRadius, DragValue,
+        FontId, Frame, Id, Image, ImageButton, Label, Margin, Response, RichText, ScrollArea,
+        Slider, Stroke, TopBottomPanel, Ui, Vec2,
     },
 };
 
@@ -233,7 +233,7 @@ fn bottom_panel(
         .exact_height(height)
         .frame(Frame {
             inner_margin: Margin {
-                top: 8.0 * device_pixel_ratio,
+                top: (8.0 * device_pixel_ratio) as i8,
                 ..Default::default()
             },
             fill: Color32::from_black_alpha(192),
@@ -292,9 +292,9 @@ fn time_manager(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, 
         widget_styles.inactive.bg_stroke = Stroke::NONE;
         widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(8);
         widget_styles.hovered.bg_stroke = Stroke::NONE;
-        widget_styles.hovered.rounding = Rounding::same(min_touch_size);
+        widget_styles.hovered.corner_radius = CornerRadius::same(min_touch_size as u8);
         widget_styles.active.weak_bg_fill = Color32::from_white_alpha(32);
-        widget_styles.active.rounding = Rounding::same(min_touch_size);
+        widget_styles.active.corner_radius = CornerRadius::same(min_touch_size as u8);
 
         ui.menu_image_button(image.clone().max_size(min_touch_target), |ui| {
             ui.set_max_width(200.0 * device_pixel_ratio);
@@ -347,10 +347,10 @@ fn pause_button(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
         widget_styles.active.weak_bg_fill = Color32::from_white_alpha(32);
 
         let button = ImageButton::new(image.clone().max_size(min_touch_target))
-            .rounding(Rounding::same(min_touch_size));
+            .corner_radius(CornerRadius::same(min_touch_size as u8));
 
         let button_instance = ui.add(button).on_hover_text(hover_text);
-        if button_instance.clicked {
+        if button_instance.clicked() {
             sim_state.running = !sim_state.running;
         }
     });
@@ -544,7 +544,7 @@ fn time_unit_box_inner(
         };
         let text = RichText::new(string).font(font.clone());
 
-        let label = SelectableLabel::new(sim_state.ui.time_speed_unit == unit, text);
+        let label = Button::selectable(sim_state.ui.time_speed_unit == unit, text);
         let label = ui.add_sized(min_touch_vec, label);
 
         if label.clicked() {
@@ -556,7 +556,7 @@ fn time_unit_box_inner(
     ui.separator();
 
     let text = RichText::new("Auto-pick").font(font);
-    let label = SelectableLabel::new(sim_state.ui.time_speed_unit_auto, text);
+    let label = Button::selectable(sim_state.ui.time_speed_unit_auto, text);
     let auto = ui.add_sized(min_touch_vec, label);
     if auto.clicked() {
         sim_state.ui.time_speed_unit_auto = !sim_state.ui.time_speed_unit_auto;
