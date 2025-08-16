@@ -191,7 +191,7 @@ fn handle_ui(
 }
 
 fn fps_area(ctx: &EguiContext, device_pixel_ratio: f32, frame_data: &FrameData) {
-    let pos = 12.0 * device_pixel_ratio;
+    let pos = 12.0;
     Area::new(*FPS_AREA_ID)
         .constrain_to(ctx.screen_rect())
         .fixed_pos((pos, pos))
@@ -209,7 +209,7 @@ fn fps_inner(ui: &mut Ui, device_pixel_ratio: f32, frame_data: &FrameData) {
         format!("FPS: {fps:.0}\n1%L: {low:.0}")
     };
     const BACKGROUND_COLOR: Color32 = Color32::from_rgba_premultiplied(0, 0, 0, 128);
-    let font = FontId::monospace(11.0 * device_pixel_ratio);
+    let font = FontId::monospace(11.0);
     let text = RichText::new(string)
         .background_color(BACKGROUND_COLOR)
         .color(Color32::WHITE)
@@ -226,14 +226,14 @@ fn bottom_panel(
     sim_state: &mut SimState,
     elapsed_time: f64,
 ) {
-    let height = 64.0 * device_pixel_ratio;
+    let height = 64.0;
     // TODO: Bottom panel expansion using show_animated
     TopBottomPanel::bottom(*BOTTOM_PANEL_ID)
         .show_separator_line(false)
         .exact_height(height)
         .frame(Frame {
             inner_margin: Margin {
-                top: (8.0 * device_pixel_ratio) as i8,
+                top: (8.0) as i8,
                 ..Default::default()
             },
             fill: Color32::from_black_alpha(192),
@@ -256,19 +256,19 @@ fn bottom_panel_contents(
     sim_state: &mut SimState,
     elapsed_time: f64,
 ) {
-    ui.set_height(48.0 * device_pixel_ratio);
-    ui.add_space(16.0 * device_pixel_ratio);
+    ui.set_height(48.0);
+    ui.add_space(16.0);
     pause_button(ui, device_pixel_ratio, sim_state);
 
-    if ui.available_width() > 900.0 * device_pixel_ratio {
+    if ui.available_width() > 900.0 {
         time_display(ui, device_pixel_ratio, sim_state);
-        ui.add_space(12.0 * device_pixel_ratio);
+        ui.add_space(12.0);
         ui.separator();
-        ui.add_space(12.0 * device_pixel_ratio);
+        ui.add_space(12.0);
         time_control(ui, device_pixel_ratio, sim_state, elapsed_time, false);
-        ui.add_space(12.0 * device_pixel_ratio);
+        ui.add_space(12.0);
         ui.separator();
-        ui.add_space(12.0 * device_pixel_ratio);
+        ui.add_space(12.0);
     } else {
         time_manager(ui, device_pixel_ratio, sim_state, elapsed_time);
         ui.separator();
@@ -276,14 +276,14 @@ fn bottom_panel_contents(
 }
 
 fn time_manager(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, elapsed_time: f64) {
-    let min_touch_size = 48.0 * device_pixel_ratio;
+    let min_touch_size = 48.0;
     let min_touch_target = Vec2::splat(min_touch_size);
 
     let image: &Image<'static> = &*assets::TIME_IMAGE;
 
     let hover_text = RichText::new("Manage time")
         .color(Color32::WHITE)
-        .size(16.0 * device_pixel_ratio);
+        .size(16.0);
 
     ui.scope(|ui| {
         ui.spacing_mut().button_padding = Vec2::ZERO;
@@ -301,13 +301,13 @@ fn time_manager(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, 
 
         let popup = Popup::menu(&button).close_behavior(PopupCloseBehavior::CloseOnClickOutside);
         popup.show(|ui| {
-            ui.set_max_width(200.0 * device_pixel_ratio);
+            ui.set_max_width(200.0);
             time_display(ui, device_pixel_ratio, sim_state);
-            ui.add_space(12.0 * device_pixel_ratio);
+            ui.add_space(12.0);
             ui.separator();
-            ui.add_space(12.0 * device_pixel_ratio);
+            ui.add_space(12.0);
             time_control(ui, device_pixel_ratio, sim_state, elapsed_time, true);
-            ui.add_space(16.0 * device_pixel_ratio);
+            ui.add_space(16.0);
         });
     });
 
@@ -322,7 +322,7 @@ fn time_manager(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, 
 }
 
 fn pause_button(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
-    let min_touch_size = 48.0 * device_pixel_ratio;
+    let min_touch_size = 48.0;
     let min_touch_target = Vec2::splat(min_touch_size);
 
     let image: &Image<'static> = if sim_state.running {
@@ -335,9 +335,7 @@ fn pause_button(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
         true => "Currently running\nClick/tap to pause",
         false => "Currently paused\nClick/tap to resume",
     };
-    let hover_text = RichText::new(hover_string)
-        .color(Color32::WHITE)
-        .size(16.0 * device_pixel_ratio);
+    let hover_text = RichText::new(hover_string).color(Color32::WHITE).size(16.0);
 
     ui.scope(|ui| {
         ui.spacing_mut().button_padding = Vec2::ZERO;
@@ -359,24 +357,22 @@ fn pause_button(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
 }
 
 fn time_display(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
-    let min_touch_size = 48.0 * device_pixel_ratio;
-    let display_size = Vec2::new(220.0 * device_pixel_ratio, min_touch_size);
+    let min_touch_size = 48.0;
+    let display_size = Vec2::new(220.0, min_touch_size);
 
     let string = sim_state.ui.time_disp.format_time(sim_state.universe.time);
 
     let text = RichText::new(string)
         .monospace()
         .color(Color32::WHITE)
-        .size(16.0 * device_pixel_ratio);
+        .size(16.0);
 
     let hover_string = format!(
         "Currently in {} mode\nLeft click to cycle, right click to cycle backwards",
         sim_state.ui.time_disp
     );
 
-    let hover_text = RichText::new(hover_string)
-        .color(Color32::WHITE)
-        .size(16.0 * device_pixel_ratio);
+    let hover_text = RichText::new(hover_string).color(Color32::WHITE).size(16.0);
 
     ui.scope(|ui| {
         ui.spacing_mut().button_padding = Vec2::ZERO;
@@ -430,8 +426,8 @@ fn time_slider(
         Let go to stop changing time.",
     )
     .color(Color32::WHITE)
-    .size(16.0 * device_pixel_ratio);
-    ui.spacing_mut().interact_size.y = 48.0 * device_pixel_ratio;
+    .size(16.0);
+    ui.spacing_mut().interact_size.y = 48.0;
     let slider = Slider::new(&mut sim_state.ui.time_slider_pos, -1.0..=1.0)
         .show_value(false)
         .handle_shape(egui::style::HandleShape::Rect { aspect_ratio: 0.3 });
@@ -463,7 +459,7 @@ fn time_drag_value(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimStat
         Click/tap to enter in an amount manually.",
     )
     .color(Color32::WHITE)
-    .size(16.0 * device_pixel_ratio);
+    .size(16.0);
     let dv_instance = dv_instance.on_hover_text(hover_text);
 
     if prev_speed_amt != sim_state.ui.time_speed_amount {
@@ -482,15 +478,14 @@ fn time_drag_value_inner(
     device_pixel_ratio: f32,
     sim_state: &mut SimState,
 ) -> Response {
-    let dv_size = Vec2::new(96.0 * device_pixel_ratio, 48.0 * device_pixel_ratio);
+    let dv_size = Vec2::new(96.0, 48.0);
     let style_name: Arc<str> = TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME.into();
     ui.style_mut().text_styles.insert(
         egui::TextStyle::Name(style_name.clone()),
-        FontId::monospace(16.0 * device_pixel_ratio),
+        FontId::monospace(16.0),
     );
     ui.style_mut().drag_value_text_style = egui::TextStyle::Name(style_name);
-    ui.spacing_mut().button_padding =
-        Vec2::new(16.0 * device_pixel_ratio, 8.0 * device_pixel_ratio);
+    ui.spacing_mut().button_padding = Vec2::new(16.0, 8.0);
     let widget_styles = &mut ui.visuals_mut().widgets;
     widget_styles.inactive.weak_bg_fill = Color32::TRANSPARENT;
     widget_styles.inactive.bg_stroke = Stroke::NONE;
@@ -504,20 +499,18 @@ fn time_drag_value_inner(
     ui.add_sized(dv_size, drag_value)
 }
 fn time_unit_box(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
-    let min_touch_len = 48.0 * device_pixel_ratio;
+    let min_touch_len = 48.0;
     let unit_string = format!("{}/s", sim_state.ui.time_speed_unit);
 
-    let unit_text = RichText::new(unit_string)
-        .color(Color32::WHITE)
-        .size(16.0 * device_pixel_ratio);
+    let unit_text = RichText::new(unit_string).color(Color32::WHITE).size(16.0);
 
     let hover_text =
         RichText::new("Pick a different time speed unit or disable automatic unit selection")
             .color(Color32::WHITE)
-            .size(16.0 * device_pixel_ratio);
+            .size(16.0);
 
     ui.spacing_mut().interact_size.y = min_touch_len;
-    ui.spacing_mut().button_padding.x = 16.0 * device_pixel_ratio;
+    ui.spacing_mut().button_padding.x = 16.0;
 
     ComboBox::from_id_salt(TIME_CONTROL_COMBO_BOX_SALT)
         .selected_text(unit_text)
@@ -534,9 +527,9 @@ fn time_unit_box_inner(
     sim_state: &mut SimState,
     per_second: bool,
 ) {
-    let min_touch_len = 48.0 * device_pixel_ratio;
+    let min_touch_len = 48.0;
     let min_touch_vec = Vec2::splat(min_touch_len);
-    let font = FontId::proportional(16.0 * device_pixel_ratio);
+    let font = FontId::proportional(16.0);
 
     for unit in TimeUnit::iter() {
         let string = if per_second {
@@ -565,7 +558,7 @@ fn time_unit_box_inner(
     }
 }
 fn time_unit_box_popup(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
-    let font = FontId::proportional(16.0 * device_pixel_ratio);
+    let font = FontId::proportional(16.0);
 
     let unit = sim_state.ui.time_speed_unit;
     let title_string = if sim_state.ui.time_speed_unit_auto {
