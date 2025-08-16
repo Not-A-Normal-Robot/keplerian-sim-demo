@@ -176,30 +176,25 @@ pub(super) fn update(
         accumulated_time_ms,
         viewport,
         device_pixel_ratio,
-        |ctx| handle_ui(ctx, device_pixel_ratio, elapsed_time, sim_state),
+        |ctx| handle_ui(ctx, elapsed_time, sim_state),
     )
 }
 
-fn handle_ui(
-    ctx: &EguiContext,
-    device_pixel_ratio: f32,
-    elapsed_time: f64,
-    sim_state: &mut SimState,
-) {
-    fps_area(ctx, device_pixel_ratio, &sim_state.ui.frame_data);
-    bottom_panel(ctx, device_pixel_ratio, sim_state, elapsed_time);
+fn handle_ui(ctx: &EguiContext, elapsed_time: f64, sim_state: &mut SimState) {
+    fps_area(ctx, &sim_state.ui.frame_data);
+    bottom_panel(ctx, sim_state, elapsed_time);
 }
 
-fn fps_area(ctx: &EguiContext, device_pixel_ratio: f32, frame_data: &FrameData) {
+fn fps_area(ctx: &EguiContext, frame_data: &FrameData) {
     let pos = 12.0;
     Area::new(*FPS_AREA_ID)
         .constrain_to(ctx.screen_rect())
         .fixed_pos((pos, pos))
         .default_width(1000.0)
-        .show(&ctx, |ui| fps_inner(ui, device_pixel_ratio, frame_data));
+        .show(&ctx, |ui| fps_inner(ui, frame_data));
 }
 
-fn fps_inner(ui: &mut Ui, device_pixel_ratio: f32, frame_data: &FrameData) {
+fn fps_inner(ui: &mut Ui, frame_data: &FrameData) {
     let fps = frame_data.get_average_fps();
     let low = frame_data.get_low_average();
 
@@ -220,12 +215,7 @@ fn fps_inner(ui: &mut Ui, device_pixel_ratio: f32, frame_data: &FrameData) {
     ui.add(label);
 }
 
-fn bottom_panel(
-    ctx: &EguiContext,
-    device_pixel_ratio: f32,
-    sim_state: &mut SimState,
-    elapsed_time: f64,
-) {
+fn bottom_panel(ctx: &EguiContext, sim_state: &mut SimState, elapsed_time: f64) {
     let height = 64.0;
     // TODO: Bottom panel expansion using show_animated
     TopBottomPanel::bottom(*BOTTOM_PANEL_ID)
@@ -243,39 +233,32 @@ fn bottom_panel(
             ScrollArea::horizontal()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                    ui.horizontal(|ui| {
-                        bottom_panel_contents(ui, device_pixel_ratio, sim_state, elapsed_time)
-                    })
+                    ui.horizontal(|ui| bottom_panel_contents(ui, sim_state, elapsed_time))
                 })
         });
 }
 
-fn bottom_panel_contents(
-    ui: &mut Ui,
-    device_pixel_ratio: f32,
-    sim_state: &mut SimState,
-    elapsed_time: f64,
-) {
+fn bottom_panel_contents(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64) {
     ui.set_height(48.0);
     ui.add_space(16.0);
-    pause_button(ui, device_pixel_ratio, sim_state);
+    pause_button(ui, sim_state);
 
     if ui.available_width() > 900.0 {
-        time_display(ui, device_pixel_ratio, sim_state);
+        time_display(ui, sim_state);
         ui.add_space(12.0);
         ui.separator();
         ui.add_space(12.0);
-        time_control(ui, device_pixel_ratio, sim_state, elapsed_time, false);
+        time_control(ui, sim_state, elapsed_time, false);
         ui.add_space(12.0);
         ui.separator();
         ui.add_space(12.0);
     } else {
-        time_manager(ui, device_pixel_ratio, sim_state, elapsed_time);
+        time_manager(ui, sim_state, elapsed_time);
         ui.separator();
     }
 }
 
-fn time_manager(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, elapsed_time: f64) {
+fn time_manager(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64) {
     let min_touch_size = 48.0;
     let min_touch_target = Vec2::splat(min_touch_size);
 
@@ -302,11 +285,11 @@ fn time_manager(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, 
         let popup = Popup::menu(&button).close_behavior(PopupCloseBehavior::CloseOnClickOutside);
         popup.show(|ui| {
             ui.set_max_width(200.0);
-            time_display(ui, device_pixel_ratio, sim_state);
+            time_display(ui, sim_state);
             ui.add_space(12.0);
             ui.separator();
             ui.add_space(12.0);
-            time_control(ui, device_pixel_ratio, sim_state, elapsed_time, true);
+            time_control(ui, sim_state, elapsed_time, true);
             ui.add_space(16.0);
         });
     });
@@ -321,7 +304,7 @@ fn time_manager(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState, 
     ui.label(text);
 }
 
-fn pause_button(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
+fn pause_button(ui: &mut Ui, sim_state: &mut SimState) {
     let min_touch_size = 48.0;
     let min_touch_target = Vec2::splat(min_touch_size);
 
@@ -356,7 +339,7 @@ fn pause_button(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
     });
 }
 
-fn time_display(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
+fn time_display(ui: &mut Ui, sim_state: &mut SimState) {
     let min_touch_size = 48.0;
     let display_size = Vec2::new(220.0, min_touch_size);
 
@@ -395,31 +378,19 @@ fn time_display(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) 
     });
 }
 
-fn time_control(
-    ui: &mut Ui,
-    device_pixel_ratio: f32,
-    sim_state: &mut SimState,
-    elapsed_time: f64,
-    column_mode: bool,
-) {
+fn time_control(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64, column_mode: bool) {
     ui.scope(|ui| {
-        time_slider(ui, device_pixel_ratio, sim_state, elapsed_time, column_mode);
-        time_drag_value(ui, device_pixel_ratio, sim_state);
+        time_slider(ui, sim_state, elapsed_time, column_mode);
+        time_drag_value(ui, sim_state);
         if column_mode {
-            time_unit_box_popup(ui, device_pixel_ratio, sim_state);
+            time_unit_box_popup(ui, sim_state);
         } else {
-            time_unit_box(ui, device_pixel_ratio, sim_state);
+            time_unit_box(ui, sim_state);
         }
     });
 }
 
-fn time_slider(
-    ui: &mut Ui,
-    device_pixel_ratio: f32,
-    sim_state: &mut SimState,
-    elapsed_time: f64,
-    column_mode: bool,
-) {
+fn time_slider(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64, column_mode: bool) {
     let hover_text = RichText::new(
         "Move the slider left to decelerate time.\n\
         Move the slider right to accelerate time.\n\
@@ -445,13 +416,11 @@ fn time_slider(
         sim_state.ui.time_slider_pos *= (-5.0 * elapsed_time / 1000.0).exp();
     }
 }
-fn time_drag_value(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
+fn time_drag_value(ui: &mut Ui, sim_state: &mut SimState) {
     sim_state.ui.time_speed_amount = sim_state.sim_speed / sim_state.ui.time_speed_unit.get_value();
     let prev_speed_amt = sim_state.ui.time_speed_amount;
 
-    let dv_instance = ui
-        .scope(|ui| time_drag_value_inner(ui, device_pixel_ratio, sim_state))
-        .inner;
+    let dv_instance = ui.scope(|ui| time_drag_value_inner(ui, sim_state)).inner;
 
     let hover_text = RichText::new(
         "Drag left to slow down time.\n\
@@ -473,11 +442,7 @@ fn time_drag_value(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimStat
             sim_state.sim_speed / sim_state.ui.time_speed_unit.get_value();
     }
 }
-fn time_drag_value_inner(
-    ui: &mut Ui,
-    device_pixel_ratio: f32,
-    sim_state: &mut SimState,
-) -> Response {
+fn time_drag_value_inner(ui: &mut Ui, sim_state: &mut SimState) -> Response {
     let dv_size = Vec2::new(96.0, 48.0);
     let style_name: Arc<str> = TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME.into();
     ui.style_mut().text_styles.insert(
@@ -498,7 +463,7 @@ fn time_drag_value_inner(
         .custom_formatter(fmt::format_dv_number);
     ui.add_sized(dv_size, drag_value)
 }
-fn time_unit_box(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
+fn time_unit_box(ui: &mut Ui, sim_state: &mut SimState) {
     let min_touch_len = 48.0;
     let unit_string = format!("{}/s", sim_state.ui.time_speed_unit);
 
@@ -515,18 +480,11 @@ fn time_unit_box(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState)
     ComboBox::from_id_salt(TIME_CONTROL_COMBO_BOX_SALT)
         .selected_text(unit_text)
         .height(f32::INFINITY)
-        .show_ui(ui, |ui| {
-            time_unit_box_inner(ui, device_pixel_ratio, sim_state, true)
-        })
+        .show_ui(ui, |ui| time_unit_box_inner(ui, sim_state, true))
         .response
         .on_hover_text(hover_text);
 }
-fn time_unit_box_inner(
-    ui: &mut Ui,
-    device_pixel_ratio: f32,
-    sim_state: &mut SimState,
-    per_second: bool,
-) {
+fn time_unit_box_inner(ui: &mut Ui, sim_state: &mut SimState, per_second: bool) {
     let min_touch_len = 48.0;
     let min_touch_vec = Vec2::splat(min_touch_len);
     let font = FontId::proportional(16.0);
@@ -557,7 +515,7 @@ fn time_unit_box_inner(
         sim_state.ui.time_speed_unit_auto = !sim_state.ui.time_speed_unit_auto;
     }
 }
-fn time_unit_box_popup(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut SimState) {
+fn time_unit_box_popup(ui: &mut Ui, sim_state: &mut SimState) {
     let font = FontId::proportional(16.0);
 
     let unit = sim_state.ui.time_speed_unit;
@@ -572,6 +530,6 @@ fn time_unit_box_popup(ui: &mut Ui, device_pixel_ratio: f32, sim_state: &mut Sim
         .font(font.clone());
 
     ui.menu_button(title_text, |ui| {
-        time_unit_box_inner(ui, device_pixel_ratio, sim_state, false);
+        time_unit_box_inner(ui, sim_state, false);
     });
 }
