@@ -3,9 +3,14 @@
 <html>
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link data-trunk rel="scss" href="assets/index.scss" />
     <script data-trunk src="assets/watchdog.js" type="module"></script>
     <link data-trunk rel="rust" data-target-name="keplerian_sim_demo" />
+    <link data-trunk rel="icon" href="assets/favicon.svg" />
+    <link data-trunk rel="copy-file" href="assets/banner.svg" />
+    <link data-trunk rel="copy-file" href="assets/loading.svg" />
     <noscript>
         <style>
             .hide-noscript {
@@ -17,15 +22,49 @@
 
 <body>
     <noscript>
+        <dialog open>
+            <h1>
+                This demo requires JavaScript to run.
+            </h1>
+            <p>
+                For more information, refer to
+                <a href="https://www.enable-javascript.com/" target="_blank"
+                    rel="noopener noreferrer">https://www.enable-javascript.com/</a>
+            </p>
+            <details>
+                <summary>See minimum requirements</summary>
+                <p>
+                    We require a somewhat modern browser with these following features:
+                <ul>
+                    <li>JavaScript support</li>
+                    <li>WebGL support</li>
+                    <li>WebAssembly support</li>
+                </ul>
+                </p>
+            </details>
+        </dialog>
+    </noscript>
+    <dialog open class="hide-noscript loading">
         <h1>
-            This demo requires JavaScript to run.
+            <img class="banner" src="banner.svg" alt="Keplerian Orbital Mechanics">
         </h1>
-        <p>
-            For more information, refer to
-            <a href="https://www.enable-javascript.com/" target="_blank"
-                rel="noopener noreferrer">https://www.enable-javascript.com/</a>
+        <div class="row">
+            <img class="loading" src="loading.svg" alt="">
+            <p class="loading">
+                Loading demo... <br>
+                Please wait.
+            </p>
+        </div>
+        <p class="load-delay-1">
+            Loading is taking longer than expected.
         </p>
-        <details>
+        <p class="load-delay-2">
+            If you're seeing this message, the demo has not loaded yet.
+            This may be caused by spurious network conditions, a slow computer, incompatibility,
+            or a bug. <br>
+            Consider checking the console (<kbd>F12</kbd> or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd>) for errors.
+        </p>
+        <details class="load-delay-2">
             <summary>See minimum requirements</summary>
             <p>
                 We require a somewhat modern browser with these following features:
@@ -36,30 +75,37 @@
             </ul>
             </p>
         </details>
-    </noscript>
-    <p class="hide-noscript">
-        Loading demo...
-    </p>
-    <p class="hide-noscript load-delay-1">
-        Loading is taking longer than expected.
-    </p>
-    <p class="hide-noscript load-delay-2">
-        If you're seeing this message, the demo has not loaded yet.
-        This may be caused by spurious network conditions, a slow computer, incompatibility,
-        or a bug. <br>
-        Consider checking the console for errors.
-    </p>
-    <details class="hide-noscript load-delay-2">
-        <summary>See minimum requirements</summary>
-        <p>
-            We require a somewhat modern browser with these following features:
-        <ul>
-            <li>JavaScript support</li>
-            <li>WebGL support</li>
-            <li>WebAssembly support</li>
-        </ul>
-        </p>
-    </details>
+        <details class="load-delay-2">
+            <summary>Opening the console</summary>
+            <p>
+                You can open the console with the following keybinds:
+            </p>
+            <ul>
+                <li>
+                    <kbd>F12</kbd>
+                </li>
+                <li>
+                    <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>K</kbd>
+                </li>
+            </ul>
+            <p>
+                On Firefox, you can try to see in the "Network" tab if
+                a request failed. This is similar on Chrome. <br>
+                If a request failed, try refreshing the page or trying again later. <br>
+                If you see an error in the console tab, then that might indicate a
+                problem in the software itself. <br>
+                You can report it to the developer by submitting a bug report issue:
+                <a href="https://github.com/Not-A-Normal-Robot/keplerian-sim-demo/issues/new" target="_blank"
+                    rel="noreferrer noopener">
+                    https://github.com/Not-A-Normal-Robot/keplerian-sim-demo/issues/new
+                </a>
+            </p>
+            <p>
+                Opening the console is not very easy in mobile and is out of the scope
+                of this guide.
+            </p>
+        </details>
+    </dialog>
 </body>
 
 </html>

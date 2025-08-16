@@ -184,60 +184,6 @@ impl Program {
     }
 
     pub(crate) fn run(mut self) {
-        // We want two orbits: one with an eccentricity of 0,
-        // and one with an orbital period 3x that.
-        // T is proportional to sqrt(a^3 / GM).
-        // 2pi sqrt(a_1^3 / GM) = T1
-        // 3 2pi sqrt(a_2^3 / GM) = T2
-        // 3 sqrt(a_1^3 / GM) = sqrt(a_2^3 / GM)
-        // sqrt(3)^2 sqrt(a_1^3 / GM) = sqrt(a_2^3 / GM)
-        // sqrt(3^2) sqrt(a_1^3 / GM) = sqrt(a_2^3 / GM)
-        // sqrt(9 a_1^3 / GM) = sqrt(a_2^3 / GM)
-        // 9 a_1^3 = a_2^3
-        // cbrt(9 a_1^3) = cbrt(a_2^3)
-        // cbrt(9) a_1 = a_2
-        // So the second orbit should have a semi-major axis
-        // cbrt(9) times of that of the first
-
-        // SMA equation: a = r_p / (1 - e)
-        // r_p = 1
-        // a = cbrt(9)
-        // cbrt(9) = 1 / (1 - e)
-        // 1 / cbrt(9) = 1 - e
-        // e \approx 0.51925014323086387256
-
-        let o1 = Orbit::new(
-            0.0,
-            1.0,
-            0.0,
-            135.0f64.to_radians(),
-            0.0,
-            std::f64::consts::PI,
-            1.0,
-        );
-        println!(
-            "a: {}, b: {}, l: {}",
-            o1.get_semi_major_axis(),
-            o1.get_semi_minor_axis(),
-            o1.get_linear_eccentricity()
-        );
-        let o2 = Orbit::new(
-            0.51925014323086387256,
-            1.0,
-            0.0,
-            135.0f64.to_radians(),
-            0.0,
-            0.0,
-            1.0,
-        );
-        println!(
-            "a: {}, b: {}, l: {}",
-            o2.get_semi_major_axis(),
-            o2.get_semi_minor_axis(),
-            o2.get_linear_eccentricity()
-        );
-        return;
-
         if let Some(window) = self.window.take() {
             window.render_loop(move |frame_input| self.tick(frame_input));
         }

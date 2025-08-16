@@ -317,8 +317,11 @@
         }
     </style>
     <circle cx="0" cy="0" r="0.5" fill="yellow" />
-    <circle class="a" cx="0" cy="0" r="0.1" fill="#f22" />
+    <circle class="a" cx="0" cy="0" r="0.1" fill="#f74c00" />
     <circle class="b" r="0.1" fill="#44f" />
-    <circle r="1" fill="none" stroke="white" stroke-width="0.02" stroke-opacity="0.4" stroke-dasharray="0.1012" stroke-linecap="round"/>
-    <!-- <ellipse cx="1.080083823051904" rx="4.16016764610380822906" ry="3.5553720739769604" fill="none" stroke="white" stroke-width="0.02" stroke-opacity="0.4"/> -->
+    <circle r="1" fill="none" stroke="#f74c00" stroke-width="0.02" stroke-opacity="0.6" stroke-dasharray="0.1012"
+        stroke-linecap="round" />
+    <ellipse cx="1.080083823051904" rx="2.080083823051904" ry="1.7776860369884802" fill="none" stroke="#77f"
+        stroke-width="0.02" stroke-opacity="0.6" transform="rotate(-45)" stroke-linecap="round" stroke-dasharray="0.101"
+        stroke-dashoffset="8" />
 </svg>
