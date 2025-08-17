@@ -135,7 +135,7 @@ impl Program {
                     name: "Root".into(),
                     mass: 1e15,
                     radius: 100.0,
-                    color: Srgba::BLUE,
+                    color: Srgba::new_opaque(255, 255, 255),
                     orbit: None,
                 },
                 None,
@@ -144,11 +144,23 @@ impl Program {
         universe
             .add_body(
                 Body {
-                    name: "Child".into(),
+                    name: "Alpha".into(),
                     mass: 1.0,
                     radius: 30.0,
-                    color: Srgba::new_opaque(196, 196, 196),
-                    orbit: Some(Orbit::new(0.7, 200.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
+                    color: Srgba::new_opaque(255, 196, 196),
+                    orbit: Some(Orbit::new(0.0, 200.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
+                },
+                Some(root_id),
+            )
+            .unwrap();
+        universe
+            .add_body(
+                Body {
+                    name: "Beta".into(),
+                    mass: 1.0,
+                    radius: 30.0,
+                    color: Srgba::new_opaque(196, 196, 255),
+                    orbit: Some(Orbit::new(0.7, 300.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
                 },
                 Some(root_id),
             )
