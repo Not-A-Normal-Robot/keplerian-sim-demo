@@ -86,7 +86,7 @@ impl Program {
         )
     }
     fn new_control() -> CameraControl {
-        CameraControl::new(Vec3::new(0.0, 0.0, 0.0), 100.0, 1e10)
+        CameraControl::new(Vec3::new(0.0, 0.0, 0.0), 100.0, 1e10, 7000.0)
     }
     fn new_dir_light(context: &Context) -> DirectionalLight {
         DirectionalLight::new(&context, 1.0, Srgba::WHITE, Vec3::new(0.0, -0.5, -0.5))
@@ -229,8 +229,11 @@ impl Program {
             .get_body(self.sim_state.focused_body())
             .map(|body| 1.5 * body.radius)
             .unwrap_or(1e-3) as f32;
-        self.control
-            .handle_events(&mut self.camera, &mut frame_input.events);
+        self.control.handle_events(
+            &mut self.camera,
+            &mut frame_input.events,
+            frame_input.elapsed_time as f32,
+        );
 
         frame_input
             .screen()
