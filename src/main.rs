@@ -1,7 +1,7 @@
 use keplerian_sim::Orbit;
 use three_d::{
-    AmbientLight, Axes, Camera, ClearState, Context, CpuTexture, Degrees, DirectionalLight,
-    FrameInput, FrameOutput, GUI, Srgba, Texture2DRef, TextureData, Vec3, Viewport,
+    AmbientLight, Camera, ClearState, Context, CpuTexture, Degrees, DirectionalLight, FrameInput,
+    FrameOutput, GUI, Srgba, Texture2DRef, TextureData, Vec3, Viewport,
     window::{Window, WindowSettings},
 };
 
