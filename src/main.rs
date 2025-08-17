@@ -214,16 +214,12 @@ impl Program {
         self.control
             .handle_events(&mut self.camera, &mut frame_input.events);
 
-        let axes = Axes::new(&self.context, 4.0, 200.0);
-
         frame_input
             .screen()
             .clear(ClearState::color_and_depth(0.0, 0.0, 0.0, 1.0, 100000.0))
             .render(
                 &self.camera,
-                (&self.generate_scene(&position_map))
-                    .into_iter()
-                    .chain(axes.into_iter()),
+                &self.generate_scene(&position_map),
                 &[&self.top_light, &self.ambient_light],
             )
             .write(|| self.gui.render())
