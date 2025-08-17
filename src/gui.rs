@@ -17,7 +17,7 @@ use three_d::{
     egui::{
         self, Area, Button, Color32, ComboBox, Context as EguiContext, CornerRadius, DragValue,
         FontId, Frame, Id, Image, ImageButton, Label, Margin, Popup, PopupCloseBehavior, Response,
-        RichText, ScrollArea, Slider, Stroke, TopBottomPanel, Ui, Vec2,
+        RichText, ScrollArea, Slider, Stroke, TopBottomPanel, Ui, Vec2, Window,
     },
 };
 
@@ -220,6 +220,8 @@ fn handle_ui(
 ) {
     fps_area(ctx, &sim_state.ui.frame_data);
     bottom_panel(ctx, sim_state, elapsed_time, position_map);
+    body_tree_window(ctx, sim_state);
+    body_edit_window(ctx, sim_state);
 }
 
 fn fps_area(ctx: &EguiContext, frame_data: &FrameData) {
@@ -585,5 +587,17 @@ fn time_unit_box_popup(ui: &mut Ui, sim_state: &mut SimState) {
 
     ui.menu_button(title_text, |ui| {
         time_unit_box_inner(ui, sim_state, false);
+    });
+}
+
+fn body_tree_window(ctx: &EguiContext, _sim_state: &mut SimState) {
+    Window::new("Celestial Bodies").show(ctx, |ui| {
+        ui.label("This window is not implemented yet.");
+    });
+}
+
+fn body_edit_window(ctx: &EguiContext, _sim_state: &mut SimState) {
+    Window::new("Celestial Editor").show(ctx, |ui| {
+        ui.label("This window is not implemented yet.");
     });
 }
