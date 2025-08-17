@@ -223,6 +223,12 @@ impl Program {
         );
 
         self.camera.set_viewport(frame_input.viewport);
+        self.control.min_distance = self
+            .sim_state
+            .universe
+            .get_body(self.sim_state.focused_body())
+            .map(|body| 1.5 * body.radius)
+            .unwrap_or(1e-3) as f32;
         self.control
             .handle_events(&mut self.camera, &mut frame_input.events);
 

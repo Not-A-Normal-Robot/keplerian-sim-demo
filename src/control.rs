@@ -29,15 +29,14 @@ impl CameraControl {
     }
 
     /// Handles the events. Must be called each frame.
-    pub fn handle_events(&self, camera: &mut Camera, events: &mut [Event]) -> bool {
-        let mut change = false;
+    pub fn handle_events(&self, camera: &mut Camera, events: &mut [Event]) {
         for event in events.iter_mut() {
-            self.handle_event(camera, event, &mut change);
+            self.handle_event(camera, event);
         }
-        change
+        self.reclamp(camera);
     }
 
-    fn handle_event(&self, camera: &mut Camera, event: &mut Event, change: &mut bool) {
+    fn handle_event(&self, camera: &mut Camera, event: &mut Event) {
         match event {
             Event::MouseMotion {
                 delta,
@@ -64,7 +63,6 @@ impl CameraControl {
                     let up = camera.up();
                     camera.set_view(pos, self.target, up);
                     *handled = true;
-                    *change = true;
                 }
             }
             Event::MouseWheel { delta, handled, .. } => {
@@ -88,7 +86,6 @@ impl CameraControl {
 
                 self.zoom(camera, delta);
                 *handled = true;
-                *change = true;
             }
             Event::PinchGesture { delta, handled, .. } => {
                 // This doesn't get run on mobile for some reason
@@ -97,7 +94,6 @@ impl CameraControl {
                 }
                 self.zoom(camera, *delta);
                 *handled = true;
-                *change = true;
             }
             _ => {}
         }
@@ -108,6 +104,16 @@ impl CameraControl {
         let new_distance = (distance * delta.exp()).clamp(self.min_distance, self.max_distance);
         let up = camera.up();
         camera.set_view(view * -new_distance, self.target, up);
+    }
+    fn reclamp(&self, camera: &mut Camera) {
+        let view = camera.view_direction();
+        let distance = self.target.distance(camera.position());
+        let up = camera.up();
+        if distance < self.min_distance {
+            camera.set_view(view * -self.min_distance, self.target, up);
+        } else if distance > self.max_distance {
+            camera.set_view(view * -self.max_distance, self.target, up);
+        }
     }
 }
 
