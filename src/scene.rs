@@ -171,8 +171,10 @@ fn add_body_instances(
 
 impl Program {
     pub(crate) fn generate_scene(&self, position_map: &HashMap<Id, DVec3>) -> Scene {
-        let camera_offset =
-            *position_map.get(&self.focused_body).unwrap_or(&DVec3::ZERO) + self.focus_offset;
+        let camera_offset = *position_map
+            .get(&self.sim_state.focused_body())
+            .unwrap_or(&DVec3::ZERO)
+            + self.sim_state.focus_offset;
 
         let camera_pos = self.camera.position();
         let camera_pos = DVec3::new(

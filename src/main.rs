@@ -1,4 +1,3 @@
-use glam::DVec3;
 use keplerian_sim::Orbit;
 use three_d::{
     AmbientLight, Axes, Camera, ClearState, Context, CpuTexture, Degrees, DirectionalLight,
@@ -46,8 +45,6 @@ pub(crate) struct Program {
     context: Context,
     camera: Camera,
     control: CameraControl,
-    focused_body: universe::Id,
-    focus_offset: DVec3,
     gui: GUI,
 
     top_light: DirectionalLight,
@@ -179,8 +176,6 @@ impl Program {
             context,
             camera,
             control,
-            focused_body: 1,
-            focus_offset: DVec3::ZERO,
             gui,
             top_light,
             ambient_light,
@@ -201,7 +196,7 @@ impl Program {
                 .universe
                 .tick(self.sim_state.sim_speed * frame_input.elapsed_time / 1000.0);
         }
-        self.focus_offset *= (-5.0 * frame_input.elapsed_time / 1000.0).exp();
+        self.sim_state.focus_offset *= (-0.025 * frame_input.elapsed_time).exp();
         let position_map = self.sim_state.universe.get_all_body_positions();
 
         gui::update(
@@ -212,6 +207,7 @@ impl Program {
             frame_input.viewport,
             frame_input.device_pixel_ratio,
             frame_input.elapsed_time,
+            &position_map,
         );
 
         self.camera.set_viewport(frame_input.viewport);

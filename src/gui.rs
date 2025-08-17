@@ -1,12 +1,15 @@
 use std::{
     cmp::Reverse,
-    collections::{BinaryHeap, VecDeque},
+    collections::{BinaryHeap, HashMap, VecDeque},
     sync::{Arc, LazyLock},
 };
 
-use super::assets;
-use super::universe::Universe;
+use super::{
+    assets,
+    universe::{self, Universe},
+};
 use float_pretty_print::PrettyPrintFloat;
+use glam::DVec3;
 use ordered_float::NotNan;
 use strum::IntoEnumIterator;
 use three_d::{
@@ -122,6 +125,8 @@ pub(crate) struct SimState {
     pub universe: Universe,
     pub sim_speed: f64,
     pub running: bool,
+    focused_body: universe::Id,
+    pub focus_offset: DVec3,
     ui: UiState,
 }
 
@@ -132,6 +137,30 @@ impl SimState {
             ..Default::default()
         }
     }
+    pub(crate) fn switch_focus(
+        &mut self,
+        focus_body_id: universe::Id,
+        position_map: &HashMap<universe::Id, DVec3>,
+    ) {
+        // old_position → old_focus
+        //            \      ↓
+        //             \new_focus
+
+        let old_focus = *position_map.get(&self.focused_body).unwrap_or(&DVec3::ZERO);
+        let old_position = old_focus + self.focus_offset;
+        let new_focus = *position_map.get(&focus_body_id).unwrap_or(&DVec3::ZERO);
+        let new_offset = old_position - new_focus;
+        self.focused_body = focus_body_id;
+        self.focus_offset = if new_offset.is_nan() {
+            DVec3::ZERO
+        } else {
+            new_offset
+        };
+    }
+    #[inline]
+    pub(crate) fn focused_body(&self) -> universe::Id {
+        self.focused_body
+    }
 }
 
 impl Default for SimState {
@@ -140,6 +169,8 @@ impl Default for SimState {
             universe: Universe::default(),
             sim_speed: 1.0,
             running: true,
+            focused_body: 0,
+            focus_offset: DVec3::ZERO,
             ui: UiState::default(),
         }
     }
@@ -165,6 +196,7 @@ pub(super) fn update(
     viewport: Viewport,
     device_pixel_ratio: f32,
     elapsed_time: f64,
+    position_map: &HashMap<universe::Id, DVec3>,
 ) -> bool {
     if let Ok(frame_duration) = NotNan::new(elapsed_time / 1000.0)
         && frame_duration.is_finite()
@@ -176,13 +208,18 @@ pub(super) fn update(
         accumulated_time_ms,
         viewport,
         device_pixel_ratio,
-        |ctx| handle_ui(ctx, elapsed_time, sim_state),
+        |ctx| handle_ui(ctx, elapsed_time, sim_state, position_map),
     )
 }
 
-fn handle_ui(ctx: &EguiContext, elapsed_time: f64, sim_state: &mut SimState) {
+fn handle_ui(
+    ctx: &EguiContext,
+    elapsed_time: f64,
+    sim_state: &mut SimState,
+    position_map: &HashMap<universe::Id, DVec3>,
+) {
     fps_area(ctx, &sim_state.ui.frame_data);
-    bottom_panel(ctx, sim_state, elapsed_time);
+    bottom_panel(ctx, sim_state, elapsed_time, position_map);
 }
 
 fn fps_area(ctx: &EguiContext, frame_data: &FrameData) {
@@ -215,7 +252,12 @@ fn fps_inner(ui: &mut Ui, frame_data: &FrameData) {
     ui.add(label);
 }
 
-fn bottom_panel(ctx: &EguiContext, sim_state: &mut SimState, elapsed_time: f64) {
+fn bottom_panel(
+    ctx: &EguiContext,
+    sim_state: &mut SimState,
+    elapsed_time: f64,
+    position_map: &HashMap<universe::Id, DVec3>,
+) {
     let height = 64.0;
     // TODO: Bottom panel expansion using show_animated
     TopBottomPanel::bottom(*BOTTOM_PANEL_ID)
@@ -233,12 +275,19 @@ fn bottom_panel(ctx: &EguiContext, sim_state: &mut SimState, elapsed_time: f64) 
             ScrollArea::horizontal()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                    ui.horizontal(|ui| bottom_panel_contents(ui, sim_state, elapsed_time))
+                    ui.horizontal(|ui| {
+                        bottom_panel_contents(ui, sim_state, elapsed_time, position_map)
+                    })
                 })
         });
 }
 
-fn bottom_panel_contents(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64) {
+fn bottom_panel_contents(
+    ui: &mut Ui,
+    sim_state: &mut SimState,
+    elapsed_time: f64,
+    position_map: &HashMap<universe::Id, DVec3>,
+) {
     ui.set_height(48.0);
     ui.add_space(16.0);
     pause_button(ui, sim_state);
@@ -255,6 +304,12 @@ fn bottom_panel_contents(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f6
     } else {
         time_manager(ui, sim_state, elapsed_time);
         ui.separator();
+    }
+
+    // HACK: Replace with a better solution later
+    if ui.button("focus another").clicked() {
+        let focused_id = sim_state.focused_body();
+        sim_state.switch_focus(if focused_id == 0 { 1 } else { 0 }, position_map);
     }
 }
 
