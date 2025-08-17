@@ -29,6 +29,10 @@ pub const LOD_SUBDIVS: [u32; LOD_LEVEL_COUNT] = [32, 24, 16, 12, 9, 7, 5, 3];
 pub const LOD_CUTOFFS: [f64; LOD_LEVEL_COUNT] =
     [0.25, 0.125, 0.062, 0.031, 0.015, 0.007, 0.002, 0.0005];
 
+/// The minimum camera radial size to consider rendering an orbit.
+/// If an orbit is smaller than this, it is ignored.
+pub const MIN_ORBIT_RADIAL_SIZE: f64 = 0.007;
+
 const fn get_lod_type(radial_size: f64) -> Option<usize> {
     let mut i = 0;
     while i < LOD_LEVEL_COUNT {
@@ -169,15 +173,24 @@ impl Program {
     pub(crate) fn generate_scene(&self, position_map: &HashMap<Id, DVec3>) -> Scene {
         let camera_offset =
             *position_map.get(&self.focused_body).unwrap_or(&DVec3::ZERO) + self.focus_offset;
+
+        let camera_pos = self.camera.position();
+        let camera_pos = DVec3::new(
+            camera_pos.x as f64,
+            camera_pos.y as f64,
+            camera_pos.z as f64,
+        );
+
         Scene {
-            bodies: self.generate_body_tris(camera_offset, position_map),
-            lines: self.generate_orbit_lines(camera_offset, position_map),
+            bodies: self.generate_body_tris(camera_offset, camera_pos, position_map),
+            lines: self.generate_orbit_lines(camera_offset, camera_pos, position_map),
         }
     }
 
     fn generate_body_tris(
         &self,
         camera_offset: DVec3,
+        camera_pos: DVec3,
         position_map: &HashMap<u64, DVec3>,
     ) -> [Gm<InstancedMesh, PhysicalMaterial>; LOD_LEVEL_COUNT] {
         let mut instances_arr: [Instances; LOD_LEVEL_COUNT] = core::array::from_fn(|_| Instances {
@@ -187,12 +200,6 @@ impl Program {
         });
 
         let body_map = self.sim_state.universe.get_bodies();
-        let camera_pos = self.camera.position();
-        let camera_pos = DVec3::new(
-            camera_pos.x as f64,
-            camera_pos.y as f64,
-            camera_pos.z as f64,
-        );
 
         add_body_instances(
             body_map,
@@ -224,6 +231,7 @@ impl Program {
     fn generate_orbit_lines(
         &self,
         camera_offset: DVec3,
+        camera_pos: DVec3,
         position_map: &HashMap<u64, DVec3>,
     ) -> Box<[Gm<AutoscalingSprites, ColorMaterial>]> {
         let circle_tex = &self.circle_tex;
@@ -237,6 +245,7 @@ impl Program {
                     &self.context,
                     body_tuple,
                     camera_offset,
+                    camera_pos,
                     self.camera.view_direction(),
                     position_map,
                     Some(circle_tex.clone()),
@@ -250,6 +259,7 @@ impl Program {
         context: &Context,
         body_tuple: (&Id, &BodyWrapper),
         camera_offset: DVec3,
+        camera_pos: DVec3,
         view_direction: Vec3,
         position_map: &HashMap<u64, DVec3>,
         texture: Option<Texture2DRef>,
@@ -270,6 +280,14 @@ impl Program {
 
         let offset = parent_pos - camera_offset;
 
+        let semi_major_axis = orbit.get_semi_major_axis();
+        let distance_to_camera = (offset - camera_pos).length();
+        let radial_size = get_radial_size(semi_major_axis, distance_to_camera);
+        if radial_size < MIN_ORBIT_RADIAL_SIZE {
+            // Too small to see, skip
+            return None;
+        }
+
         let material = ColorMaterial {
             color: body.color,
             texture,
@@ -278,8 +296,6 @@ impl Program {
                 blend: Blend::TRANSPARENCY,
                 ..Default::default()
             },
-            // Might want to change this if texture is partially
-            // transparent? Idk
             is_transparent: true,
         };
 
