@@ -2,14 +2,14 @@ use glam::DVec3;
 use keplerian_sim::Orbit;
 use three_d::{
     AmbientLight, Axes, Camera, ClearState, Context, CpuTexture, Degrees, DirectionalLight,
-    FrameInput, FrameOutput, GUI, OrbitControl, Srgba, Texture2DRef, TextureData, Vec3, Viewport,
+    FrameInput, FrameOutput, GUI, Srgba, Texture2DRef, TextureData, Vec3, Viewport,
     window::{Window, WindowSettings},
 };
 
 use gui::SimState;
 
 use self::body::Body;
-
+use self::control::CameraControl;
 use self::universe::Universe;
 #[path = "assets/mod.rs"]
 mod assets;
@@ -17,6 +17,8 @@ mod assets;
 mod autoscaling_sprites;
 #[path = "body.rs"]
 mod body;
+#[path = "control.rs"]
+mod control;
 #[path = "gui.rs"]
 mod gui;
 #[path = "scene.rs"]
@@ -43,7 +45,7 @@ pub(crate) struct Program {
     window: Option<Window>,
     context: Context,
     camera: Camera,
-    control: OrbitControl,
+    control: CameraControl,
     gui: GUI,
 
     top_light: DirectionalLight,
@@ -84,8 +86,8 @@ impl Program {
             5e16,
         )
     }
-    fn new_control() -> OrbitControl {
-        OrbitControl::new(Vec3::new(0.0, 0.0, 0.0), 100.0, 1e10)
+    fn new_control() -> CameraControl {
+        CameraControl::new(Vec3::new(0.0, 0.0, 0.0), 100.0, 1e10)
     }
     fn new_dir_light(context: &Context) -> DirectionalLight {
         DirectionalLight::new(&context, 1.0, Srgba::WHITE, Vec3::new(0.0, -0.5, -0.5))
