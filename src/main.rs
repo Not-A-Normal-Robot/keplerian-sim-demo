@@ -46,6 +46,8 @@ pub(crate) struct Program {
     context: Context,
     camera: Camera,
     control: CameraControl,
+    focused_body: universe::Id,
+    focus_offset: DVec3,
     gui: GUI,
 
     top_light: DirectionalLight,
@@ -177,6 +179,8 @@ impl Program {
             context,
             camera,
             control,
+            focused_body: 1,
+            focus_offset: DVec3::ZERO,
             gui,
             top_light,
             ambient_light,
@@ -197,6 +201,8 @@ impl Program {
                 .universe
                 .tick(self.sim_state.sim_speed * frame_input.elapsed_time / 1000.0);
         }
+        self.focus_offset *= (-5.0 * frame_input.elapsed_time / 1000.0).exp();
+        let position_map = self.sim_state.universe.get_all_body_positions();
 
         gui::update(
             &mut self.gui,
@@ -219,7 +225,7 @@ impl Program {
             .clear(ClearState::color_and_depth(0.0, 0.0, 0.0, 1.0, 100000.0))
             .render(
                 &self.camera,
-                (&self.generate_scene(DVec3::new(0.0, 0.0, 0.0)))
+                (&self.generate_scene(&position_map))
                     .into_iter()
                     .chain(axes.into_iter()),
                 &[&self.top_light, &self.ambient_light],

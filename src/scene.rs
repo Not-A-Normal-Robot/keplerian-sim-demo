@@ -157,11 +157,12 @@ fn add_body_instances(
 }
 
 impl Program {
-    pub(crate) fn generate_scene(&self, camera_offset: DVec3) -> Scene {
-        let position_map = self.sim_state.universe.get_all_body_positions();
+    pub(crate) fn generate_scene(&self, position_map: &HashMap<Id, DVec3>) -> Scene {
+        let camera_offset =
+            *position_map.get(&self.focused_body).unwrap_or(&DVec3::ZERO) + self.focus_offset;
         Scene {
-            bodies: self.generate_body_tris(camera_offset, &position_map),
-            lines: self.generate_orbit_lines(camera_offset, &position_map),
+            bodies: self.generate_body_tris(camera_offset, position_map),
+            lines: self.generate_orbit_lines(camera_offset, position_map),
         }
     }
 
