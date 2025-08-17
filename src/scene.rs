@@ -19,7 +19,7 @@ pub const LOD_LEVEL_COUNT: usize = 8;
 /// Level of detail subdivisions for the celestial object(s).
 ///
 /// Smaller indices mean smaller distance which means higher detail.
-pub const LOD_SUBDIVS: [u32; LOD_LEVEL_COUNT] = [24, 16, 12, 9, 7, 5, 3, 2];
+pub const LOD_SUBDIVS: [u32; LOD_LEVEL_COUNT] = [32, 24, 16, 12, 9, 7, 5, 3];
 
 /// Level of detail cutoffs, in radians.
 ///
@@ -27,7 +27,7 @@ pub const LOD_SUBDIVS: [u32; LOD_LEVEL_COUNT] = [24, 16, 12, 9, 7, 5, 3, 2];
 /// then subdivision index `i` should be used. If theta is less
 /// than all the cutoffs, then the sphere should not be rendered at all.
 pub const LOD_CUTOFFS: [f64; LOD_LEVEL_COUNT] =
-    [1.0, 0.25, 0.125, 0.062, 0.031, 0.015, 0.007, 0.002];
+    [0.25, 0.125, 0.062, 0.031, 0.015, 0.007, 0.002, 0.0005];
 
 const fn get_lod_type(radial_size: f64) -> Option<usize> {
     let mut i = 0;
@@ -122,6 +122,7 @@ fn add_body_instance(
     id: &super::universe::Id,
     body_wrapper: &super::universe::BodyWrapper,
     camera_offset: DVec3,
+    camera_pos: DVec3,
     position_map: &HashMap<u64, DVec3>,
     instances_arr: &mut [Instances; LOD_LEVEL_COUNT],
 ) {
@@ -130,7 +131,7 @@ fn add_body_instance(
         Some(p) => p - camera_offset,
         None => return,
     };
-    let distance = position.length();
+    let distance = (position - camera_pos).length();
     let size = get_radial_size(body.radius, distance);
     let lod_group = match get_lod_type(size) {
         Some(l) => l,
@@ -148,11 +149,19 @@ fn add_body_instance(
 fn add_body_instances(
     body_map: &HashMap<Id, BodyWrapper>,
     camera_offset: DVec3,
+    camera_pos: DVec3,
     position_map: &HashMap<u64, DVec3>,
     instances_arr: &mut [Instances; LOD_LEVEL_COUNT],
 ) {
     for (id, body_wrapper) in body_map {
-        add_body_instance(id, body_wrapper, camera_offset, position_map, instances_arr);
+        add_body_instance(
+            id,
+            body_wrapper,
+            camera_offset,
+            camera_pos,
+            position_map,
+            instances_arr,
+        );
     }
 }
 
@@ -178,8 +187,20 @@ impl Program {
         });
 
         let body_map = self.sim_state.universe.get_bodies();
+        let camera_pos = self.camera.position();
+        let camera_pos = DVec3::new(
+            camera_pos.x as f64,
+            camera_pos.y as f64,
+            camera_pos.z as f64,
+        );
 
-        add_body_instances(body_map, camera_offset, position_map, &mut instances_arr);
+        add_body_instances(
+            body_map,
+            camera_offset,
+            camera_pos,
+            position_map,
+            &mut instances_arr,
+        );
 
         let mut material = PhysicalMaterial::new_opaque(&self.context, &CpuMaterial::default());
 
