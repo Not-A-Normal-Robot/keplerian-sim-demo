@@ -1,3 +1,4 @@
+// TODO: Factor out 48.0 as a const for MIN_TOUCH_TARGET_LEN
 use std::{
     cmp::Reverse,
     collections::{BinaryHeap, HashMap, VecDeque},
@@ -6,7 +7,7 @@ use std::{
 
 use super::{
     assets,
-    universe::{self, Universe},
+    universe::{Id as UniverseId, Universe},
 };
 use float_pretty_print::PrettyPrintFloat;
 use glam::DVec3;
@@ -15,10 +16,10 @@ use strum::IntoEnumIterator;
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
-        self, Area, Button, CollapsingHeader, Color32, ComboBox, Context as EguiContext,
-        CornerRadius, DragValue, FontId, Frame, Id, Image, ImageButton, Label, Margin, Popup,
-        PopupCloseBehavior, Response, RichText, ScrollArea, Slider, Stroke, TopBottomPanel, Ui,
-        Vec2, Window,
+        self, Area, Atom, AtomLayout, Button, Color32, ComboBox, Context as EguiContext,
+        CornerRadius, DragValue, FontId, Frame, Id as EguiId, Image, ImageButton, Label, Margin,
+        Popup, PopupCloseBehavior, Pos2, Response, RichText, ScrollArea, Slider, Stroke,
+        TopBottomPanel, Ui, Vec2, Window, collapsing_header::CollapsingState,
     },
 };
 
@@ -35,10 +36,13 @@ const TIME_CONTROL_COMBO_BOX_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"Solstice")).unwrap();
 const BODY_PREFIX_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"Planets!")).unwrap();
+const CIRCLE_ICON_SALT: std::num::NonZeroU64 =
+    std::num::NonZeroU64::new(u64::from_be_bytes(*b"Circles!")).unwrap();
 
-const FPS_AREA_ID: LazyLock<Id> = LazyLock::new(|| Id::new(FPS_AREA_SALT));
-const BOTTOM_PANEL_ID: LazyLock<Id> = LazyLock::new(|| Id::new(BOTTOM_PANEL_SALT));
-const BODY_PREFIX_ID: LazyLock<Id> = LazyLock::new(|| Id::new(BODY_PREFIX_SALT));
+const FPS_AREA_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(FPS_AREA_SALT));
+const BOTTOM_PANEL_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(BOTTOM_PANEL_SALT));
+const BODY_PREFIX_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(BODY_PREFIX_SALT));
+const CIRCLE_ICON_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(CIRCLE_ICON_SALT));
 const TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME: &'static str = "TSDVF";
 
 mod fmt {
@@ -126,7 +130,7 @@ pub(crate) struct SimState {
     pub universe: Universe,
     pub sim_speed: f64,
     pub running: bool,
-    focused_body: universe::Id,
+    focused_body: UniverseId,
     pub focus_offset: DVec3,
     ui: UiState,
 }
@@ -140,8 +144,8 @@ impl SimState {
     }
     pub(crate) fn switch_focus(
         &mut self,
-        focus_body_id: universe::Id,
-        position_map: &HashMap<universe::Id, DVec3>,
+        focus_body_id: UniverseId,
+        position_map: &HashMap<UniverseId, DVec3>,
     ) {
         // old_position → old_focus
         //            \      ↓
@@ -159,7 +163,7 @@ impl SimState {
         };
     }
     #[inline]
-    pub(crate) fn focused_body(&self) -> universe::Id {
+    pub(crate) fn focused_body(&self) -> UniverseId {
         self.focused_body
     }
 }
@@ -197,7 +201,7 @@ pub(super) fn update(
     viewport: Viewport,
     device_pixel_ratio: f32,
     elapsed_time: f64,
-    position_map: &HashMap<universe::Id, DVec3>,
+    position_map: &HashMap<UniverseId, DVec3>,
 ) -> bool {
     if let Ok(frame_duration) = NotNan::new(elapsed_time / 1000.0)
         && frame_duration.is_finite()
@@ -217,7 +221,7 @@ fn handle_ui(
     ctx: &EguiContext,
     elapsed_time: f64,
     sim_state: &mut SimState,
-    position_map: &HashMap<universe::Id, DVec3>,
+    position_map: &HashMap<UniverseId, DVec3>,
 ) {
     fps_area(ctx, &sim_state.ui.frame_data);
     bottom_panel(ctx, sim_state, elapsed_time);
@@ -573,16 +577,29 @@ fn time_unit_box_popup(ui: &mut Ui, sim_state: &mut SimState) {
     });
 }
 
-fn get_body_egui_id(universe_id: universe::Id) -> Id {
+fn get_body_egui_id(universe_id: UniverseId) -> EguiId {
     BODY_PREFIX_ID.with(universe_id)
 }
 
+const BODY_TREE_ICON_SIZE: f32 = 16.0;
 fn body_tree_window(
     ctx: &EguiContext,
     sim_state: &mut SimState,
-    position_map: &HashMap<universe::Id, DVec3>,
+    position_map: &HashMap<UniverseId, DVec3>,
 ) {
-    let roots: Box<[universe::Id]> = sim_state
+    Window::new("Celestial Bodies").show(ctx, |ui| {
+        ui.scope(|ui| {
+            body_tree_window_contents(ui, sim_state, position_map);
+        })
+    });
+}
+
+fn body_tree_window_contents(
+    ui: &mut Ui,
+    sim_state: &mut SimState,
+    position_map: &HashMap<UniverseId, DVec3>,
+) {
+    let roots: Box<[UniverseId]> = sim_state
         .universe
         .get_bodies()
         .iter()
@@ -591,71 +608,138 @@ fn body_tree_window(
             None => Some(id),
         })
         .collect();
-    Window::new("Celestial Bodies").show(ctx, |ui| {
-        // ui.label("This window is not implemented yet.");
-        for id in roots {
-            body_tree_node(ui, sim_state, id, position_map);
-        }
-    });
+
+    for universe_id in roots {
+        body_tree_node(ui, sim_state, universe_id, position_map);
+    }
 }
 
 fn body_tree_node(
     ui: &mut Ui,
     sim_state: &mut SimState,
-    id: universe::Id,
-    position_map: &HashMap<universe::Id, DVec3>,
+    universe_id: UniverseId,
+    position_map: &HashMap<UniverseId, DVec3>,
 ) {
-    let satellites = match sim_state.universe.get_bodies().get(&id) {
+    let satellites = match sim_state.universe.get_bodies().get(&universe_id) {
         Some(wrapper) => &wrapper.relations.satellites,
         None => return,
     };
 
     if satellites.is_empty() {
-        body_tree_leaf_node(ui, sim_state, id, position_map);
+        ui.indent((*BODY_PREFIX_ID, universe_id), |ui| {
+            body_tree_leaf_node(ui, sim_state, universe_id, position_map);
+        });
     } else {
-        body_tree_parent_node(ui, sim_state, id, position_map);
+        body_tree_parent_node(ui, sim_state, universe_id, position_map);
     }
 }
 
 fn body_tree_parent_node(
     ui: &mut Ui,
     sim_state: &mut SimState,
-    id: universe::Id,
-    position_map: &HashMap<universe::Id, DVec3>,
+    universe_id: UniverseId,
+    position_map: &HashMap<UniverseId, DVec3>,
 ) {
-    let wrapper = match sim_state.universe.get_bodies().get(&id) {
+    let wrapper = match sim_state.universe.get_bodies().get(&universe_id) {
         Some(wrapper) => wrapper,
         None => return,
     };
     let satellites = wrapper.relations.satellites.clone();
 
-    let response = CollapsingHeader::new(&wrapper.body.name)
-        .id_salt(get_body_egui_id(id))
-        .show(ui, |ui| {
+    let selected = sim_state.focused_body() == universe_id;
+    let egui_id = get_body_egui_id(universe_id);
+    let res_tuple = CollapsingState::load_with_default_open(ui.ctx(), egui_id, true)
+        .show_header(ui, |ui| {
+            const RADIUS: f32 = BODY_TREE_ICON_SIZE / 2.0;
+            let center = Pos2::from((RADIUS, RADIUS));
+            let fill_color = wrapper.body.color;
+            let fill_color = Color32::from_rgba_unmultiplied(
+                fill_color.r,
+                fill_color.g,
+                fill_color.b,
+                fill_color.a,
+            );
+
+            let circle_atom =
+                Atom::custom(*CIRCLE_ICON_ID, (BODY_TREE_ICON_SIZE, BODY_TREE_ICON_SIZE));
+
+            let text = RichText::new(&wrapper.body.name).color(Color32::WHITE);
+            let text = if selected { text.underline() } else { text };
+
+            let mut layout = AtomLayout::new(circle_atom);
+            layout.push_right(text);
+
+            let res = Button::selectable(selected, layout.atoms)
+                .right_text("")
+                .min_size(Vec2::new(ui.available_width(), BODY_TREE_ICON_SIZE))
+                .atom_ui(ui);
+
+            if let Some(rect) = res.rect(*CIRCLE_ICON_ID) {
+                ui.painter().with_clip_rect(rect).circle_filled(
+                    center + rect.min.to_vec2(),
+                    RADIUS,
+                    fill_color,
+                );
+            }
+
+            res.response
+        })
+        .body(|ui| {
             for id in satellites {
-                body_tree_node(ui, sim_state, id, position_map);
+                body_tree_node(ui, sim_state, id, position_map)
             }
         });
+    let (_button_res, header_res, _body_res) = res_tuple;
 
-    if response.header_response.clicked() {
-        sim_state.switch_focus(id, position_map);
+    if header_res.inner.clicked() {
+        sim_state.switch_focus(universe_id, position_map);
     }
 }
 
 fn body_tree_leaf_node(
     ui: &mut Ui,
     sim_state: &mut SimState,
-    id: universe::Id,
-    position_map: &HashMap<universe::Id, DVec3>,
+    universe_id: UniverseId,
+    position_map: &HashMap<UniverseId, DVec3>,
 ) {
-    let body = match sim_state.universe.get_body(id) {
+    let body = match sim_state.universe.get_body(universe_id) {
         Some(body) => body,
         None => return,
     };
 
-    let button = Button::selectable(sim_state.focused_body == id, &body.name);
-    if ui.add(button).clicked() {
-        sim_state.switch_focus(id, &position_map);
+    let selected = sim_state.focused_body == universe_id;
+
+    const RADIUS: f32 = BODY_TREE_ICON_SIZE / 2.0;
+    let center = Pos2::from((RADIUS, RADIUS));
+    let fill_color = body.color;
+    let fill_color =
+        Color32::from_rgba_unmultiplied(fill_color.r, fill_color.g, fill_color.b, fill_color.a);
+
+    let circle_atom = Atom::custom(*CIRCLE_ICON_ID, (BODY_TREE_ICON_SIZE, BODY_TREE_ICON_SIZE));
+
+    let text = RichText::new(&body.name).color(Color32::WHITE);
+    let text = if selected { text.underline() } else { text };
+
+    let mut layout = AtomLayout::new(circle_atom);
+    layout.push_right(text);
+
+    let res = Button::selectable(selected, layout.atoms)
+        .right_text("")
+        .min_size(Vec2::new(ui.available_width(), BODY_TREE_ICON_SIZE))
+        .atom_ui(ui);
+
+    if let Some(rect) = res.rect(*CIRCLE_ICON_ID) {
+        ui.painter().with_clip_rect(rect).circle_filled(
+            center + rect.min.to_vec2(),
+            RADIUS,
+            fill_color,
+        );
+    }
+
+    let response = res.response;
+
+    if response.clicked() {
+        sim_state.switch_focus(universe_id, &position_map);
     }
 }
 
