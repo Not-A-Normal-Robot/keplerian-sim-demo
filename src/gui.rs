@@ -15,9 +15,10 @@ use strum::IntoEnumIterator;
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
-        self, Area, Button, Color32, ComboBox, Context as EguiContext, CornerRadius, DragValue,
-        FontId, Frame, Id, Image, ImageButton, Label, Margin, Popup, PopupCloseBehavior, Response,
-        RichText, ScrollArea, Slider, Stroke, TopBottomPanel, Ui, Vec2, Window,
+        self, Area, Button, CollapsingHeader, Color32, ComboBox, Context as EguiContext,
+        CornerRadius, DragValue, FontId, Frame, Id, Image, ImageButton, Label, Margin, Popup,
+        PopupCloseBehavior, Response, RichText, ScrollArea, Slider, Stroke, TopBottomPanel, Ui,
+        Vec2, Window,
     },
 };
 
@@ -32,12 +33,12 @@ const BOTTOM_PANEL_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"BluRigel")).unwrap();
 const TIME_CONTROL_COMBO_BOX_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"Solstice")).unwrap();
-const _UNUSED_SALT: std::num::NonZeroU64 =
-    std::num::NonZeroU64::new(u64::from_be_bytes(*b"TimeIsUp")).unwrap();
+const BODY_PREFIX_SALT: std::num::NonZeroU64 =
+    std::num::NonZeroU64::new(u64::from_be_bytes(*b"Planets!")).unwrap();
 
 const FPS_AREA_ID: LazyLock<Id> = LazyLock::new(|| Id::new(FPS_AREA_SALT));
 const BOTTOM_PANEL_ID: LazyLock<Id> = LazyLock::new(|| Id::new(BOTTOM_PANEL_SALT));
-const _UNUSED_ID: LazyLock<Id> = LazyLock::new(|| Id::new(_UNUSED_SALT));
+const BODY_PREFIX_ID: LazyLock<Id> = LazyLock::new(|| Id::new(BODY_PREFIX_SALT));
 const TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME: &'static str = "TSDVF";
 
 mod fmt {
@@ -219,8 +220,8 @@ fn handle_ui(
     position_map: &HashMap<universe::Id, DVec3>,
 ) {
     fps_area(ctx, &sim_state.ui.frame_data);
-    bottom_panel(ctx, sim_state, elapsed_time, position_map);
-    body_tree_window(ctx, sim_state);
+    bottom_panel(ctx, sim_state, elapsed_time);
+    body_tree_window(ctx, sim_state, position_map);
     body_edit_window(ctx, sim_state);
 }
 
@@ -254,12 +255,7 @@ fn fps_inner(ui: &mut Ui, frame_data: &FrameData) {
     ui.add(label);
 }
 
-fn bottom_panel(
-    ctx: &EguiContext,
-    sim_state: &mut SimState,
-    elapsed_time: f64,
-    position_map: &HashMap<universe::Id, DVec3>,
-) {
+fn bottom_panel(ctx: &EguiContext, sim_state: &mut SimState, elapsed_time: f64) {
     let height = 64.0;
     // TODO: Bottom panel expansion using show_animated
     TopBottomPanel::bottom(*BOTTOM_PANEL_ID)
@@ -277,19 +273,12 @@ fn bottom_panel(
             ScrollArea::horizontal()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                    ui.horizontal(|ui| {
-                        bottom_panel_contents(ui, sim_state, elapsed_time, position_map)
-                    })
+                    ui.horizontal(|ui| bottom_panel_contents(ui, sim_state, elapsed_time))
                 })
         });
 }
 
-fn bottom_panel_contents(
-    ui: &mut Ui,
-    sim_state: &mut SimState,
-    elapsed_time: f64,
-    position_map: &HashMap<universe::Id, DVec3>,
-) {
+fn bottom_panel_contents(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64) {
     ui.set_height(48.0);
     ui.add_space(16.0);
     pause_button(ui, sim_state);
@@ -306,12 +295,6 @@ fn bottom_panel_contents(
     } else {
         time_manager(ui, sim_state, elapsed_time);
         ui.separator();
-    }
-
-    // HACK: Replace with a better solution later
-    if ui.button("focus another").clicked() {
-        let focused_id = sim_state.focused_body();
-        sim_state.switch_focus(if focused_id == 0 { 1 } else { 0 }, position_map);
     }
 }
 
@@ -590,10 +573,90 @@ fn time_unit_box_popup(ui: &mut Ui, sim_state: &mut SimState) {
     });
 }
 
-fn body_tree_window(ctx: &EguiContext, _sim_state: &mut SimState) {
+fn get_body_egui_id(universe_id: universe::Id) -> Id {
+    BODY_PREFIX_ID.with(universe_id)
+}
+
+fn body_tree_window(
+    ctx: &EguiContext,
+    sim_state: &mut SimState,
+    position_map: &HashMap<universe::Id, DVec3>,
+) {
+    let roots: Box<[universe::Id]> = sim_state
+        .universe
+        .get_bodies()
+        .iter()
+        .filter_map(|(&id, wrapper)| match wrapper.relations.parent {
+            Some(_) => None,
+            None => Some(id),
+        })
+        .collect();
     Window::new("Celestial Bodies").show(ctx, |ui| {
-        ui.label("This window is not implemented yet.");
+        // ui.label("This window is not implemented yet.");
+        for id in roots {
+            body_tree_node(ui, sim_state, id, position_map);
+        }
     });
+}
+
+fn body_tree_node(
+    ui: &mut Ui,
+    sim_state: &mut SimState,
+    id: universe::Id,
+    position_map: &HashMap<universe::Id, DVec3>,
+) {
+    let satellites = match sim_state.universe.get_bodies().get(&id) {
+        Some(wrapper) => &wrapper.relations.satellites,
+        None => return,
+    };
+
+    if satellites.is_empty() {
+        body_tree_leaf_node(ui, sim_state, id, position_map);
+    } else {
+        body_tree_parent_node(ui, sim_state, id, position_map);
+    }
+}
+
+fn body_tree_parent_node(
+    ui: &mut Ui,
+    sim_state: &mut SimState,
+    id: universe::Id,
+    position_map: &HashMap<universe::Id, DVec3>,
+) {
+    let wrapper = match sim_state.universe.get_bodies().get(&id) {
+        Some(wrapper) => wrapper,
+        None => return,
+    };
+    let satellites = wrapper.relations.satellites.clone();
+
+    let response = CollapsingHeader::new(&wrapper.body.name)
+        .id_salt(get_body_egui_id(id))
+        .show(ui, |ui| {
+            for id in satellites {
+                body_tree_node(ui, sim_state, id, position_map);
+            }
+        });
+
+    if response.header_response.clicked() {
+        sim_state.switch_focus(id, position_map);
+    }
+}
+
+fn body_tree_leaf_node(
+    ui: &mut Ui,
+    sim_state: &mut SimState,
+    id: universe::Id,
+    position_map: &HashMap<universe::Id, DVec3>,
+) {
+    let body = match sim_state.universe.get_body(id) {
+        Some(body) => body,
+        None => return,
+    };
+
+    let button = Button::selectable(sim_state.focused_body == id, &body.name);
+    if ui.add(button).clicked() {
+        sim_state.switch_focus(id, &position_map);
+    }
 }
 
 fn body_edit_window(ctx: &EguiContext, _sim_state: &mut SimState) {

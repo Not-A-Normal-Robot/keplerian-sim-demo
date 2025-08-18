@@ -145,10 +145,22 @@ impl Program {
             .add_body(
                 Body {
                     name: "Alpha".into(),
-                    mass: 1.0,
+                    mass: 1e12,
                     radius: 30.0,
                     color: Srgba::new_opaque(255, 196, 196),
-                    orbit: Some(Orbit::new(0.0, 200.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
+                    orbit: Some(Orbit::new(0.0, 400.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
+                },
+                Some(root_id),
+            )
+            .unwrap();
+        let beta_id = universe
+            .add_body(
+                Body {
+                    name: "Beta".into(),
+                    mass: 1e12,
+                    radius: 30.0,
+                    color: Srgba::new_opaque(196, 196, 255),
+                    orbit: Some(Orbit::new(0.7, 600.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
                 },
                 Some(root_id),
             )
@@ -156,13 +168,13 @@ impl Program {
         universe
             .add_body(
                 Body {
-                    name: "Beta".into(),
-                    mass: 1.0,
-                    radius: 30.0,
-                    color: Srgba::new_opaque(196, 196, 255),
-                    orbit: Some(Orbit::new(0.7, 300.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
+                    name: "Beta A".into(),
+                    mass: 1e5,
+                    radius: 3.0,
+                    color: Srgba::new_opaque(196, 255, 196),
+                    orbit: Some(Orbit::new(0.1, 40.0, 1.0, 1.0, 1.0, 1.0, 1.0)),
                 },
-                Some(root_id),
+                Some(beta_id),
             )
             .unwrap();
 
