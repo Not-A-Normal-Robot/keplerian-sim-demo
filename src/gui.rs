@@ -116,6 +116,7 @@ struct UiState {
     time_speed_unit: TimeUnit,
     time_speed_unit_auto: bool,
     frame_data: FrameData,
+    body_with_popup: Option<UniverseId>,
 }
 
 impl Default for UiState {
@@ -127,6 +128,7 @@ impl Default for UiState {
             time_speed_unit: TimeUnit::Seconds,
             time_speed_unit_auto: true,
             frame_data: FrameData::new(),
+            body_with_popup: None,
         }
     }
 }
@@ -582,7 +584,8 @@ fn body_tree_window(
     sim_state: &mut SimState,
     position_map: &HashMap<UniverseId, DVec3>,
 ) {
-    Window::new("Celestial Bodies").show(ctx, |ui| {
+    let window = Window::new("Celestial Bodies").scroll(true);
+    window.show(ctx, |ui| {
         ui.scope(|ui| {
             body_tree_window_contents(ui, sim_state, position_map);
         })
@@ -698,9 +701,12 @@ fn body_tree_base_node(
 
     let response = &res.response;
 
+    if response.clicked() {
+        sim_state.switch_focus(universe_id, &position_map);
+    }
+
     if let Some(rect) = res.rect(*ELLIPSIS_BUTTON_ID) {
         let inner_button = ellipsis_button(ui, rect);
-
         ellipsis_popup(
             sim_state,
             &inner_button,
@@ -708,10 +714,6 @@ fn body_tree_base_node(
             universe_id,
             position_map,
         );
-    }
-
-    if response.clicked() {
-        sim_state.switch_focus(universe_id, &position_map);
     }
 }
 
@@ -734,8 +736,17 @@ fn ellipsis_popup(
     universe_id: UniverseId,
     position_map: &HashMap<UniverseId, DVec3>,
 ) {
-    let mut popup = Popup::from_toggle_button_response(inner_response)
-        .close_behavior(PopupCloseBehavior::CloseOnClickOutside);
+    let open = sim_state.ui.body_with_popup == Some(universe_id);
+
+    if inner_response.clicked() || outer_response.secondary_clicked() {
+        if open {
+            sim_state.ui.body_with_popup = None;
+        } else {
+            sim_state.ui.body_with_popup = Some(universe_id);
+        }
+    }
+
+    let popup = Popup::from_response(inner_response).open(open);
 
     #[must_use = "Show the button using ui.show()"]
     fn button<'a>(atoms: impl IntoAtoms<'a>) -> Button<'a> {
@@ -751,18 +762,16 @@ fn ellipsis_popup(
         ui.add_sized((ui.available_width(), 16.0), button)
     }
 
-    if outer_response.secondary_clicked() {
-        popup = popup.open(true);
-    }
-
-    popup.show(|ui| {
+    let popup = popup.show(|ui| {
         ui.visuals_mut().override_text_color = Some(Color32::WHITE);
 
         if ui_button(ui, "New child...").clicked() {
             // TODO
+            sim_state.ui.body_with_popup = None
         }
         if ui_button(ui, "New sibling...").clicked() {
             // TODO
+            sim_state.ui.body_with_popup = None
         }
         ui.separator();
 
@@ -783,11 +792,21 @@ fn ellipsis_popup(
         ui.separator();
         if ui_button(ui, "Duplicate").clicked() {
             // TODO
+            sim_state.ui.body_with_popup = None
         }
         if ui_button(ui, "Delete...").clicked() {
             // TODO
+            sim_state.ui.body_with_popup = None
         }
     });
+    if outer_response.clicked_elsewhere()
+        && inner_response.clicked_elsewhere()
+        && popup
+            .map(|p| p.response.clicked_elsewhere())
+            .unwrap_or(false)
+    {
+        sim_state.ui.body_with_popup = None;
+    }
 }
 
 fn body_edit_window(ctx: &EguiContext, _sim_state: &mut SimState) {
