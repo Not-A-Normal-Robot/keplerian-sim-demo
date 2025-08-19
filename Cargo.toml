@@ -13,6 +13,7 @@ float-pretty-print = "0.1.1"
 glam = "0.30.5"
 keplerian_sim = "0.4.0"
 ordered-float = "5.0.0"
+pastey = "0.1.1"
 strum = "0.27.2"
 strum_macros = "0.27.2"
 three-d = { version = "0.18.2", features = ["egui-gui"] }
