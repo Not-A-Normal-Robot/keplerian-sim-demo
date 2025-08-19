@@ -1,4 +1,3 @@
-// TODO: Factor out 48.0 as a const for MIN_TOUCH_TARGET_LEN
 use std::{
     cmp::Reverse,
     collections::{BinaryHeap, HashMap, VecDeque},
@@ -44,6 +43,9 @@ const BOTTOM_PANEL_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(BOTTOM_PA
 const BODY_PREFIX_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(BODY_PREFIX_SALT));
 const CIRCLE_ICON_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(CIRCLE_ICON_SALT));
 const TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME: &'static str = "TSDVF";
+
+const MIN_TOUCH_TARGET_LEN: f32 = 48.0;
+const MIN_TOUCH_TARGET_VEC: Vec2 = Vec2::splat(MIN_TOUCH_TARGET_LEN);
 
 mod fmt {
     use std::ops::RangeInclusive;
@@ -283,7 +285,7 @@ fn bottom_panel(ctx: &EguiContext, sim_state: &mut SimState, elapsed_time: f64) 
 }
 
 fn bottom_panel_contents(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64) {
-    ui.set_height(48.0);
+    ui.set_height(MIN_TOUCH_TARGET_LEN);
     ui.add_space(16.0);
     pause_button(ui, sim_state);
 
@@ -303,9 +305,6 @@ fn bottom_panel_contents(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f6
 }
 
 fn time_manager(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64) {
-    let min_touch_size = 48.0;
-    let min_touch_target = Vec2::splat(min_touch_size);
-
     let image: &Image<'static> = &*assets::TIME_IMAGE;
 
     let hover_text = RichText::new("Manage time")
@@ -322,7 +321,7 @@ fn time_manager(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64) {
         widget_styles.active.weak_bg_fill = Color32::from_white_alpha(64);
 
         let button = ImageButton::new(image.clone().fit_to_exact_size(min_touch_target))
-            .corner_radius(min_touch_size);
+            .corner_radius(MIN_TOUCH_TARGET_LEN);
         let button = ui.add(button).on_hover_text(hover_text);
 
         let popup = Popup::menu(&button).close_behavior(PopupCloseBehavior::CloseOnClickOutside);
@@ -348,9 +347,6 @@ fn time_manager(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64) {
 }
 
 fn pause_button(ui: &mut Ui, sim_state: &mut SimState) {
-    let min_touch_size = 48.0;
-    let min_touch_target = Vec2::splat(min_touch_size);
-
     let image: &Image<'static> = if sim_state.running {
         &*assets::PAUSED_IMAGE
     } else {
@@ -372,8 +368,8 @@ fn pause_button(ui: &mut Ui, sim_state: &mut SimState) {
         widget_styles.hovered.bg_stroke = Stroke::NONE;
         widget_styles.active.weak_bg_fill = Color32::from_white_alpha(64);
 
-        let button = ImageButton::new(image.clone().max_size(min_touch_target))
-            .corner_radius(CornerRadius::same(min_touch_size as u8));
+        let button = ImageButton::new(image.clone().max_size(MIN_TOUCH_TARGET_VEC))
+            .corner_radius(CornerRadius::same(MIN_TOUCH_TARGET_LEN as u8));
 
         let button_instance = ui.add(button).on_hover_text(hover_text);
         if button_instance.clicked() {
@@ -383,8 +379,7 @@ fn pause_button(ui: &mut Ui, sim_state: &mut SimState) {
 }
 
 fn time_display(ui: &mut Ui, sim_state: &mut SimState) {
-    let min_touch_size = 48.0;
-    let display_size = Vec2::new(220.0, min_touch_size);
+    let display_size = Vec2::new(220.0, MIN_TOUCH_TARGET_LEN);
 
     let string = sim_state.ui.time_disp.format_time(sim_state.universe.time);
 
@@ -441,7 +436,7 @@ fn time_slider(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64, column_
     )
     .color(Color32::WHITE)
     .size(16.0);
-    ui.spacing_mut().interact_size.y = 48.0;
+    ui.spacing_mut().interact_size.y = MIN_TOUCH_TARGET_LEN;
     let slider = Slider::new(&mut sim_state.ui.time_slider_pos, -1.0..=1.0)
         .show_value(false)
         .handle_shape(egui::style::HandleShape::Rect { aspect_ratio: 0.3 });
@@ -486,7 +481,7 @@ fn time_drag_value(ui: &mut Ui, sim_state: &mut SimState) {
     }
 }
 fn time_drag_value_inner(ui: &mut Ui, sim_state: &mut SimState) -> Response {
-    let dv_size = Vec2::new(96.0, 48.0);
+    let dv_size = Vec2::new(MIN_TOUCH_TARGET_LEN * 2.0, MIN_TOUCH_TARGET_LEN);
     let style_name: Arc<str> = TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME.into();
     ui.style_mut().text_styles.insert(
         egui::TextStyle::Name(style_name.clone()),
@@ -507,7 +502,6 @@ fn time_drag_value_inner(ui: &mut Ui, sim_state: &mut SimState) -> Response {
     ui.add_sized(dv_size, drag_value)
 }
 fn time_unit_box(ui: &mut Ui, sim_state: &mut SimState) {
-    let min_touch_len = 48.0;
     let unit_string = format!("{}/s", sim_state.ui.time_speed_unit);
 
     let unit_text = RichText::new(unit_string).color(Color32::WHITE).size(16.0);
@@ -517,7 +511,7 @@ fn time_unit_box(ui: &mut Ui, sim_state: &mut SimState) {
             .color(Color32::WHITE)
             .size(16.0);
 
-    ui.spacing_mut().interact_size.y = min_touch_len;
+    ui.spacing_mut().interact_size.y = MIN_TOUCH_TARGET_LEN;
     ui.spacing_mut().button_padding.x = 16.0;
 
     ComboBox::from_id_salt(TIME_CONTROL_COMBO_BOX_SALT)
@@ -528,8 +522,6 @@ fn time_unit_box(ui: &mut Ui, sim_state: &mut SimState) {
         .on_hover_text(hover_text);
 }
 fn time_unit_box_inner(ui: &mut Ui, sim_state: &mut SimState, per_second: bool) {
-    let min_touch_len = 48.0;
-    let min_touch_vec = Vec2::splat(min_touch_len);
     let font = FontId::proportional(16.0);
 
     for unit in TimeUnit::iter() {
@@ -541,7 +533,7 @@ fn time_unit_box_inner(ui: &mut Ui, sim_state: &mut SimState, per_second: bool) 
         let text = RichText::new(string).font(font.clone());
 
         let label = Button::selectable(sim_state.ui.time_speed_unit == unit, text);
-        let label = ui.add_sized(min_touch_vec, label);
+        let label = ui.add_sized(MIN_TOUCH_TARGET_VEC, label);
 
         if label.clicked() {
             sim_state.ui.time_speed_unit_auto = false;
@@ -553,7 +545,7 @@ fn time_unit_box_inner(ui: &mut Ui, sim_state: &mut SimState, per_second: bool) 
 
     let text = RichText::new("Auto-pick").font(font);
     let label = Button::selectable(sim_state.ui.time_speed_unit_auto, text);
-    let auto = ui.add_sized(min_touch_vec, label);
+    let auto = ui.add_sized(MIN_TOUCH_TARGET_VEC, label);
     if auto.clicked() {
         sim_state.ui.time_speed_unit_auto = !sim_state.ui.time_speed_unit_auto;
     }
