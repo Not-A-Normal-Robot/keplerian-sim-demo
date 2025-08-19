@@ -239,7 +239,7 @@ impl Program {
             .sim_state
             .universe
             .get_body(self.sim_state.focused_body())
-            .map(|body| 1.5 * body.radius)
+            .map(|wrapper| 1.5 * wrapper.body.radius)
             .unwrap_or(1e-3) as f32;
         self.control.handle_events(
             &mut self.camera,

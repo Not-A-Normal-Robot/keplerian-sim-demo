@@ -174,13 +174,13 @@ impl Universe {
     }
 
     /// Gets a mutable reference to a body in the universe.
-    pub fn get_body_mut(&mut self, index: Id) -> Option<&mut Body> {
-        self.bodies.get_mut(&index).map(|wrapper| &mut wrapper.body)
+    pub fn get_body_mut(&mut self, index: Id) -> Option<&mut BodyWrapper> {
+        self.bodies.get_mut(&index)
     }
 
     /// Gets an immutable reference to a body in the universe.
-    pub fn get_body(&self, index: Id) -> Option<&Body> {
-        self.bodies.get(&index).map(|wrapper| &wrapper.body)
+    pub fn get_body(&self, index: Id) -> Option<&BodyWrapper> {
+        self.bodies.get(&index)
     }
 
     /// Gets the first index of a body with a given name, if any.

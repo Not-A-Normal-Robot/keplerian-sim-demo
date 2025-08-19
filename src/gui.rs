@@ -618,7 +618,7 @@ fn body_tree_node(
     universe_id: UniverseId,
     position_map: &HashMap<UniverseId, DVec3>,
 ) {
-    let satellites = match sim_state.universe.get_bodies().get(&universe_id) {
+    let satellites = match sim_state.universe.get_body(universe_id) {
         Some(wrapper) => &wrapper.relations.satellites,
         None => return,
     };
@@ -638,7 +638,7 @@ fn body_tree_parent_node(
     universe_id: UniverseId,
     position_map: &HashMap<UniverseId, DVec3>,
 ) {
-    let wrapper = match sim_state.universe.get_bodies().get(&universe_id) {
+    let wrapper = match sim_state.universe.get_body(universe_id) {
         Some(wrapper) => wrapper,
         None => return,
     };
@@ -663,7 +663,7 @@ fn body_tree_base_node(
     position_map: &HashMap<UniverseId, DVec3>,
 ) {
     let body = match sim_state.universe.get_body(universe_id) {
-        Some(body) => body,
+        Some(wrapper) => &wrapper.body,
         None => return,
     };
 
@@ -763,38 +763,92 @@ fn ellipsis_popup(
     }
 
     let popup = popup.show(|ui| {
+        let body_wrapper = sim_state.universe.get_body(universe_id);
+        let parent_id = body_wrapper.map(|w| w.relations.parent).flatten();
+        let siblings = parent_id
+            .map(|id| sim_state.universe.get_body(id))
+            .flatten()
+            .map(|w| &w.relations.satellites);
+        let cur_sibling_idx = siblings
+            .map(|siblings| siblings.iter().position(|s| *s == universe_id))
+            .flatten();
+
         ui.visuals_mut().override_text_color = Some(Color32::WHITE);
 
-        if ui_button(ui, "New child...").clicked() {
-            // TODO
-            sim_state.ui.body_with_popup = None
-        }
-        if ui_button(ui, "New sibling...").clicked() {
-            // TODO
-            sim_state.ui.body_with_popup = None
-        }
+        let new_child_button = ui_button(ui, "New child...");
+
+        let new_sibling_enabled = parent_id.is_some();
+        let new_sibling_button = ui.scope(|ui| {
+            if !new_sibling_enabled {
+                ui.disable();
+            }
+
+            ui_button(ui, "New sibling...")
+        });
+        let new_sibling_button = new_sibling_button.inner;
         ui.separator();
 
         let focus_button =
             Button::selectable(sim_state.focused_body == universe_id, "Focus").right_text("");
         let focus_button = ui.add_sized((ui.available_width(), 16.0), focus_button);
-        if focus_button.clicked() {
-            sim_state.switch_focus(universe_id, position_map);
-        }
 
         ui.separator();
-        if ui_button(ui, "Move up").clicked() {
-            // TODO
-        }
-        if ui_button(ui, "Move down").clicked() {
-            // TODO
-        }
+
+        let up_enabled = cur_sibling_idx.map(|i| i > 0).unwrap_or(false);
+        let up_button = ui.scope(|ui| {
+            if !up_enabled {
+                ui.disable();
+            }
+            ui.add_sized((ui.available_width(), 16.0), button("Move up"))
+        });
+        let up_button = up_button.inner;
+
+        let down_enabled = cur_sibling_idx
+            .map(|i| siblings.map(|s| s.len() > i + 1))
+            .flatten()
+            .unwrap_or(false);
+        let down_button = ui.scope(|ui| {
+            if !down_enabled {
+                ui.disable();
+            }
+            ui.add_sized((ui.available_width(), 16.0), button("Move down"))
+        });
+        let down_button = down_button.inner;
+
         ui.separator();
-        if ui_button(ui, "Duplicate").clicked() {
+        let duplicate_button = ui_button(ui, "Duplicate");
+        let delete_button = ui_button(ui, "Delete...");
+
+        if new_child_button.clicked() {
             // TODO
             sim_state.ui.body_with_popup = None
         }
-        if ui_button(ui, "Delete...").clicked() {
+        if new_sibling_button.clicked() {
+            // TODO
+            sim_state.ui.body_with_popup = None
+        }
+        if let Some(parent_id) = parent_id
+            && let Some(cur_idx) = cur_sibling_idx
+        {
+            if up_button.clicked() && cur_idx > 0 {
+                let prev_idx = cur_idx - 1;
+                let parent = sim_state.universe.get_body_mut(parent_id).unwrap();
+                parent.relations.satellites.swap(cur_idx, prev_idx);
+            }
+            if down_button.clicked() {
+                let next_idx = cur_idx + 1;
+                let parent = sim_state.universe.get_body_mut(parent_id).unwrap();
+                parent.relations.satellites.swap(cur_idx, next_idx);
+            }
+        }
+        if focus_button.clicked() {
+            sim_state.switch_focus(universe_id, position_map);
+        }
+        if duplicate_button.clicked() {
+            // TODO
+            sim_state.ui.body_with_popup = None
+        }
+        if delete_button.clicked() {
             // TODO
             sim_state.ui.body_with_popup = None
         }
