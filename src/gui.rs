@@ -16,9 +16,12 @@ use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
         self, Area, Atom, AtomLayout, Button, Color32, ComboBox, Context as EguiContext,
-        CornerRadius, DragValue, FontId, Frame, Id as EguiId, Image, ImageButton, IntoAtoms, Label,
-        Margin, Popup, PopupCloseBehavior, Pos2, Rect, Response, RichText, ScrollArea, Slider,
-        Stroke, TextWrapMode, TopBottomPanel, Ui, Vec2, Window, collapsing_header::CollapsingState,
+        CornerRadius, DragValue, FontId, Frame, Id as EguiId, Image, ImageButton, IntoAtoms, Key,
+        Label, Margin, Popup, PopupCloseBehavior, Pos2, Rect, Response, RichText, ScrollArea,
+        Slider, Stroke, TextEdit, TextWrapMode, TopBottomPanel, Ui, Vec2, Window,
+        collapsing_header::CollapsingState,
+        text::{CCursor, CCursorRange},
+        text_edit::TextEditState,
     },
 };
 
@@ -39,12 +42,15 @@ const CIRCLE_ICON_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"Circles!")).unwrap();
 const ELLIPSIS_BUTTON_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"see_more")).unwrap();
+const RENAME_TEXTEDIT_SALT: std::num::NonZeroU64 =
+    std::num::NonZeroU64::new(u64::from_be_bytes(*b"OmgRen??")).unwrap();
 
 const FPS_AREA_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(FPS_AREA_SALT));
 const BOTTOM_PANEL_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(BOTTOM_PANEL_SALT));
 const BODY_PREFIX_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(BODY_PREFIX_SALT));
 const CIRCLE_ICON_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(CIRCLE_ICON_SALT));
 const ELLIPSIS_BUTTON_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(ELLIPSIS_BUTTON_SALT));
+const RENAME_TEXTEDIT_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(RENAME_TEXTEDIT_SALT));
 const TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME: &'static str = "TSDVF";
 
 const MIN_TOUCH_TARGET_LEN: f32 = 48.0;
@@ -109,6 +115,12 @@ impl FrameData {
     }
 }
 
+struct RenameState {
+    universe_id: UniverseId,
+    name_buffer: String,
+    requesting_focus: bool,
+}
+
 struct UiState {
     time_disp: TimeDisplay,
     time_slider_pos: f64,
@@ -116,7 +128,8 @@ struct UiState {
     time_speed_unit: TimeUnit,
     time_speed_unit_auto: bool,
     frame_data: FrameData,
-    body_with_popup: Option<UniverseId>,
+    listed_body_with_popup: Option<UniverseId>,
+    listed_body_with_rename: Option<RenameState>,
 }
 
 impl Default for UiState {
@@ -128,7 +141,8 @@ impl Default for UiState {
             time_speed_unit: TimeUnit::Seconds,
             time_speed_unit_auto: true,
             frame_data: FrameData::new(),
-            body_with_popup: None,
+            listed_body_with_popup: None,
+            listed_body_with_rename: None,
         }
     }
 }
@@ -677,13 +691,14 @@ fn body_tree_base_node(
 
     let circle_atom = Atom::custom(*CIRCLE_ICON_ID, Vec2::splat(BODY_TREE_ICON_SIZE));
 
-    let text = RichText::new(&body.name).color(Color32::WHITE);
-    let text = if selected { text.underline() } else { text };
-
     let inner_button_atom = Atom::custom(*ELLIPSIS_BUTTON_ID, Vec2::splat(BODY_TREE_ICON_SIZE));
 
     let mut layout = AtomLayout::new(circle_atom);
+
+    let text = RichText::new(&body.name).color(Color32::WHITE);
+    let text = if selected { text.underline() } else { text };
     layout.push_right(text);
+
     layout.push_right(Atom::grow());
     layout.push_right(inner_button_atom);
 
@@ -699,9 +714,48 @@ fn body_tree_base_node(
         );
     }
 
+    let mut rect = res.response.rect;
+    let padding = BODY_TREE_ICON_SIZE * 1.5;
+    *rect.right_mut() -= padding;
+    *rect.left_mut() += padding;
+
+    if let Some(ren_state) = &mut sim_state.ui.listed_body_with_rename
+        && ren_state.universe_id == universe_id
+    {
+        let text_edit = TextEdit::singleline(&mut ren_state.name_buffer).id(*RENAME_TEXTEDIT_ID);
+
+        let response = ui.put(rect, text_edit);
+
+        if ren_state.requesting_focus {
+            response.request_focus();
+
+            if response.has_focus() {
+                ren_state.requesting_focus = false;
+            }
+        }
+
+        if response.lost_focus() {
+            let string = sim_state
+                .ui
+                .listed_body_with_rename
+                .take()
+                .map(|s| s.name_buffer);
+            if let Some(string) = string
+                && !ui.input(|i| i.key_down(Key::Escape))
+            {
+                sim_state
+                    .universe
+                    .get_body_mut(universe_id)
+                    .map(|w| w.body.name = string);
+            }
+        }
+    }
+
     let response = &res.response;
 
-    if response.clicked() {
+    if response.double_clicked() {
+        set_rename_state(ui, sim_state, universe_id);
+    } else if response.clicked() {
         sim_state.switch_focus(universe_id, &position_map);
     }
 
@@ -715,6 +769,33 @@ fn body_tree_base_node(
             position_map,
         );
     }
+}
+
+fn set_rename_state(ui: &mut Ui, sim_state: &mut SimState, universe_id: UniverseId) {
+    let string = match sim_state.universe.get_body(universe_id) {
+        Some(w) => w.body.name.clone(),
+        None => return,
+    };
+    let strlen = string.chars().count();
+    if let Some(state) = sim_state.ui.listed_body_with_rename.take() {
+        sim_state
+            .universe
+            .get_body_mut(state.universe_id)
+            .map(|w| w.body.name = state.name_buffer);
+    }
+
+    sim_state.ui.listed_body_with_rename = Some(RenameState {
+        universe_id,
+        name_buffer: string,
+        requesting_focus: true,
+    });
+
+    let mut state = TextEditState::default();
+    state.cursor.set_char_range(Some(CCursorRange::two(
+        CCursor::new(0),
+        CCursor::new(strlen),
+    )));
+    state.store(ui.ctx(), *RENAME_TEXTEDIT_ID);
 }
 
 fn ellipsis_button(ui: &mut Ui, rect: Rect) -> Response {
@@ -736,13 +817,13 @@ fn ellipsis_popup(
     universe_id: UniverseId,
     position_map: &HashMap<UniverseId, DVec3>,
 ) {
-    let open = sim_state.ui.body_with_popup == Some(universe_id);
+    let open = sim_state.ui.listed_body_with_popup == Some(universe_id);
 
     if inner_response.clicked() || outer_response.secondary_clicked() {
         if open {
-            sim_state.ui.body_with_popup = None;
+            sim_state.ui.listed_body_with_popup = None;
         } else {
-            sim_state.ui.body_with_popup = Some(universe_id);
+            sim_state.ui.listed_body_with_popup = Some(universe_id);
         }
     }
 
@@ -834,14 +915,15 @@ fn ellipsis_popup(
             ui.add_sized((ui.available_width(), 16.0), button("Delete"))
         });
         let delete_button = delete_button.inner;
+        let rename_button = ui_button(ui, "Rename");
 
         if new_child_button.clicked() {
             // TODO
-            sim_state.ui.body_with_popup = None;
+            sim_state.ui.listed_body_with_popup = None;
         }
         if new_sibling_button.clicked() {
             // TODO
-            sim_state.ui.body_with_popup = None;
+            sim_state.ui.listed_body_with_popup = None;
         }
         if let Some(parent_id) = parent_id
             && let Some(cur_idx) = cur_sibling_idx
@@ -862,12 +944,16 @@ fn ellipsis_popup(
         }
         if duplicate_button.clicked() {
             let _ = sim_state.universe.duplicate_body(universe_id);
-            sim_state.ui.body_with_popup = None;
+            sim_state.ui.listed_body_with_popup = None;
         }
         if delete_button.clicked() {
             sim_state.universe.remove_body(universe_id);
             sim_state.switch_focus(parent_id.unwrap_or(0), position_map);
-            sim_state.ui.body_with_popup = None;
+            sim_state.ui.listed_body_with_popup = None;
+        }
+        if rename_button.clicked() {
+            set_rename_state(ui, sim_state, universe_id);
+            sim_state.ui.listed_body_with_popup = None;
         }
     });
     if outer_response.clicked_elsewhere()
@@ -876,7 +962,7 @@ fn ellipsis_popup(
             .map(|p| p.response.clicked_elsewhere())
             .unwrap_or(false)
     {
-        sim_state.ui.body_with_popup = None;
+        sim_state.ui.listed_body_with_popup = None;
     }
 }
 
