@@ -17,7 +17,7 @@ use three_d::{
     egui::{
         self, Area, Atom, AtomLayout, Button, Color32, ComboBox, Context as EguiContext,
         CornerRadius, DragValue, FontId, Frame, Id as EguiId, Image, ImageButton, Label, Margin,
-        Popup, PopupCloseBehavior, Pos2, Response, RichText, ScrollArea, Slider, Stroke,
+        Popup, PopupCloseBehavior, Pos2, Rect, Response, RichText, ScrollArea, Slider, Stroke,
         TopBottomPanel, Ui, Vec2, Window, collapsing_header::CollapsingState,
     },
 };
@@ -37,11 +37,14 @@ const BODY_PREFIX_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"Planets!")).unwrap();
 const CIRCLE_ICON_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"Circles!")).unwrap();
+const ELLIPSIS_BUTTON_SALT: std::num::NonZeroU64 =
+    std::num::NonZeroU64::new(u64::from_be_bytes(*b"see_more")).unwrap();
 
 const FPS_AREA_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(FPS_AREA_SALT));
 const BOTTOM_PANEL_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(BOTTOM_PANEL_SALT));
 const BODY_PREFIX_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(BODY_PREFIX_SALT));
 const CIRCLE_ICON_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(CIRCLE_ICON_SALT));
+const ELLIPSIS_BUTTON_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(ELLIPSIS_BUTTON_SALT));
 const TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME: &'static str = "TSDVF";
 
 const MIN_TOUCH_TARGET_LEN: f32 = 48.0;
@@ -658,11 +661,15 @@ fn body_tree_parent_node(
             let text = RichText::new(&wrapper.body.name).color(Color32::WHITE);
             let text = if selected { text.underline() } else { text };
 
+            let inner_button_atom =
+                Atom::custom(*ELLIPSIS_BUTTON_ID, Vec2::splat(BODY_TREE_ICON_SIZE));
+
             let mut layout = AtomLayout::new(circle_atom);
             layout.push_right(text);
+            layout.push_right(Atom::grow());
+            layout.push_right(inner_button_atom);
 
             let res = Button::selectable(selected, layout.atoms)
-                .right_text("")
                 .min_size(Vec2::new(ui.available_width(), BODY_TREE_ICON_SIZE))
                 .atom_ui(ui);
 
@@ -672,6 +679,13 @@ fn body_tree_parent_node(
                     RADIUS,
                     fill_color,
                 );
+            }
+
+            if let Some(rect) = res.rect(*ELLIPSIS_BUTTON_ID) {
+                let inner_button = ellipsis_button(ui, rect);
+                if inner_button.clicked() {
+                    // TODO: Show popup
+                }
             }
 
             res.response
@@ -707,16 +721,19 @@ fn body_tree_leaf_node(
     let fill_color =
         Color32::from_rgba_unmultiplied(fill_color.r, fill_color.g, fill_color.b, fill_color.a);
 
-    let circle_atom = Atom::custom(*CIRCLE_ICON_ID, (BODY_TREE_ICON_SIZE, BODY_TREE_ICON_SIZE));
+    let circle_atom = Atom::custom(*CIRCLE_ICON_ID, Vec2::splat(BODY_TREE_ICON_SIZE));
 
     let text = RichText::new(&body.name).color(Color32::WHITE);
     let text = if selected { text.underline() } else { text };
 
+    let inner_button_atom = Atom::custom(*ELLIPSIS_BUTTON_ID, Vec2::splat(BODY_TREE_ICON_SIZE));
+
     let mut layout = AtomLayout::new(circle_atom);
     layout.push_right(text);
+    layout.push_right(Atom::grow());
+    layout.push_right(inner_button_atom);
 
     let res = Button::selectable(selected, layout.atoms)
-        .right_text("")
         .min_size(Vec2::new(ui.available_width(), BODY_TREE_ICON_SIZE))
         .atom_ui(ui);
 
@@ -726,6 +743,14 @@ fn body_tree_leaf_node(
             RADIUS,
             fill_color,
         );
+    }
+
+    if let Some(rect) = res.rect(*ELLIPSIS_BUTTON_ID) {
+        let inner_button = ellipsis_button(ui, rect);
+
+        if inner_button.clicked() {
+            // TODO: Show popup
+        }
     }
 
     let response = res.response;
@@ -739,4 +764,16 @@ fn body_edit_window(ctx: &EguiContext, _sim_state: &mut SimState) {
     Window::new("Celestial Editor").show(ctx, |ui| {
         ui.label("This window is not implemented yet.");
     });
+}
+
+fn ellipsis_button(ui: &mut Ui, rect: Rect) -> Response {
+    let ellipsis_button = ImageButton::new(assets::ELLIPSIS_IMAGE.clone());
+    ui.spacing_mut().button_padding = Vec2::ZERO;
+    let widget_styles = &mut ui.visuals_mut().widgets;
+    widget_styles.inactive.weak_bg_fill = Color32::TRANSPARENT;
+    widget_styles.inactive.bg_stroke = Stroke::NONE;
+    widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(64);
+    widget_styles.active.weak_bg_fill = Color32::from_white_alpha(128);
+
+    ui.put(rect, ellipsis_button)
 }
