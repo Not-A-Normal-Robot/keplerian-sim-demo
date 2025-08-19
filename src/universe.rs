@@ -88,6 +88,12 @@ impl Universe {
         }
     }
 
+    fn get_and_inc_id(&mut self) -> Id {
+        let id = self.next_id;
+        self.next_id = self.next_id.wrapping_add(1);
+        id
+    }
+
     /// Adds a body to the universe.
     ///
     /// `body`: The body to add into the universe.  
@@ -113,8 +119,7 @@ impl Universe {
             }
         }
 
-        let id = self.next_id;
-        self.next_id = self.next_id.wrapping_add(1);
+        let id = self.get_and_inc_id();
 
         self.bodies.insert(
             id,
@@ -253,6 +258,31 @@ impl Universe {
         }
 
         map
+    }
+
+    /// Duplicates a body and its satellites.
+    ///
+    /// Returns an Err if the body with the specified index was not found,
+    /// or if the specified body is a root node.
+    pub fn duplicate_body(&mut self, index: Id) -> Result<Id, ()> {
+        let parent_index = match self.bodies.get(&index) {
+            Some(w) => w.relations.parent,
+            None => return Err(()),
+        }
+        .ok_or(())?;
+        Ok(self.duplicate_body_inner(index, Some(parent_index)))
+    }
+
+    fn duplicate_body_inner(&mut self, index: Id, parent_index: Option<Id>) -> Id {
+        let wrapper = self.get_body(index).unwrap();
+        let body = wrapper.body.clone();
+        let sats = wrapper.relations.satellites.clone();
+        let new_index = self.add_body(body, parent_index).unwrap();
+
+        for sat_index in sats {
+            self.duplicate_body_inner(sat_index, Some(new_index));
+        }
+        new_index
     }
 }
 

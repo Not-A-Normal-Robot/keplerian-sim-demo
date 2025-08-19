@@ -816,16 +816,32 @@ fn ellipsis_popup(
         let down_button = down_button.inner;
 
         ui.separator();
-        let duplicate_button = ui_button(ui, "Duplicate");
-        let delete_button = ui_button(ui, "Delete...");
+        let duplicate_enabled = parent_id.is_some();
+        let duplicate_button = ui.scope(|ui| {
+            if !duplicate_enabled {
+                ui.disable();
+            }
+
+            ui.add_sized((ui.available_width(), 16.0), button("Duplicate"))
+        });
+        let duplicate_button = duplicate_button.inner;
+        let delete_enabled = parent_id.is_some();
+        let delete_button = ui.scope(|ui| {
+            if !delete_enabled {
+                ui.disable();
+            }
+
+            ui.add_sized((ui.available_width(), 16.0), button("Delete"))
+        });
+        let delete_button = delete_button.inner;
 
         if new_child_button.clicked() {
             // TODO
-            sim_state.ui.body_with_popup = None
+            sim_state.ui.body_with_popup = None;
         }
         if new_sibling_button.clicked() {
             // TODO
-            sim_state.ui.body_with_popup = None
+            sim_state.ui.body_with_popup = None;
         }
         if let Some(parent_id) = parent_id
             && let Some(cur_idx) = cur_sibling_idx
@@ -845,12 +861,13 @@ fn ellipsis_popup(
             sim_state.switch_focus(universe_id, position_map);
         }
         if duplicate_button.clicked() {
-            // TODO
-            sim_state.ui.body_with_popup = None
+            let _ = sim_state.universe.duplicate_body(universe_id);
+            sim_state.ui.body_with_popup = None;
         }
         if delete_button.clicked() {
-            // TODO
-            sim_state.ui.body_with_popup = None
+            sim_state.universe.remove_body(universe_id);
+            sim_state.switch_focus(parent_id.unwrap_or(0), position_map);
+            sim_state.ui.body_with_popup = None;
         }
     });
     if outer_response.clicked_elsewhere()
