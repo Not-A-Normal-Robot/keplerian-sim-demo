@@ -320,7 +320,7 @@ fn time_manager(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64) {
         widget_styles.hovered.bg_stroke = Stroke::NONE;
         widget_styles.active.weak_bg_fill = Color32::from_white_alpha(64);
 
-        let button = ImageButton::new(image.clone().fit_to_exact_size(min_touch_target))
+        let button = ImageButton::new(image.clone().fit_to_exact_size(MIN_TOUCH_TARGET_VEC))
             .corner_radius(MIN_TOUCH_TARGET_LEN);
         let button = ui.add(button).on_hover_text(hover_text);
 
