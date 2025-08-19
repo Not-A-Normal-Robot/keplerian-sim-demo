@@ -16,9 +16,9 @@ use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
         self, Area, Atom, AtomLayout, Button, Color32, ComboBox, Context as EguiContext,
-        CornerRadius, DragValue, FontId, Frame, Id as EguiId, Image, ImageButton, Label, Margin,
-        Popup, PopupCloseBehavior, Pos2, Rect, Response, RichText, ScrollArea, Slider, Stroke,
-        TopBottomPanel, Ui, Vec2, Window, collapsing_header::CollapsingState,
+        CornerRadius, DragValue, FontId, Frame, Id as EguiId, Image, ImageButton, IntoAtoms, Label,
+        Margin, Popup, PopupCloseBehavior, Pos2, Rect, Response, RichText, ScrollArea, Slider,
+        Stroke, TextWrapMode, TopBottomPanel, Ui, Vec2, Window, collapsing_header::CollapsingState,
     },
 };
 
@@ -622,7 +622,7 @@ fn body_tree_node(
 
     if satellites.is_empty() {
         ui.indent((*BODY_PREFIX_ID, universe_id), |ui| {
-            body_tree_leaf_node(ui, sim_state, universe_id, position_map);
+            body_tree_base_node(ui, sim_state, universe_id, position_map);
         });
     } else {
         body_tree_parent_node(ui, sim_state, universe_id, position_map);
@@ -641,68 +641,19 @@ fn body_tree_parent_node(
     };
     let satellites = wrapper.relations.satellites.clone();
 
-    let selected = sim_state.focused_body() == universe_id;
     let egui_id = get_body_egui_id(universe_id);
-    let res_tuple = CollapsingState::load_with_default_open(ui.ctx(), egui_id, true)
+    CollapsingState::load_with_default_open(ui.ctx(), egui_id, true)
         .show_header(ui, |ui| {
-            const RADIUS: f32 = BODY_TREE_ICON_SIZE / 2.0;
-            let center = Pos2::from((RADIUS, RADIUS));
-            let fill_color = wrapper.body.color;
-            let fill_color = Color32::from_rgba_unmultiplied(
-                fill_color.r,
-                fill_color.g,
-                fill_color.b,
-                fill_color.a,
-            );
-
-            let circle_atom =
-                Atom::custom(*CIRCLE_ICON_ID, (BODY_TREE_ICON_SIZE, BODY_TREE_ICON_SIZE));
-
-            let text = RichText::new(&wrapper.body.name).color(Color32::WHITE);
-            let text = if selected { text.underline() } else { text };
-
-            let inner_button_atom =
-                Atom::custom(*ELLIPSIS_BUTTON_ID, Vec2::splat(BODY_TREE_ICON_SIZE));
-
-            let mut layout = AtomLayout::new(circle_atom);
-            layout.push_right(text);
-            layout.push_right(Atom::grow());
-            layout.push_right(inner_button_atom);
-
-            let res = Button::selectable(selected, layout.atoms)
-                .min_size(Vec2::new(ui.available_width(), BODY_TREE_ICON_SIZE))
-                .atom_ui(ui);
-
-            if let Some(rect) = res.rect(*CIRCLE_ICON_ID) {
-                ui.painter().with_clip_rect(rect).circle_filled(
-                    center + rect.min.to_vec2(),
-                    RADIUS,
-                    fill_color,
-                );
-            }
-
-            if let Some(rect) = res.rect(*ELLIPSIS_BUTTON_ID) {
-                let inner_button = ellipsis_button(ui, rect);
-                if inner_button.clicked() {
-                    // TODO: Show popup
-                }
-            }
-
-            res.response
+            body_tree_base_node(ui, sim_state, universe_id, position_map);
         })
         .body(|ui| {
             for id in satellites {
                 body_tree_node(ui, sim_state, id, position_map)
             }
         });
-    let (_button_res, header_res, _body_res) = res_tuple;
-
-    if header_res.inner.clicked() {
-        sim_state.switch_focus(universe_id, position_map);
-    }
 }
 
-fn body_tree_leaf_node(
+fn body_tree_base_node(
     ui: &mut Ui,
     sim_state: &mut SimState,
     universe_id: UniverseId,
@@ -745,25 +696,23 @@ fn body_tree_leaf_node(
         );
     }
 
+    let response = &res.response;
+
     if let Some(rect) = res.rect(*ELLIPSIS_BUTTON_ID) {
         let inner_button = ellipsis_button(ui, rect);
 
-        if inner_button.clicked() {
-            // TODO: Show popup
-        }
+        ellipsis_popup(
+            sim_state,
+            &inner_button,
+            response,
+            universe_id,
+            position_map,
+        );
     }
-
-    let response = res.response;
 
     if response.clicked() {
         sim_state.switch_focus(universe_id, &position_map);
     }
-}
-
-fn body_edit_window(ctx: &EguiContext, _sim_state: &mut SimState) {
-    Window::new("Celestial Editor").show(ctx, |ui| {
-        ui.label("This window is not implemented yet.");
-    });
 }
 
 fn ellipsis_button(ui: &mut Ui, rect: Rect) -> Response {
@@ -776,4 +725,73 @@ fn ellipsis_button(ui: &mut Ui, rect: Rect) -> Response {
     widget_styles.active.weak_bg_fill = Color32::from_white_alpha(128);
 
     ui.put(rect, ellipsis_button)
+}
+
+fn ellipsis_popup(
+    sim_state: &mut SimState,
+    inner_response: &Response,
+    outer_response: &Response,
+    universe_id: UniverseId,
+    position_map: &HashMap<UniverseId, DVec3>,
+) {
+    let mut popup = Popup::from_toggle_button_response(inner_response)
+        .close_behavior(PopupCloseBehavior::CloseOnClickOutside);
+
+    #[must_use = "Show the button using ui.show()"]
+    fn button<'a>(atoms: impl IntoAtoms<'a>) -> Button<'a> {
+        Button::new(atoms)
+            .wrap_mode(TextWrapMode::Extend)
+            .right_text("")
+            .frame_when_inactive(false)
+    }
+
+    #[must_use = "Check for button interaction using .clicked()"]
+    fn ui_button<'a>(ui: &'a mut Ui, atoms: impl IntoAtoms<'a>) -> Response {
+        let button = button(atoms);
+        ui.add_sized((ui.available_width(), 16.0), button)
+    }
+
+    if outer_response.secondary_clicked() {
+        popup = popup.open(true);
+    }
+
+    popup.show(|ui| {
+        ui.visuals_mut().override_text_color = Some(Color32::WHITE);
+
+        if ui_button(ui, "New child...").clicked() {
+            // TODO
+        }
+        if ui_button(ui, "New sibling...").clicked() {
+            // TODO
+        }
+        ui.separator();
+
+        let focus_button =
+            Button::selectable(sim_state.focused_body == universe_id, "Focus").right_text("");
+        let focus_button = ui.add_sized((ui.available_width(), 16.0), focus_button);
+        if focus_button.clicked() {
+            sim_state.switch_focus(universe_id, position_map);
+        }
+
+        ui.separator();
+        if ui_button(ui, "Move up").clicked() {
+            // TODO
+        }
+        if ui_button(ui, "Move down").clicked() {
+            // TODO
+        }
+        ui.separator();
+        if ui_button(ui, "Duplicate").clicked() {
+            // TODO
+        }
+        if ui_button(ui, "Delete...").clicked() {
+            // TODO
+        }
+    });
+}
+
+fn body_edit_window(ctx: &EguiContext, _sim_state: &mut SimState) {
+    Window::new("Celestial Editor").show(ctx, |ui| {
+        ui.label("This window is not implemented yet.");
+    });
 }
