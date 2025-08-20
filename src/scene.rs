@@ -95,6 +95,12 @@ impl<'a> IntoIterator for &'a PreviewScene {
     }
 }
 
+impl PreviewScene {
+    fn iter(&self) -> <Self as IntoIterator>::IntoIter {
+        self.into_iter()
+    }
+}
+
 pub(crate) struct Scene {
     bodies: [Gm<InstancedMesh, PhysicalMaterial>; LOD_LEVEL_COUNT],
     lines: Box<[Gm<AutoscalingSprites, ColorMaterial>]>,
@@ -146,7 +152,7 @@ impl<'a> IntoIterator for &'a Scene {
                     as fn(&Gm<AutoscalingSprites, ColorMaterial>) -> &dyn Object,
             ))
             .chain(self.preview.iter().map(
-                <PreviewScene as IntoIterator>::into_iter
+                PreviewScene::iter
                     as fn(&'a PreviewScene) -> <PreviewScene as IntoIterator>::IntoIter,
             ))
     }
