@@ -184,12 +184,12 @@ impl Program {
         );
 
         Scene {
-            bodies: self.generate_body_tris(camera_offset, camera_pos, position_map),
+            bodies: self.generate_body_gms(camera_offset, camera_pos, position_map),
             lines: self.generate_orbit_lines(camera_offset, camera_pos, position_map),
         }
     }
 
-    fn generate_body_tris(
+    fn generate_body_gms(
         &self,
         camera_offset: DVec3,
         camera_pos: DVec3,
