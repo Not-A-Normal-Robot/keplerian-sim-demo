@@ -943,8 +943,20 @@ fn ellipsis_popup(
             sim_state.switch_focus(universe_id, position_map);
         }
         if duplicate_button.clicked() {
-            let _ = sim_state.universe.duplicate_body(universe_id);
+            let result = sim_state.universe.duplicate_body(universe_id);
             sim_state.ui.listed_body_with_popup = None;
+
+            if let Ok(universe_id) = result {
+                sim_state.ui.listed_body_with_rename = Some(RenameState {
+                    universe_id,
+                    name_buffer: sim_state
+                        .universe
+                        .get_body(universe_id)
+                        .map(|w| w.body.name.clone())
+                        .unwrap_or_default(),
+                    requesting_focus: true,
+                });
+            }
         }
         if delete_button.clicked() {
             sim_state.universe.remove_body(universe_id);
