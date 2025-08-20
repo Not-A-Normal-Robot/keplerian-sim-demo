@@ -6,6 +6,7 @@ use std::{
 
 use super::{
     assets,
+    body::Body,
     universe::{Id as UniverseId, Universe},
 };
 use float_pretty_print::PrettyPrintFloat;
@@ -147,12 +148,18 @@ impl Default for UiState {
     }
 }
 
+pub(crate) struct UncommittedBody {
+    pub body: Body,
+    pub parent_id: Option<UniverseId>,
+}
+
 pub(crate) struct SimState {
     pub universe: Universe,
     pub sim_speed: f64,
     pub running: bool,
     focused_body: UniverseId,
     pub focus_offset: DVec3,
+    pub uncommitted_body: Option<UncommittedBody>,
     ui: UiState,
 }
 
@@ -197,6 +204,7 @@ impl Default for SimState {
             running: true,
             focused_body: 0,
             focus_offset: DVec3::ZERO,
+            uncommitted_body: None,
             ui: UiState::default(),
         }
     }

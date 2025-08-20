@@ -7,11 +7,13 @@ use glam::DVec3;
 use keplerian_sim::OrbitTrait;
 use three_d::{
     Blend, ColorMaterial, Context, CpuMaterial, CpuMesh, Cull, Gm, InnerSpace as _, InstancedMesh,
-    Instances, Mat4, Object, PhysicalMaterial, RenderStates, Texture2DRef, Vec3, Vec4,
+    Instances, Mat4, Mesh, Object, PhysicalMaterial, RenderStates, Srgba, Texture2DRef, Vec3, Vec4,
 };
 
 use super::Program;
 use super::autoscaling_sprites::AutoscalingSprites;
+use super::body::Body;
+use super::gui::UncommittedBody;
 use super::universe::{BodyWrapper, Id};
 
 pub const LOD_LEVEL_COUNT: usize = 8;
@@ -61,9 +63,15 @@ pub static SPHERE_MESHES: LazyLock<[CpuMesh; LOD_LEVEL_COUNT]> = LazyLock::new(|
     array
 });
 
+struct UncommittedScene {
+    body: Option<Gm<Mesh, PhysicalMaterial>>,
+    path: Option<Gm<AutoscalingSprites, ColorMaterial>>,
+}
+
 pub(crate) struct Scene {
     bodies: [Gm<InstancedMesh, PhysicalMaterial>; LOD_LEVEL_COUNT],
     lines: Box<[Gm<AutoscalingSprites, ColorMaterial>]>,
+    uncommitted: Option<UncommittedScene>,
 }
 
 /// Converts a Gm into an abstract Object.
@@ -127,7 +135,7 @@ fn add_body_instance(
     body_wrapper: &super::universe::BodyWrapper,
     camera_offset: DVec3,
     camera_pos: DVec3,
-    position_map: &HashMap<u64, DVec3>,
+    position_map: &HashMap<Id, DVec3>,
     instances_arr: &mut [Instances; LOD_LEVEL_COUNT],
 ) {
     let body = &body_wrapper.body;
@@ -154,7 +162,7 @@ fn add_body_instances(
     body_map: &HashMap<Id, BodyWrapper>,
     camera_offset: DVec3,
     camera_pos: DVec3,
-    position_map: &HashMap<u64, DVec3>,
+    position_map: &HashMap<Id, DVec3>,
     instances_arr: &mut [Instances; LOD_LEVEL_COUNT],
 ) {
     for (id, body_wrapper) in body_map {
@@ -186,6 +194,7 @@ impl Program {
         Scene {
             bodies: self.generate_body_gms(camera_offset, camera_pos, position_map),
             lines: self.generate_orbit_lines(camera_offset, camera_pos, position_map),
+            uncommitted: self.generate_uncommitted_scene(camera_offset, camera_pos, position_map),
         }
     }
 
@@ -193,7 +202,7 @@ impl Program {
         &self,
         camera_offset: DVec3,
         camera_pos: DVec3,
-        position_map: &HashMap<u64, DVec3>,
+        position_map: &HashMap<Id, DVec3>,
     ) -> [Gm<InstancedMesh, PhysicalMaterial>; LOD_LEVEL_COUNT] {
         let mut instances_arr: [Instances; LOD_LEVEL_COUNT] = core::array::from_fn(|_| Instances {
             transformations: Vec::new(),
@@ -234,24 +243,27 @@ impl Program {
         &self,
         camera_offset: DVec3,
         camera_pos: DVec3,
-        position_map: &HashMap<u64, DVec3>,
+        position_map: &HashMap<Id, DVec3>,
     ) -> Box<[Gm<AutoscalingSprites, ColorMaterial>]> {
         let circle_tex = &self.circle_tex;
+        let view_direction = self.camera.view_direction();
 
         self.sim_state
             .universe
             .get_bodies()
-            .iter()
-            .filter_map(|body_tuple| {
+            .values()
+            .filter_map(|body_wrapper| {
                 Self::generate_orbit_line(
                     &self.context,
-                    body_tuple,
+                    &body_wrapper.body,
+                    body_wrapper.relations.parent,
                     camera_offset,
                     camera_pos,
-                    self.camera.view_direction(),
+                    view_direction,
                     position_map,
                     Some(circle_tex.clone()),
                     self.sim_state.universe.time,
+                    Self::POINT_SCALE,
                 )
             })
             .collect()
@@ -259,24 +271,22 @@ impl Program {
 
     fn generate_orbit_line(
         context: &Context,
-        body_tuple: (&Id, &BodyWrapper),
+        body: &Body,
+        parent_id: Option<Id>,
         camera_offset: DVec3,
         camera_pos: DVec3,
         view_direction: Vec3,
-        position_map: &HashMap<u64, DVec3>,
+        position_map: &HashMap<Id, DVec3>,
         texture: Option<Texture2DRef>,
         time: f64,
+        point_scale: f32,
     ) -> Option<Gm<AutoscalingSprites, ColorMaterial>> {
-        let wrapper = body_tuple.1;
-        let body = &wrapper.body;
         let orbit = match &body.orbit {
             Some(o) => o,
             None => return None,
         };
 
-        let parent_pos = wrapper
-            .relations
-            .parent
+        let parent_pos = parent_id
             .map(|id| *position_map.get(&id).unwrap_or(&DVec3::default()))
             .unwrap_or(DVec3::default());
 
@@ -309,7 +319,7 @@ impl Program {
             dist_b.partial_cmp(&dist_a).unwrap_or(Ordering::Equal)
         });
 
-        let geometry = AutoscalingSprites::new(context, points, None, Self::POINT_SCALE);
+        let geometry = AutoscalingSprites::new(context, points, None, point_scale);
 
         Some(Gm::new(geometry, material))
     }
@@ -349,6 +359,85 @@ impl Program {
 
             let v = orbit.get_position_at_eccentric_anomaly(ecc_anom) + offset;
             Vec3::new(v.x as f32, v.y as f32, v.z as f32)
+        })
+    }
+
+    fn generate_uncommitted_body(
+        &self,
+        camera_offset: DVec3,
+        camera_pos: DVec3,
+        position_map: &HashMap<Id, DVec3>,
+        wrapper: &UncommittedBody,
+    ) -> Option<Gm<Mesh, PhysicalMaterial>> {
+        let parent_pos = wrapper
+            .parent_id
+            .map(|id| position_map.get(&id).map(|x| *x))
+            .flatten()
+            .unwrap_or(DVec3::ZERO);
+        let body_pos = wrapper
+            .body
+            .orbit
+            .as_ref()
+            .map(|o| o.get_position_at_time(self.sim_state.universe.time))
+            .unwrap_or(DVec3::ZERO)
+            + parent_pos;
+        let position = body_pos - camera_offset;
+        let distance = (position - camera_pos).length();
+        let radial_size = get_radial_size(wrapper.body.radius, distance);
+
+        let cpu_mesh = &SPHERE_MESHES[get_lod_type(radial_size)?];
+        let mesh = Mesh::new(&self.context, cpu_mesh);
+
+        let material = CpuMaterial {
+            albedo: Srgba {
+                a: (((wrapper.body.color.a as u16 * 80u16) + 127) / 255) as u8,
+                ..wrapper.body.color
+            },
+            ..Default::default()
+        };
+        let mut material = PhysicalMaterial::new_transparent(&self.context, &material);
+
+        material.render_states = RenderStates {
+            cull: Cull::Back,
+            blend: Blend::TRANSPARENCY,
+            ..Default::default()
+        };
+
+        Some(Gm::new(mesh, material))
+    }
+
+    const UNCOMMITTED_POINT_SCALE: f32 = Self::POINT_SCALE * 0.5;
+
+    fn generate_uncommitted_scene(
+        &self,
+        camera_offset: DVec3,
+        camera_pos: DVec3,
+        position_map: &HashMap<Id, DVec3>,
+    ) -> Option<UncommittedScene> {
+        let body_wrapper = self.sim_state.uncommitted_body.as_ref()?;
+
+        let body_gm =
+            self.generate_uncommitted_body(camera_offset, camera_pos, position_map, body_wrapper);
+        let path = Self::generate_orbit_line(
+            &self.context,
+            &body_wrapper.body,
+            body_wrapper.parent_id,
+            camera_offset,
+            camera_pos,
+            self.camera.view_direction(),
+            position_map,
+            Some(self.circle_tex.clone()),
+            self.sim_state.universe.time,
+            Self::UNCOMMITTED_POINT_SCALE,
+        );
+
+        if body_gm.is_none() && path.is_none() {
+            return None;
+        }
+
+        Some(UncommittedScene {
+            body: body_gm,
+            path,
         })
     }
 }
