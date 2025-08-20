@@ -148,7 +148,7 @@ impl Default for UiState {
     }
 }
 
-pub(crate) struct UncommittedBody {
+pub(crate) struct PreviewBody {
     pub body: Body,
     pub parent_id: Option<UniverseId>,
 }
@@ -159,7 +159,7 @@ pub(crate) struct SimState {
     pub running: bool,
     focused_body: UniverseId,
     pub focus_offset: DVec3,
-    pub uncommitted_body: Option<UncommittedBody>,
+    pub preview_body: Option<PreviewBody>,
     ui: UiState,
 }
 
@@ -204,7 +204,7 @@ impl Default for SimState {
             running: true,
             focused_body: 0,
             focus_offset: DVec3::ZERO,
-            uncommitted_body: None,
+            preview_body: None,
             ui: UiState::default(),
         }
     }

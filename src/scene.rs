@@ -13,7 +13,7 @@ use three_d::{
 use super::Program;
 use super::autoscaling_sprites::AutoscalingSprites;
 use super::body::Body;
-use super::gui::UncommittedBody;
+use super::gui::PreviewBody;
 use super::universe::{BodyWrapper, Id};
 
 pub const LOD_LEVEL_COUNT: usize = 8;
@@ -63,15 +63,42 @@ pub static SPHERE_MESHES: LazyLock<[CpuMesh; LOD_LEVEL_COUNT]> = LazyLock::new(|
     array
 });
 
-struct UncommittedScene {
+struct PreviewScene {
     body: Option<Gm<Mesh, PhysicalMaterial>>,
     path: Option<Gm<AutoscalingSprites, ColorMaterial>>,
+}
+
+impl<'a> IntoIterator for &'a PreviewScene {
+    type Item = &'a dyn Object;
+    type IntoIter = std::iter::Chain<
+        std::iter::Map<
+            core::option::Iter<'a, Gm<Mesh, PhysicalMaterial>>,
+            fn(&'a Gm<Mesh, PhysicalMaterial>) -> &'a dyn Object,
+        >,
+        std::iter::Map<
+            core::option::Iter<'a, Gm<AutoscalingSprites, ColorMaterial>>,
+            fn(&'a Gm<AutoscalingSprites, ColorMaterial>) -> &'a dyn Object,
+        >,
+    >;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.body
+            .iter()
+            .map(
+                gm_to_object::<Mesh, PhysicalMaterial>
+                    as fn(&Gm<Mesh, PhysicalMaterial>) -> &dyn Object,
+            )
+            .chain(self.path.iter().map(
+                gm_to_object::<AutoscalingSprites, ColorMaterial>
+                    as fn(&Gm<AutoscalingSprites, ColorMaterial>) -> &dyn Object,
+            ))
+    }
 }
 
 pub(crate) struct Scene {
     bodies: [Gm<InstancedMesh, PhysicalMaterial>; LOD_LEVEL_COUNT],
     lines: Box<[Gm<AutoscalingSprites, ColorMaterial>]>,
-    uncommitted: Option<UncommittedScene>,
+    preview: Option<PreviewScene>,
 }
 
 /// Converts a Gm into an abstract Object.
@@ -92,13 +119,19 @@ where
 impl<'a> IntoIterator for &'a Scene {
     type Item = &'a dyn Object;
     type IntoIter = std::iter::Chain<
-        std::iter::Map<
-            core::slice::Iter<'a, Gm<InstancedMesh, PhysicalMaterial>>,
-            fn(&'a Gm<InstancedMesh, PhysicalMaterial>) -> &'a dyn Object,
+        std::iter::Chain<
+            std::iter::Map<
+                core::slice::Iter<'a, Gm<InstancedMesh, PhysicalMaterial>>,
+                fn(&'a Gm<InstancedMesh, PhysicalMaterial>) -> &'a dyn Object,
+            >,
+            std::iter::Map<
+                core::slice::Iter<'a, Gm<AutoscalingSprites, ColorMaterial>>,
+                fn(&'a Gm<AutoscalingSprites, ColorMaterial>) -> &'a dyn Object,
+            >,
         >,
         std::iter::Map<
-            core::slice::Iter<'a, Gm<AutoscalingSprites, ColorMaterial>>,
-            fn(&'a Gm<AutoscalingSprites, ColorMaterial>) -> &'a dyn Object,
+            core::option::Iter<'a, PreviewScene>,
+            fn(&'a PreviewScene) -> <PreviewScene as IntoIterator>::IntoIter,
         >,
     >;
     fn into_iter(self) -> Self::IntoIter {
@@ -111,6 +144,10 @@ impl<'a> IntoIterator for &'a Scene {
             .chain(self.lines.iter().map(
                 gm_to_object::<AutoscalingSprites, ColorMaterial>
                     as fn(&Gm<AutoscalingSprites, ColorMaterial>) -> &dyn Object,
+            ))
+            .chain(self.preview.iter().map(
+                <PreviewScene as IntoIterator>::into_iter
+                    as fn(&'a PreviewScene) -> <PreviewScene as IntoIterator>::IntoIter,
             ))
     }
 }
@@ -194,7 +231,7 @@ impl Program {
         Scene {
             bodies: self.generate_body_gms(camera_offset, camera_pos, position_map),
             lines: self.generate_orbit_lines(camera_offset, camera_pos, position_map),
-            uncommitted: self.generate_uncommitted_scene(camera_offset, camera_pos, position_map),
+            preview: self.generate_preview_scene(camera_offset, camera_pos, position_map),
         }
     }
 
@@ -362,12 +399,12 @@ impl Program {
         })
     }
 
-    fn generate_uncommitted_body(
+    fn generate_preview_body(
         &self,
         camera_offset: DVec3,
         camera_pos: DVec3,
         position_map: &HashMap<Id, DVec3>,
-        wrapper: &UncommittedBody,
+        wrapper: &PreviewBody,
     ) -> Option<Gm<Mesh, PhysicalMaterial>> {
         let parent_pos = wrapper
             .parent_id
@@ -406,18 +443,18 @@ impl Program {
         Some(Gm::new(mesh, material))
     }
 
-    const UNCOMMITTED_POINT_SCALE: f32 = Self::POINT_SCALE * 0.5;
+    const PREVIEW_POINT_SCALE: f32 = Self::POINT_SCALE * 0.5;
 
-    fn generate_uncommitted_scene(
+    fn generate_preview_scene(
         &self,
         camera_offset: DVec3,
         camera_pos: DVec3,
         position_map: &HashMap<Id, DVec3>,
-    ) -> Option<UncommittedScene> {
-        let body_wrapper = self.sim_state.uncommitted_body.as_ref()?;
+    ) -> Option<PreviewScene> {
+        let body_wrapper = self.sim_state.preview_body.as_ref()?;
 
         let body_gm =
-            self.generate_uncommitted_body(camera_offset, camera_pos, position_map, body_wrapper);
+            self.generate_preview_body(camera_offset, camera_pos, position_map, body_wrapper);
         let path = Self::generate_orbit_line(
             &self.context,
             &body_wrapper.body,
@@ -428,14 +465,14 @@ impl Program {
             position_map,
             Some(self.circle_tex.clone()),
             self.sim_state.universe.time,
-            Self::UNCOMMITTED_POINT_SCALE,
+            Self::PREVIEW_POINT_SCALE,
         );
 
         if body_gm.is_none() && path.is_none() {
             return None;
         }
 
-        Some(UncommittedScene {
+        Some(PreviewScene {
             body: body_gm,
             path,
         })
