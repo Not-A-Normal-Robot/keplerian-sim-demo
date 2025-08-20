@@ -124,8 +124,7 @@ impl CameraControl {
         let view = camera.view_direction();
         let up = camera.up();
         let old_distance = self.target.distance(camera.position());
-        let factor = 1.0 - (-0.03 * elapsed_time).exp().min(1.0);
-        // let factor = 0.99;
+        let factor = (-0.03 * elapsed_time).exp().min(1.0);
         let old_diff = self.desired_distance - old_distance;
         let new_diff = old_diff * factor.min(1.0);
         let new_distance = self.desired_distance - new_diff;
