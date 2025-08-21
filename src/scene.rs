@@ -1,7 +1,6 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::f64::consts::TAU;
-use std::ops::Deref;
 use std::sync::LazyLock;
 
 use glam::DVec3;
@@ -64,7 +63,7 @@ pub static SPHERE_MESHES: LazyLock<[CpuMesh; LOD_LEVEL_COUNT]> = LazyLock::new(|
     array
 });
 
-struct PreviewScene {
+pub(crate) struct PreviewScene {
     body: Option<Gm<Mesh, PhysicalMaterial>>,
     path: Option<Gm<AutoscalingSprites, ColorMaterial>>,
 }
@@ -96,28 +95,6 @@ impl<'a> IntoIterator for &'a PreviewScene {
     }
 }
 
-impl PreviewScene {
-    fn body_obj(&self) -> Option<&dyn Object> {
-        self.body
-            .iter()
-            .map(
-                gm_to_object::<Mesh, PhysicalMaterial>
-                    as fn(&Gm<Mesh, PhysicalMaterial>) -> &dyn Object,
-            )
-            .next()
-    }
-
-    fn path_obj(&self) -> Option<&dyn Object> {
-        self.path
-            .iter()
-            .map(
-                gm_to_object::<AutoscalingSprites, ColorMaterial>
-                    as fn(&Gm<AutoscalingSprites, ColorMaterial>) -> &dyn Object,
-            )
-            .next()
-    }
-}
-
 pub(crate) struct Scene {
     bodies: [Gm<InstancedMesh, PhysicalMaterial>; LOD_LEVEL_COUNT],
     lines: Box<[Gm<AutoscalingSprites, ColorMaterial>]>,
@@ -143,19 +120,32 @@ impl<'a> IntoIterator for &'a Scene {
     type Item = &'a dyn Object;
     type IntoIter = std::iter::Chain<
         std::iter::Chain<
-            std::iter::Chain<
-                std::iter::Map<
-                    core::slice::Iter<'a, Gm<InstancedMesh, PhysicalMaterial>>,
-                    fn(&'a Gm<InstancedMesh, PhysicalMaterial>) -> &'a dyn Object,
-                >,
-                std::iter::Map<
-                    core::slice::Iter<'a, Gm<AutoscalingSprites, ColorMaterial>>,
-                    fn(&'a Gm<AutoscalingSprites, ColorMaterial>) -> &'a dyn Object,
+            std::iter::Map<
+                core::slice::Iter<'a, Gm<InstancedMesh, PhysicalMaterial>>,
+                fn(&'a Gm<InstancedMesh, PhysicalMaterial>) -> &'a dyn Object,
+            >,
+            std::iter::Map<
+                core::slice::Iter<'a, Gm<AutoscalingSprites, ColorMaterial>>,
+                fn(&'a Gm<AutoscalingSprites, ColorMaterial>) -> &'a dyn Object,
+            >,
+        >,
+        std::iter::Flatten<
+            std::iter::Map<
+                core::option::IntoIter<&'a PreviewScene>,
+                fn(
+                    &'a PreviewScene,
+                ) -> std::iter::Chain<
+                    std::iter::Map<
+                        core::option::Iter<'a, Gm<Mesh, PhysicalMaterial>>,
+                        fn(&'a Gm<Mesh, PhysicalMaterial>) -> &'a dyn Object,
+                    >,
+                    std::iter::Map<
+                        core::option::Iter<'a, Gm<AutoscalingSprites, ColorMaterial>>,
+                        fn(&'a Gm<AutoscalingSprites, ColorMaterial>) -> &'a dyn Object,
+                    >,
                 >,
             >,
-            core::option::IntoIter<&'a dyn Object>,
         >,
-        core::option::IntoIter<&'a dyn Object>,
     >;
     fn into_iter(self) -> Self::IntoIter {
         self.bodies
@@ -171,16 +161,12 @@ impl<'a> IntoIterator for &'a Scene {
             .chain(
                 self.preview
                     .as_ref()
-                    .map(|p| p.body_obj())
-                    .flatten()
-                    .into_iter(),
-            )
-            .chain(
-                self.preview
-                    .as_ref()
-                    .map(|p| p.path_obj())
-                    .flatten()
-                    .into_iter(),
+                    .into_iter()
+                    .map(
+                        <&PreviewScene as IntoIterator>::into_iter
+                            as fn(_) -> <&'a PreviewScene as IntoIterator>::IntoIter,
+                    )
+                    .flatten(),
             )
     }
 }
