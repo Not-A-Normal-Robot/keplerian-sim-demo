@@ -290,7 +290,8 @@ impl Program {
 
     const POINTS_PER_ORBIT: usize = 512;
     const RAD_PER_POINT: f64 = TAU / Self::POINTS_PER_ORBIT as f64;
-    const POINT_SCALE: f32 = 0.002;
+    const POINT_SCALE: f32 = 0.0005;
+    const FOCUSED_POINT_SCALE: f32 = Self::POINT_SCALE * 1.5;
 
     fn generate_orbit_lines(
         &self,
@@ -304,8 +305,8 @@ impl Program {
         self.sim_state
             .universe
             .get_bodies()
-            .values()
-            .filter_map(|body_wrapper| {
+            .iter()
+            .filter_map(|(&id, body_wrapper)| {
                 Self::generate_orbit_line(
                     &self.context,
                     &body_wrapper.body,
@@ -316,7 +317,11 @@ impl Program {
                     position_map,
                     Some(circle_tex.clone()),
                     self.sim_state.universe.time,
-                    Self::POINT_SCALE,
+                    if id == self.sim_state.focused_body() {
+                        Self::FOCUSED_POINT_SCALE
+                    } else {
+                        Self::POINT_SCALE
+                    },
                 )
             })
             .collect()
@@ -465,7 +470,7 @@ impl Program {
         Some(Gm::new(mesh, material))
     }
 
-    const PREVIEW_POINT_SCALE: f32 = Self::POINT_SCALE * 0.5;
+    const PREVIEW_POINT_SCALE: f32 = Self::POINT_SCALE * 2.0;
 
     fn generate_preview_scene(
         &self,
