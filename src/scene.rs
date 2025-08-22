@@ -64,7 +64,7 @@ pub static SPHERE_MESHES: LazyLock<[CpuMesh; LOD_LEVEL_COUNT]> = LazyLock::new(|
 });
 
 pub(crate) struct PreviewScene {
-    body: Option<Gm<Mesh, PhysicalMaterial>>,
+    body: Option<Gm<Mesh, ColorMaterial>>,
     path: Option<Gm<AutoscalingSprites, ColorMaterial>>,
 }
 
@@ -72,8 +72,8 @@ impl<'a> IntoIterator for &'a PreviewScene {
     type Item = &'a dyn Object;
     type IntoIter = std::iter::Chain<
         std::iter::Map<
-            core::option::Iter<'a, Gm<Mesh, PhysicalMaterial>>,
-            fn(&'a Gm<Mesh, PhysicalMaterial>) -> &'a dyn Object,
+            core::option::Iter<'a, Gm<Mesh, ColorMaterial>>,
+            fn(&'a Gm<Mesh, ColorMaterial>) -> &'a dyn Object,
         >,
         std::iter::Map<
             core::option::Iter<'a, Gm<AutoscalingSprites, ColorMaterial>>,
@@ -84,10 +84,7 @@ impl<'a> IntoIterator for &'a PreviewScene {
     fn into_iter(self) -> Self::IntoIter {
         self.body
             .iter()
-            .map(
-                gm_to_object::<Mesh, PhysicalMaterial>
-                    as fn(&Gm<Mesh, PhysicalMaterial>) -> &dyn Object,
-            )
+            .map(gm_to_object::<Mesh, ColorMaterial> as fn(&Gm<Mesh, ColorMaterial>) -> &dyn Object)
             .chain(self.path.iter().map(
                 gm_to_object::<AutoscalingSprites, ColorMaterial>
                     as fn(&Gm<AutoscalingSprites, ColorMaterial>) -> &dyn Object,
@@ -136,8 +133,8 @@ impl<'a> IntoIterator for &'a Scene {
                     &'a PreviewScene,
                 ) -> std::iter::Chain<
                     std::iter::Map<
-                        core::option::Iter<'a, Gm<Mesh, PhysicalMaterial>>,
-                        fn(&'a Gm<Mesh, PhysicalMaterial>) -> &'a dyn Object,
+                        core::option::Iter<'a, Gm<Mesh, ColorMaterial>>,
+                        fn(&'a Gm<Mesh, ColorMaterial>) -> &'a dyn Object,
                     >,
                     std::iter::Map<
                         core::option::Iter<'a, Gm<AutoscalingSprites, ColorMaterial>>,
@@ -424,7 +421,7 @@ impl Program {
         camera_pos: DVec3,
         position_map: &HashMap<Id, DVec3>,
         wrapper: &PreviewBody,
-    ) -> Option<Gm<Mesh, PhysicalMaterial>> {
+    ) -> Option<Gm<Mesh, ColorMaterial>> {
         let parent_pos = wrapper
             .parent_id
             .map(|id| position_map.get(&id).map(|x| *x))
@@ -451,19 +448,18 @@ impl Program {
             w: Vec4::new(position.x as f32, position.y as f32, position.z as f32, 1.0),
         });
 
-        let material = CpuMaterial {
-            albedo: Srgba {
-                a: (((wrapper.body.color.a as u16 * 80u16) + 127) / 255) as u8,
+        let material = ColorMaterial {
+            color: Srgba {
+                a: (((wrapper.body.color.a as u16 * 127u16) + 127) / 255) as u8,
                 ..wrapper.body.color
             },
-            ..Default::default()
-        };
-        let mut material = PhysicalMaterial::new_transparent(&self.context, &material);
-
-        material.render_states = RenderStates {
-            cull: Cull::Back,
-            blend: Blend::TRANSPARENCY,
-            ..Default::default()
+            texture: None,
+            render_states: RenderStates {
+                cull: Cull::Back,
+                blend: Blend::TRANSPARENCY,
+                ..Default::default()
+            },
+            is_transparent: true,
         };
 
         Some(Gm::new(mesh, material))
