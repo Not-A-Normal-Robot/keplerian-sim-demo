@@ -973,7 +973,7 @@ fn ellipsis_popup(
                         1.0,
                     )),
                 },
-                parent_id: Some(universe_id),
+                parent_id: parent_id,
             });
             sim_state.ui.listed_body_with_popup = None;
             sim_state.ui.new_body_window_request_focus = true;
