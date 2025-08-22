@@ -19,8 +19,8 @@ use three_d::{
     egui::{
         self, Area, Atom, AtomLayout, Button, Color32, ComboBox, Context as EguiContext,
         CornerRadius, DragValue, FontId, Frame, Grid, Id as EguiId, Image, ImageButton, IntoAtoms,
-        Key, Label, Layout, Margin, Popup, PopupCloseBehavior, Pos2, Rect, Response, RichText,
-        ScrollArea, Slider, Stroke, TextEdit, TextWrapMode, TopBottomPanel, Ui, Vec2, Window,
+        Key, Label, Margin, Popup, PopupCloseBehavior, Pos2, Rect, Response, RichText, ScrollArea,
+        Slider, Stroke, TextEdit, TextWrapMode, TopBottomPanel, Ui, Vec2, Window,
         collapsing_header::CollapsingState,
         color_picker,
         text::{CCursor, CCursorRange},
@@ -1041,7 +1041,7 @@ fn body_edit_window(ctx: &EguiContext, _sim_state: &mut SimState) {
 }
 
 fn new_body_window(ctx: &EguiContext, sim_state: &mut SimState) {
-    let wrapper = match &mut sim_state.preview_body {
+    let wrapper = match sim_state.preview_body.take() {
         Some(w) => w,
         None => return,
     };
@@ -1053,7 +1053,8 @@ fn new_body_window(ctx: &EguiContext, sim_state: &mut SimState) {
         .open(&mut open)
         .show(ctx, |ui| {
             ui.scope(|ui| {
-                new_body_window_content(ui, wrapper);
+                sim_state.preview_body =
+                    new_body_window_content(ui, &mut sim_state.universe, wrapper);
             })
         });
 
@@ -1069,7 +1070,11 @@ fn new_body_window(ctx: &EguiContext, sim_state: &mut SimState) {
     }
 }
 
-fn new_body_window_content(ui: &mut Ui, wrapper: &mut PreviewBody) {
+fn new_body_window_content(
+    ui: &mut Ui,
+    universe: &mut Universe,
+    mut wrapper: PreviewBody,
+) -> Option<PreviewBody> {
     ui.visuals_mut().override_text_color = Some(Color32::WHITE);
 
     let text = RichText::new("Physical Characteristics")
@@ -1082,7 +1087,7 @@ fn new_body_window_content(ui: &mut Ui, wrapper: &mut PreviewBody) {
         .num_columns(2)
         .spacing([40.0, 4.0])
         .striped(true)
-        .show(ui, |ui| new_body_window_phys(ui, wrapper));
+        .show(ui, |ui| new_body_window_phys(ui, &mut wrapper));
 
     if let Some(orbit) = &mut wrapper.body.orbit {
         let text = RichText::new("Orbital Parameters").underline().size(16.0);
@@ -1098,7 +1103,12 @@ fn new_body_window_content(ui: &mut Ui, wrapper: &mut PreviewBody) {
     }
 
     ui.add_space(16.0);
-    ui.button("Confirm");
+    if ui.button("Confirm").clicked() {
+        let _ = universe.add_body(wrapper.body, wrapper.parent_id);
+        return None;
+    }
+
+    return Some(wrapper);
 }
 
 fn new_body_window_phys(ui: &mut Ui, wrapper: &mut PreviewBody) {
