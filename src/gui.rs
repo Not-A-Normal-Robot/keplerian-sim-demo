@@ -4,10 +4,16 @@ use std::{
     sync::{Arc, LazyLock},
 };
 
+use crate::units::mass::MassUnit;
+
 use super::{
     assets,
     body::Body,
-    units::time::{TimeDisplayMode, TimeUnit},
+    units::{
+        AutoUnit, UnitEnum,
+        length::LengthUnit,
+        time::{TimeDisplayMode, TimeUnit},
+    },
     universe::{Id as UniverseId, Universe},
 };
 use float_pretty_print::PrettyPrintFloat;
@@ -47,6 +53,8 @@ const NEW_BODY_PHYS_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"Creation")).unwrap();
 const NEW_BODY_ORBIT_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"3111pt1c")).unwrap();
+const DRAG_VALUE_WITH_UNIT_PREFIX_SALT: std::num::NonZeroU64 =
+    std::num::NonZeroU64::new(u64::from_be_bytes(*b"2ParSecs")).unwrap();
 
 const FPS_AREA_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(FPS_AREA_SALT));
 const BOTTOM_PANEL_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(BOTTOM_PANEL_SALT));
@@ -118,6 +126,26 @@ impl FrameData {
     }
 }
 
+struct NewBodyWindowState {
+    mass_unit: AutoUnit<MassUnit>,
+    radius_unit: AutoUnit<LengthUnit>,
+}
+
+impl Default for NewBodyWindowState {
+    fn default() -> Self {
+        Self {
+            mass_unit: AutoUnit {
+                auto: true,
+                unit: MassUnit::Kilograms,
+            },
+            radius_unit: AutoUnit {
+                auto: true,
+                unit: LengthUnit::Meters,
+            },
+        }
+    }
+}
+
 struct RenameState {
     universe_id: UniverseId,
     name_buffer: String,
@@ -134,6 +162,7 @@ struct UiState {
     listed_body_with_popup: Option<UniverseId>,
     listed_body_with_rename: Option<RenameState>,
     new_body_window_request_focus: bool,
+    new_body_window_state: Option<NewBodyWindowState>,
 }
 
 impl Default for UiState {
@@ -148,6 +177,7 @@ impl Default for UiState {
             listed_body_with_popup: None,
             listed_body_with_rename: None,
             new_body_window_request_focus: false,
+            new_body_window_state: None,
         }
     }
 }
@@ -1219,4 +1249,37 @@ fn new_body_window_orbit(ui: &mut Ui, orbit: &mut Orbit) {
         }
     }
     ui.end_row();
+}
+
+fn drag_value_with_unit<'a, U>(
+    id_salt: impl std::hash::Hash,
+    ui: &mut Ui,
+    base_val: &'a mut f64,
+    unit: &'a mut U,
+    dv_init: impl FnOnce(DragValue) -> DragValue,
+    cb_init: impl FnOnce(ComboBox) -> ComboBox,
+) where
+    U: UnitEnum,
+{
+    let unit_scale = unit.get_value();
+    let mut scaled_val = *base_val / unit_scale;
+    let dv = DragValue::new(&mut scaled_val);
+    let dv = dv_init(dv);
+    let cb = ComboBox::from_id_salt((DRAG_VALUE_WITH_UNIT_PREFIX_SALT, id_salt));
+    let cb = cb_init(cb);
+
+    let dv = ui.add(dv);
+    cb.show_ui(ui, |ui| {
+        for thing in <U as IntoEnumIterator>::iter() {
+            let button = ui.selectable_label(thing == *unit, thing.to_string());
+
+            if button.clicked() {
+                *unit = thing;
+            }
+        }
+    });
+
+    if dv.changed() {
+        *base_val = scaled_val * unit_scale;
+    }
 }
