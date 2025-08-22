@@ -7,6 +7,7 @@ use std::{
 use super::{
     assets,
     body::Body,
+    units::time::{TimeDisplayMode, TimeUnit},
     universe::{Id as UniverseId, Universe},
 };
 use float_pretty_print::PrettyPrintFloat;
@@ -27,11 +28,6 @@ use three_d::{
         text_edit::TextEditState,
     },
 };
-
-#[path = "time.rs"]
-mod time;
-
-use time::{TimeDisplay, TimeUnit};
 
 const FPS_AREA_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(0xFEED_A_DEFEA7ED_FAE).unwrap();
@@ -129,7 +125,7 @@ struct RenameState {
 }
 
 struct UiState {
-    time_disp: TimeDisplay,
+    time_disp: TimeDisplayMode,
     time_slider_pos: f64,
     time_speed_amount: f64,
     time_speed_unit: TimeUnit,
@@ -143,7 +139,7 @@ struct UiState {
 impl Default for UiState {
     fn default() -> Self {
         Self {
-            time_disp: TimeDisplay::SingleUnit,
+            time_disp: TimeDisplayMode::SingleUnit,
             time_slider_pos: 0.0,
             time_speed_amount: 1.0,
             time_speed_unit: TimeUnit::Seconds,
@@ -511,7 +507,7 @@ fn time_drag_value(ui: &mut Ui, sim_state: &mut SimState) {
     }
 
     if sim_state.ui.time_speed_unit_auto && !dv_instance.dragged() {
-        sim_state.ui.time_speed_unit = TimeUnit::largest_unit_from_seconds(sim_state.sim_speed);
+        sim_state.ui.time_speed_unit = TimeUnit::largest_unit_from_base(sim_state.sim_speed);
         sim_state.ui.time_speed_amount =
             sim_state.sim_speed / sim_state.ui.time_speed_unit.get_value();
     }

@@ -22,6 +22,8 @@ mod control;
 mod gui;
 #[path = "scene.rs"]
 mod scene;
+#[path = "units/mod.rs"]
+mod units;
 #[path = "universe.rs"]
 mod universe;
 

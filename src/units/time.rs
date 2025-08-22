@@ -3,7 +3,9 @@ use std::{fmt::Display, str::FromStr};
 use float_pretty_print::PrettyPrintFloat;
 use strum_macros::{EnumCount, EnumIter};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, EnumCount, EnumIter)]
+use super::UnitEnum;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, EnumCount, EnumIter)]
 pub(crate) enum TimeUnit {
     Nanos,
     Micros,
@@ -49,8 +51,8 @@ impl TimeUnit {
             TimeUnit::Years => YEAR,
         }
     }
-    pub(crate) const fn largest_unit_from_seconds(seconds: f64) -> Self {
-        match seconds {
+    pub(crate) const fn largest_unit_from_base(base: f64) -> Self {
+        match base {
             x if x.abs() >= YEAR => TimeUnit::Years,
             x if x.abs() >= DAY => TimeUnit::Days,
             x if x.abs() >= HOUR => TimeUnit::Hours,
@@ -96,8 +98,20 @@ impl FromStr for TimeUnit {
     }
 }
 
+impl UnitEnum for TimeUnit {
+    fn get_next_smaller(self) -> Option<Self> {
+        self.get_next_smaller()
+    }
+    fn get_value(self) -> f64 {
+        self.get_value()
+    }
+    fn largest_unit_from_base(base: f64) -> Self {
+        Self::largest_unit_from_base(base)
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumCount, EnumIter)]
-pub(crate) enum TimeDisplay {
+pub(crate) enum TimeDisplayMode {
     /// e.g. `1755069111.3 s`,
     SecondsOnly,
     /// Top 3 units, e.g. `14 y, 211 d, 16 h`
@@ -106,12 +120,12 @@ pub(crate) enum TimeDisplay {
     SingleUnit,
 }
 
-impl TimeDisplay {
+impl TimeDisplayMode {
     pub(crate) fn format_time(self, seconds: f64) -> String {
         match self {
-            TimeDisplay::SecondsOnly => Self::format_secs_only(seconds),
-            TimeDisplay::MultiUnit => Self::format_secs_to_years(seconds),
-            TimeDisplay::SingleUnit => Self::format_one_unit(seconds),
+            TimeDisplayMode::SecondsOnly => Self::format_secs_only(seconds),
+            TimeDisplayMode::MultiUnit => Self::format_secs_to_years(seconds),
+            TimeDisplayMode::SingleUnit => Self::format_one_unit(seconds),
         }
     }
 
@@ -121,7 +135,7 @@ impl TimeDisplay {
 
     fn format_secs_to_years(mut seconds: f64) -> String {
         const MAX_UNIT_AMOUNT: usize = 3;
-        let mut unit = TimeUnit::largest_unit_from_seconds(seconds);
+        let mut unit = TimeUnit::largest_unit_from_base(seconds);
         let mut units = Vec::with_capacity(MAX_UNIT_AMOUNT);
 
         units.push(unit);
@@ -169,7 +183,7 @@ impl TimeDisplay {
     }
 
     fn format_one_unit(seconds: f64) -> String {
-        let unit = TimeUnit::largest_unit_from_seconds(seconds);
+        let unit = TimeUnit::largest_unit_from_base(seconds);
         let amount = seconds / unit.get_value();
 
         format!("{:15.15} {unit}", PrettyPrintFloat(amount))
@@ -192,12 +206,12 @@ impl TimeDisplay {
     }
 }
 
-impl Display for TimeDisplay {
+impl Display for TimeDisplayMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TimeDisplay::SecondsOnly => write!(f, "seconds-only"),
-            TimeDisplay::MultiUnit => write!(f, "multi-unit"),
-            TimeDisplay::SingleUnit => write!(f, "single-unit"),
+            TimeDisplayMode::SecondsOnly => write!(f, "seconds-only"),
+            TimeDisplayMode::MultiUnit => write!(f, "multi-unit"),
+            TimeDisplayMode::SingleUnit => write!(f, "single-unit"),
         }
     }
 }
@@ -211,7 +225,7 @@ mod tests {
 
     #[test]
     fn test_next() {
-        let mut cur = TimeDisplay::SecondsOnly;
+        let mut cur = TimeDisplayMode::SecondsOnly;
         let mut encountered = HashSet::new();
 
         while encountered.insert(cur) {
