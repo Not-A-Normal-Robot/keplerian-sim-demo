@@ -350,12 +350,14 @@ impl Program {
 
         let offset = parent_pos - camera_offset;
 
-        let semi_major_axis = orbit.get_semi_major_axis();
-        let distance_to_camera = (offset - camera_pos).length();
-        let radial_size = get_radial_size(semi_major_axis, distance_to_camera);
-        if radial_size < MIN_ORBIT_RADIAL_SIZE {
-            // Too small to see, skip
-            return None;
+        if orbit.get_eccentricity() < 1.0 {
+            let semi_major_axis = orbit.get_semi_major_axis();
+            let distance_to_camera = (offset - camera_pos).length();
+            let radial_size = get_radial_size(semi_major_axis, distance_to_camera);
+            if radial_size < MIN_ORBIT_RADIAL_SIZE {
+                // Too small to see, skip
+                return None;
+            }
         }
 
         let material = ColorMaterial {
