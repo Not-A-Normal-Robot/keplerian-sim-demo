@@ -26,6 +26,15 @@ const HOUR: f64 = 60.0 * MINUTE;
 const DAY: f64 = 24.0 * HOUR;
 const YEAR: f64 = 365.25 * DAY;
 
+const TEXT_SECOND: &str = "s";
+const TEXT_MILLI: &str = "ms";
+const TEXT_MICRO: &str = "µs";
+const TEXT_NANO: &str = "ns";
+const TEXT_MINUTE: &str = "min";
+const TEXT_HOUR: &str = "h";
+const TEXT_DAY: &str = "d";
+const TEXT_YEAR: &str = "y";
+
 impl TimeUnit {
     pub(crate) const fn get_next_smaller(self) -> Option<Self> {
         match self {
@@ -68,14 +77,14 @@ impl TimeUnit {
 impl Display for TimeUnit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TimeUnit::Nanos => write!(f, "ns"),
-            TimeUnit::Micros => write!(f, "µs"),
-            TimeUnit::Millis => write!(f, "ms"),
-            TimeUnit::Seconds => write!(f, "s"),
-            TimeUnit::Minutes => write!(f, "min"),
-            TimeUnit::Hours => write!(f, "h"),
-            TimeUnit::Days => write!(f, "d"),
-            TimeUnit::Years => write!(f, "y"),
+            TimeUnit::Nanos => write!(f, "{TEXT_NANO}"),
+            TimeUnit::Micros => write!(f, "{TEXT_MICRO}"),
+            TimeUnit::Millis => write!(f, "{TEXT_MILLI}"),
+            TimeUnit::Seconds => write!(f, "{TEXT_SECOND}"),
+            TimeUnit::Minutes => write!(f, "{TEXT_MINUTE}"),
+            TimeUnit::Hours => write!(f, "{TEXT_HOUR}"),
+            TimeUnit::Days => write!(f, "{TEXT_DAY}"),
+            TimeUnit::Years => write!(f, "{TEXT_YEAR}"),
         }
     }
 }
@@ -85,14 +94,14 @@ impl FromStr for TimeUnit {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "ns" => Ok(TimeUnit::Nanos),
-            "us" => Ok(TimeUnit::Micros),
-            "ms" => Ok(TimeUnit::Millis),
-            "s" => Ok(TimeUnit::Seconds),
-            "m" => Ok(TimeUnit::Minutes),
-            "h" => Ok(TimeUnit::Hours),
-            "d" => Ok(TimeUnit::Days),
-            "y" => Ok(TimeUnit::Years),
+            TEXT_NANO => Ok(TimeUnit::Nanos),
+            TEXT_MICRO => Ok(TimeUnit::Micros),
+            TEXT_MILLI => Ok(TimeUnit::Millis),
+            TEXT_SECOND => Ok(TimeUnit::Seconds),
+            TEXT_MINUTE => Ok(TimeUnit::Minutes),
+            TEXT_HOUR => Ok(TimeUnit::Hours),
+            TEXT_DAY => Ok(TimeUnit::Days),
+            TEXT_YEAR => Ok(TimeUnit::Years),
             _ => Err(()),
         }
     }
