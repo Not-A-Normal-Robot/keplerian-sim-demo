@@ -4,14 +4,13 @@ use std::{
     sync::{Arc, LazyLock},
 };
 
-use crate::units::mass::MassUnit;
-
 use super::{
     assets,
     body::Body,
     units::{
         AutoUnit, UnitEnum,
         length::LengthUnit,
+        mass::MassUnit,
         time::{TimeDisplayMode, TimeUnit},
     },
     universe::{Id as UniverseId, Universe},
