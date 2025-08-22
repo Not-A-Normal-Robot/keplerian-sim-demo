@@ -937,6 +937,9 @@ fn ellipsis_popup(
             let child_name = body_wrapper
                 .map(|w| format!("Child of {}", w.body.name))
                 .unwrap_or_else(|| "Child body".to_owned());
+            let mu = body_wrapper
+                .map(|w| w.body.mass * sim_state.universe.g)
+                .unwrap_or(1.0);
 
             sim_state.preview_body = Some(PreviewBody {
                 body: Body {
@@ -944,7 +947,7 @@ fn ellipsis_popup(
                     mass: 1.0,
                     radius: this_radius * 0.1,
                     color: Srgba::WHITE,
-                    orbit: Some(Orbit::new(0.0, this_radius * 2.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
+                    orbit: Some(Orbit::new(0.0, this_radius * 2.0, 0.0, 0.0, 0.0, 0.0, mu)),
                 },
                 parent_id: Some(universe_id),
             });
@@ -956,6 +959,9 @@ fn ellipsis_popup(
                 .map(|id| sim_state.universe.get_body(id))
                 .flatten();
             let parent_radius = parent.map(|w| w.body.radius).unwrap_or(1.0);
+            let mu = parent
+                .map(|w| w.body.mass * sim_state.universe.g)
+                .unwrap_or(1.0);
             let sibling_name = parent
                 .map(|w| format!("Child of {}", w.body.name))
                 .unwrap_or_else(|| "Sibling body".to_owned());
@@ -966,15 +972,7 @@ fn ellipsis_popup(
                     mass: 1.0,
                     radius: parent_radius * 0.1,
                     color: Srgba::WHITE,
-                    orbit: Some(Orbit::new(
-                        0.0,
-                        parent_radius * 2.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1.0,
-                    )),
+                    orbit: Some(Orbit::new(0.0, parent_radius * 2.0, 0.0, 0.0, 0.0, 0.0, mu)),
                 },
                 parent_id: parent_id,
             });
