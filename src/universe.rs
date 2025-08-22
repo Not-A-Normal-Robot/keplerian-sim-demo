@@ -146,14 +146,14 @@ impl Universe {
     ///
     /// Returns: A Vec of all bodies that were removed, including the one specified.  
     /// An empty Vec is returned if the body was not found.
-    pub fn remove_body(&mut self, body_index: Id) -> Vec<Body> {
+    pub fn remove_body(&mut self, body_index: Id) -> Vec<(Id, Body)> {
         let wrapper = match self.bodies.remove(&body_index) {
             Some(wrapper) => wrapper,
             None => return Vec::new(),
         };
 
         let (body, relations) = (wrapper.body, wrapper.relations);
-        let mut bodies = vec![body];
+        let mut bodies = vec![(body_index, body)];
 
         // Remove the body from its parent's satellites.
         if let Some(parent_index) = relations.parent {

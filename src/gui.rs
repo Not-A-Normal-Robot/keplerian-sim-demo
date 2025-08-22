@@ -1015,7 +1015,13 @@ fn ellipsis_popup(
             }
         }
         if delete_button.clicked() {
-            sim_state.universe.remove_body(universe_id);
+            let bodies_removed = sim_state.universe.remove_body(universe_id);
+            if let Some(preview) = &sim_state.preview_body
+                && let Some(parent_id) = preview.parent_id
+                && bodies_removed.iter().any(|(id, _)| *id == parent_id)
+            {
+                sim_state.preview_body = None;
+            }
             sim_state.switch_focus(parent_id.unwrap_or(0), position_map);
             sim_state.ui.listed_body_with_popup = None;
         }
