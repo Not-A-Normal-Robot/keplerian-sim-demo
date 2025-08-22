@@ -11,10 +11,11 @@ use super::{
 };
 use float_pretty_print::PrettyPrintFloat;
 use glam::DVec3;
+use keplerian_sim::Orbit;
 use ordered_float::NotNan;
 use strum::IntoEnumIterator;
 use three_d::{
-    Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
+    Context as ThreeDContext, Event as ThreeDEvent, GUI, Srgba, Viewport,
     egui::{
         self, Area, Atom, AtomLayout, Button, Color32, ComboBox, Context as EguiContext,
         CornerRadius, DragValue, FontId, Frame, Id as EguiId, Image, ImageButton, IntoAtoms, Key,
@@ -131,6 +132,7 @@ struct UiState {
     frame_data: FrameData,
     listed_body_with_popup: Option<UniverseId>,
     listed_body_with_rename: Option<RenameState>,
+    new_body_window_request_focus: bool,
 }
 
 impl Default for UiState {
@@ -144,6 +146,7 @@ impl Default for UiState {
             frame_data: FrameData::new(),
             listed_body_with_popup: None,
             listed_body_with_rename: None,
+            new_body_window_request_focus: false,
         }
     }
 }
@@ -256,6 +259,7 @@ fn handle_ui(
     bottom_panel(ctx, sim_state, elapsed_time);
     body_tree_window(ctx, sim_state, position_map);
     body_edit_window(ctx, sim_state);
+    new_body_window(ctx, sim_state);
 }
 
 fn fps_area(ctx: &EguiContext, frame_data: &FrameData) {
@@ -926,12 +930,53 @@ fn ellipsis_popup(
         let rename_button = ui_button(ui, "Rename");
 
         if new_child_button.clicked() {
-            // TODO
+            let this_radius = body_wrapper.map(|x| x.body.radius).unwrap_or(1.0);
+            let child_name = body_wrapper
+                .map(|w| format!("Child of {}", w.body.name))
+                .unwrap_or_else(|| "Child body".to_owned());
+
+            sim_state.preview_body = Some(PreviewBody {
+                body: Body {
+                    name: child_name,
+                    mass: 1.0,
+                    radius: this_radius * 0.1,
+                    color: Srgba::WHITE,
+                    orbit: Some(Orbit::new(0.0, this_radius * 2.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
+                },
+                parent_id: Some(universe_id),
+            });
             sim_state.ui.listed_body_with_popup = None;
+            sim_state.ui.new_body_window_request_focus = true;
         }
         if new_sibling_button.clicked() {
-            // TODO
+            let parent = parent_id
+                .map(|id| sim_state.universe.get_body(id))
+                .flatten();
+            let parent_radius = parent.map(|w| w.body.radius).unwrap_or(1.0);
+            let sibling_name = parent
+                .map(|w| format!("Child of {}", w.body.name))
+                .unwrap_or_else(|| "Sibling body".to_owned());
+
+            sim_state.preview_body = Some(PreviewBody {
+                body: Body {
+                    name: sibling_name,
+                    mass: 1.0,
+                    radius: parent_radius * 0.1,
+                    color: Srgba::WHITE,
+                    orbit: Some(Orbit::new(
+                        0.0,
+                        parent_radius * 2.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0,
+                    )),
+                },
+                parent_id: Some(universe_id),
+            });
             sim_state.ui.listed_body_with_popup = None;
+            sim_state.ui.new_body_window_request_focus = true;
         }
         if let Some(parent_id) = parent_id
             && let Some(cur_idx) = cur_sibling_idx
@@ -990,4 +1035,28 @@ fn body_edit_window(ctx: &EguiContext, _sim_state: &mut SimState) {
     Window::new("Celestial Editor").show(ctx, |ui| {
         ui.label("This window is not implemented yet.");
     });
+}
+
+fn new_body_window(ctx: &EguiContext, sim_state: &mut SimState) {
+    let wrapper = match &mut sim_state.preview_body {
+        Some(w) => w,
+        None => return,
+    };
+
+    let mut open = true;
+
+    let window = Window::new("New Body").open(&mut open).show(ctx, |ui| {
+        ui.label("This window is not implemented yet.");
+    });
+
+    if !open {
+        sim_state.preview_body = None;
+    }
+
+    if let Some(w) = window
+        && sim_state.ui.new_body_window_request_focus
+    {
+        w.response.request_focus();
+        sim_state.ui.new_body_window_request_focus = false;
+    }
 }
