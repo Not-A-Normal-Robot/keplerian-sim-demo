@@ -19,8 +19,8 @@ use three_d::{
     egui::{
         self, Area, Atom, AtomLayout, Button, Color32, ComboBox, Context as EguiContext,
         CornerRadius, DragValue, FontId, Frame, Grid, Id as EguiId, Image, ImageButton, IntoAtoms,
-        Key, Label, Margin, Popup, PopupCloseBehavior, Pos2, Rect, Response, RichText, ScrollArea,
-        Slider, Stroke, TextEdit, TextWrapMode, TopBottomPanel, Ui, Vec2, Window,
+        Key, Label, Layout, Margin, Popup, PopupCloseBehavior, Pos2, Rect, Response, RichText,
+        ScrollArea, Slider, Stroke, TextEdit, TextWrapMode, TopBottomPanel, Ui, Vec2, Window,
         collapsing_header::CollapsingState,
         color_picker,
         text::{CCursor, CCursorRange},
@@ -47,8 +47,10 @@ const ELLIPSIS_BUTTON_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"see_more")).unwrap();
 const RENAME_TEXTEDIT_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"OmgRen??")).unwrap();
-const NEW_BODY_GRID_SALT: std::num::NonZeroU64 =
+const NEW_BODY_PHYS_SALT: std::num::NonZeroU64 =
     std::num::NonZeroU64::new(u64::from_be_bytes(*b"Creation")).unwrap();
+const NEW_BODY_ORBIT_SALT: std::num::NonZeroU64 =
+    std::num::NonZeroU64::new(u64::from_be_bytes(*b"3111pt1c")).unwrap();
 
 const FPS_AREA_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(FPS_AREA_SALT));
 const BOTTOM_PANEL_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(BOTTOM_PANEL_SALT));
@@ -1051,9 +1053,7 @@ fn new_body_window(ctx: &EguiContext, sim_state: &mut SimState) {
         .open(&mut open)
         .show(ctx, |ui| {
             ui.scope(|ui| {
-                Grid::new(NEW_BODY_GRID_SALT)
-                    .striped(true)
-                    .show(ui, |ui| new_body_window_content(ui, wrapper))
+                new_body_window_content(ui, wrapper);
             })
         });
 
@@ -1072,12 +1072,42 @@ fn new_body_window(ctx: &EguiContext, sim_state: &mut SimState) {
 fn new_body_window_content(ui: &mut Ui, wrapper: &mut PreviewBody) {
     ui.visuals_mut().override_text_color = Some(Color32::WHITE);
 
-    ui.label("Body Name");
-    // ui.set_max_width(ui.available_width());
+    let text = RichText::new("Physical Characteristics")
+        .underline()
+        .size(16.0);
+    let label = Label::new(text);
+    ui.add(label);
+    ui.add_space(8.0);
+    Grid::new(NEW_BODY_PHYS_SALT)
+        .num_columns(2)
+        .spacing([40.0, 4.0])
+        .striped(true)
+        .show(ui, |ui| new_body_window_phys(ui, wrapper));
+
+    if let Some(orbit) = &mut wrapper.body.orbit {
+        let text = RichText::new("Orbital Parameters").underline().size(16.0);
+        let label = Label::new(text);
+        ui.add_space(12.0);
+        ui.add(label);
+        ui.add_space(8.0);
+        Grid::new(NEW_BODY_ORBIT_SALT)
+            .num_columns(2)
+            .spacing([40.0, 4.0])
+            .striped(true)
+            .show(ui, |ui| new_body_window_orbit(ui, orbit));
+    }
+
+    ui.add_space(16.0);
+    ui.button("Confirm");
+}
+
+fn new_body_window_phys(ui: &mut Ui, wrapper: &mut PreviewBody) {
+    ui.label("Body name");
     ui.add(
         TextEdit::singleline(&mut wrapper.body.name)
             .char_limit(255)
-            .hint_text("Enter new body name"), // .desired_width(f32::INFINITY),
+            .hint_text("Enter new body name")
+            .desired_width(f32::INFINITY),
     );
     ui.end_row();
 
@@ -1094,87 +1124,87 @@ fn new_body_window_content(ui: &mut Ui, wrapper: &mut PreviewBody) {
     let dv = DragValue::new(&mut wrapper.body.mass)
         .range(0.0..=f64::MAX)
         .suffix(" kg");
-    ui.add(dv);
+    ui.add_sized((ui.available_width(), 16.0), dv);
     ui.end_row();
 
     ui.label("Radius");
     let dv = DragValue::new(&mut wrapper.body.radius)
         .range(0.0..=f64::MAX)
         .suffix(" m");
-    ui.add(dv);
+    ui.add_sized((ui.available_width(), 16.0), dv);
+    ui.end_row();
+}
+
+fn new_body_window_orbit(ui: &mut Ui, orbit: &mut Orbit) {
+    ui.label("Eccentricity");
+    let mut eccentricity = orbit.get_eccentricity();
+    let dv = DragValue::new(&mut eccentricity)
+        .range(0.0..=f64::MAX)
+        .speed(0.01);
+    let dv = ui.add_sized((ui.available_width(), 16.0), dv);
+    if dv.changed() {
+        orbit.set_eccentricity(eccentricity);
+    }
     ui.end_row();
 
-    if let Some(orbit) = &mut wrapper.body.orbit {
-        ui.label("Eccentricity");
-        let mut eccentricity = orbit.get_eccentricity();
-        let dv = DragValue::new(&mut eccentricity)
-            .range(0.0..=f64::MAX)
-            .speed(0.01);
-        let dv = ui.add(dv);
-        if dv.changed() {
-            orbit.set_eccentricity(eccentricity);
-        }
-        ui.end_row();
-
-        ui.label("Periapsis");
-        let mut periapsis = orbit.get_periapsis();
-        let dv = DragValue::new(&mut periapsis)
-            .range(0.0..=f64::MAX)
-            .suffix(" m");
-        let dv = ui.add(dv);
-        if dv.changed() {
-            orbit.set_periapsis(periapsis);
-        }
-        ui.end_row();
-
-        ui.label("Inclination");
-        let mut inclination = orbit.get_inclination().to_degrees();
-        let slider = Slider::new(&mut inclination, 0.0..=180.0).suffix('°');
-        let slider = ui.add(slider);
-        if slider.changed() {
-            orbit.set_inclination(inclination.to_radians());
-        }
-        ui.end_row();
-
-        ui.label("Arg. of Pe.");
-        let mut arg_pe = orbit.get_arg_pe().to_degrees();
-        let slider = Slider::new(&mut arg_pe, 0.0..=360.0).suffix('°');
-        let slider = ui.add(slider);
-        if slider.changed() {
-            orbit.set_arg_pe(arg_pe.to_radians());
-        }
-        ui.end_row();
-
-        ui.label("RAAN");
-        let mut lan = orbit.get_long_asc_node().to_degrees();
-        let slider = Slider::new(&mut lan, 0.0..=360.0).suffix('°');
-        let slider = ui.add(slider);
-        if slider.changed() {
-            orbit.set_long_asc_node(lan.to_radians());
-        }
-        ui.end_row();
-
-        let mut mean_anomaly = orbit.get_mean_anomaly_at_epoch().to_degrees();
-        if orbit.get_eccentricity() < 1.0 {
-            ui.label("Mean anom.");
-            let slider = Slider::new(&mut mean_anomaly, 0.0..=360.0).suffix('°');
-            let slider = ui.add(slider);
-            if mean_anomaly < 0.0 || mean_anomaly > 360.0 {
-                mean_anomaly = mean_anomaly.rem_euclid(360.0);
-            }
-            if slider.changed() {
-                orbit.set_mean_anomaly_at_epoch(mean_anomaly.to_radians());
-            }
-        } else {
-            ui.label("Hyp. m. anom.");
-            let dv = DragValue::new(&mut mean_anomaly)
-                .range(f64::MIN..=f64::MAX)
-                .suffix('°');
-            let dv = ui.add(dv);
-            if dv.changed() {
-                orbit.set_mean_anomaly_at_epoch(mean_anomaly.to_radians());
-            }
-        }
-        ui.end_row();
+    ui.label("Periapsis");
+    let mut periapsis = orbit.get_periapsis();
+    let dv = DragValue::new(&mut periapsis)
+        .range(0.0..=f64::MAX)
+        .suffix(" m");
+    let dv = ui.add_sized((ui.available_width(), 16.0), dv);
+    if dv.changed() {
+        orbit.set_periapsis(periapsis);
     }
+    ui.end_row();
+
+    ui.label("Inclination");
+    let mut inclination = orbit.get_inclination().to_degrees();
+    let slider = Slider::new(&mut inclination, 0.0..=180.0).suffix('°');
+    let slider = ui.add_sized((ui.available_width(), 16.0), slider);
+    if slider.changed() {
+        orbit.set_inclination(inclination.to_radians());
+    }
+    ui.end_row();
+
+    ui.label("Arg. of Pe.");
+    let mut arg_pe = orbit.get_arg_pe().to_degrees();
+    let slider = Slider::new(&mut arg_pe, 0.0..=360.0).suffix('°');
+    let slider = ui.add(slider);
+    if slider.changed() {
+        orbit.set_arg_pe(arg_pe.to_radians());
+    }
+    ui.end_row();
+
+    ui.label("RAAN");
+    let mut lan = orbit.get_long_asc_node().to_degrees();
+    let slider = Slider::new(&mut lan, 0.0..=360.0).suffix('°');
+    let slider = ui.add(slider);
+    if slider.changed() {
+        orbit.set_long_asc_node(lan.to_radians());
+    }
+    ui.end_row();
+
+    let mut mean_anomaly = orbit.get_mean_anomaly_at_epoch().to_degrees();
+    if orbit.get_eccentricity() < 1.0 {
+        ui.label("Mean anom.");
+        let slider = Slider::new(&mut mean_anomaly, 0.0..=360.0).suffix('°');
+        let slider = ui.add(slider);
+        if mean_anomaly < 0.0 || mean_anomaly > 360.0 {
+            mean_anomaly = mean_anomaly.rem_euclid(360.0);
+        }
+        if slider.changed() {
+            orbit.set_mean_anomaly_at_epoch(mean_anomaly.to_radians());
+        }
+    } else {
+        ui.label("Hyp. m. anom.");
+        let dv = DragValue::new(&mut mean_anomaly)
+            .range(f64::MIN..=f64::MAX)
+            .suffix('°');
+        let dv = ui.add(dv);
+        if dv.changed() {
+            orbit.set_mean_anomaly_at_epoch(mean_anomaly.to_radians());
+        }
+    }
+    ui.end_row();
 }
