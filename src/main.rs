@@ -177,6 +177,18 @@ impl Program {
                 Some(beta_id),
             )
             .unwrap();
+        universe
+            .add_body(
+                Body {
+                    name: "Rogue".into(),
+                    mass: 1e8,
+                    radius: 8.0,
+                    color: Srgba::new_opaque(255, 196, 255),
+                    orbit: Some(Orbit::new(1.1, 120.0, 2.0, 2.0, 2.0, -4.0, 1.0)),
+                },
+                Some(root_id),
+            )
+            .unwrap();
 
         universe
     }
