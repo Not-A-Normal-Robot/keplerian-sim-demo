@@ -442,7 +442,14 @@ impl Program {
         let radial_size = get_radial_size(wrapper.body.radius, distance);
 
         let cpu_mesh = &SPHERE_MESHES[get_lod_type(radial_size)?];
-        let mesh = Mesh::new(&self.context, cpu_mesh);
+        let mut mesh = Mesh::new(&self.context, cpu_mesh);
+        let r = wrapper.body.radius as f32;
+        mesh.set_transformation(Mat4 {
+            x: Vec4::new(r, 0.0, 0.0, 0.0),
+            y: Vec4::new(0.0, r, 0.0, 0.0),
+            z: Vec4::new(0.0, 0.0, r, 0.0),
+            w: Vec4::new(position.x as f32, position.y as f32, position.z as f32, 1.0),
+        });
 
         let material = CpuMaterial {
             albedo: Srgba {
