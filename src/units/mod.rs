@@ -12,6 +12,7 @@ pub(crate) trait UnitEnum: Copy + Display + Eq + Ord + IntoEnumIterator + FromSt
     fn largest_unit_from_base(base: f64) -> Self;
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) struct AutoUnit<U: UnitEnum> {
     pub auto: bool,
     pub unit: U,

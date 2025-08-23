@@ -1,7 +1,8 @@
+use pastey::paste;
 use std::{
     cmp::Reverse,
     collections::{BinaryHeap, HashMap, VecDeque},
-    sync::{Arc, LazyLock},
+    sync::Arc,
 };
 
 use super::{
@@ -23,10 +24,10 @@ use strum::IntoEnumIterator;
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Srgba, Viewport,
     egui::{
-        self, Area, Atom, AtomLayout, Button, Color32, ComboBox, Context as EguiContext,
+        self, Align, Area, Atom, AtomLayout, Button, Color32, ComboBox, Context as EguiContext,
         CornerRadius, DragValue, FontId, Frame, Grid, Id as EguiId, Image, ImageButton, IntoAtoms,
-        Key, Label, Margin, Popup, PopupCloseBehavior, Pos2, Rect, Response, RichText, ScrollArea,
-        Slider, Stroke, TextEdit, TextWrapMode, TopBottomPanel, Ui, Vec2, Window,
+        Key, Label, Layout, Margin, Popup, PopupCloseBehavior, Pos2, Rect, Response, RichText,
+        ScrollArea, Slider, Stroke, TextEdit, TextWrapMode, TopBottomPanel, Ui, Vec2, Window,
         collapsing_header::CollapsingState,
         color_picker,
         text::{CCursor, CCursorRange},
@@ -34,33 +35,36 @@ use three_d::{
     },
 };
 
-const FPS_AREA_SALT: std::num::NonZeroU64 =
-    std::num::NonZeroU64::new(0xFEED_A_DEFEA7ED_FAE).unwrap();
-const BOTTOM_PANEL_SALT: std::num::NonZeroU64 =
-    std::num::NonZeroU64::new(u64::from_be_bytes(*b"BluRigel")).unwrap();
-const TIME_CONTROL_COMBO_BOX_SALT: std::num::NonZeroU64 =
-    std::num::NonZeroU64::new(u64::from_be_bytes(*b"Solstice")).unwrap();
-const BODY_PREFIX_SALT: std::num::NonZeroU64 =
-    std::num::NonZeroU64::new(u64::from_be_bytes(*b"Planets!")).unwrap();
-const CIRCLE_ICON_SALT: std::num::NonZeroU64 =
-    std::num::NonZeroU64::new(u64::from_be_bytes(*b"Circles!")).unwrap();
-const ELLIPSIS_BUTTON_SALT: std::num::NonZeroU64 =
-    std::num::NonZeroU64::new(u64::from_be_bytes(*b"see_more")).unwrap();
-const RENAME_TEXTEDIT_SALT: std::num::NonZeroU64 =
-    std::num::NonZeroU64::new(u64::from_be_bytes(*b"OmgRen??")).unwrap();
-const NEW_BODY_PHYS_SALT: std::num::NonZeroU64 =
-    std::num::NonZeroU64::new(u64::from_be_bytes(*b"Creation")).unwrap();
-const NEW_BODY_ORBIT_SALT: std::num::NonZeroU64 =
-    std::num::NonZeroU64::new(u64::from_be_bytes(*b"3111pt1c")).unwrap();
-const DRAG_VALUE_WITH_UNIT_PREFIX_SALT: std::num::NonZeroU64 =
-    std::num::NonZeroU64::new(u64::from_be_bytes(*b"2ParSecs")).unwrap();
+macro_rules! declare_id {
+    (salt_only, $name:ident, $val:expr) => {
+        paste! {
+            const [<$name _SALT>]: ::core::num::NonZeroU64 =
+                ::core::num::NonZeroU64::new(u64::from_be_bytes(*$val)).unwrap();
+        }
+    };
+    ($name:ident, $val:expr) => {
+        paste! {
+            const [<$name _SALT>]: ::core::num::NonZeroU64 =
+                ::core::num::NonZeroU64::new(u64::from_be_bytes(*$val)).unwrap();
+            const [<$name _ID>]: ::std::sync::LazyLock<::three_d::egui::Id> =
+                ::std::sync::LazyLock::new(|| ::three_d::egui::Id::new([<$name _SALT>]));
+        }
+    };
+}
 
-const FPS_AREA_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(FPS_AREA_SALT));
-const BOTTOM_PANEL_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(BOTTOM_PANEL_SALT));
-const BODY_PREFIX_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(BODY_PREFIX_SALT));
-const CIRCLE_ICON_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(CIRCLE_ICON_SALT));
-const ELLIPSIS_BUTTON_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(ELLIPSIS_BUTTON_SALT));
-const RENAME_TEXTEDIT_ID: LazyLock<EguiId> = LazyLock::new(|| EguiId::new(RENAME_TEXTEDIT_SALT));
+declare_id!(FPS_AREA, b"PerfArea");
+declare_id!(BOTTOM_PANEL, b"BluRigel");
+declare_id!(salt_only, TIME_CONTROL_COMBO_BOX, b"Solstice");
+declare_id!(BODY_PREFIX, b"Planets!");
+declare_id!(CIRCLE_ICON, b"Circles!");
+declare_id!(ELLIPSIS_BUTTON, b"see_more");
+declare_id!(RENAME_TEXTEDIT, b"OmgRen??");
+declare_id!(salt_only, NEW_BODY_PHYS, b"Creation");
+declare_id!(salt_only, NEW_BODY_ORBIT, b"3111ptic");
+declare_id!(salt_only, DRAG_VALUE_WITH_UNIT_PREFIX, b"2ParSecs");
+declare_id!(salt_only, NEW_BODY_MASS, b"nMa551ve");
+declare_id!(salt_only, NEW_BODY_RADIUS, b"extraRad");
+
 const TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME: &'static str = "TSDVF";
 
 const MIN_TOUCH_TARGET_LEN: f32 = 48.0;
@@ -1074,18 +1078,24 @@ fn body_edit_window(ctx: &EguiContext, _sim_state: &mut SimState) {
 fn new_body_window(ctx: &EguiContext, sim_state: &mut SimState) {
     let wrapper = match sim_state.preview_body.take() {
         Some(w) => w,
-        None => return,
+        None => {
+            sim_state.ui.new_body_window_state = None;
+            return;
+        }
     };
+
+    let window_state = sim_state.ui.new_body_window_state.get_or_insert_default();
 
     let mut open = true;
 
     let window = Window::new("New Body")
-        .scroll(true)
+        .scroll([false, true])
+        .min_width(300.0)
         .open(&mut open)
         .show(ctx, |ui| {
             ui.scope(|ui| {
                 sim_state.preview_body =
-                    new_body_window_content(ui, &mut sim_state.universe, wrapper);
+                    new_body_window_content(ui, &mut sim_state.universe, wrapper, window_state);
             })
         });
 
@@ -1105,6 +1115,7 @@ fn new_body_window_content(
     ui: &mut Ui,
     universe: &mut Universe,
     mut wrapper: PreviewBody,
+    window_state: &mut NewBodyWindowState,
 ) -> Option<PreviewBody> {
     ui.visuals_mut().override_text_color = Some(Color32::WHITE);
 
@@ -1118,7 +1129,9 @@ fn new_body_window_content(
         .num_columns(2)
         .spacing([40.0, 4.0])
         .striped(true)
-        .show(ui, |ui| new_body_window_phys(ui, &mut wrapper));
+        .show(ui, |ui| {
+            new_body_window_phys(ui, &mut wrapper, window_state)
+        });
 
     if let Some(orbit) = &mut wrapper.body.orbit {
         let text = RichText::new("Orbital Parameters").underline().size(16.0);
@@ -1142,7 +1155,11 @@ fn new_body_window_content(
     return Some(wrapper);
 }
 
-fn new_body_window_phys(ui: &mut Ui, wrapper: &mut PreviewBody) {
+fn new_body_window_phys(
+    ui: &mut Ui,
+    wrapper: &mut PreviewBody,
+    window_state: &mut NewBodyWindowState,
+) {
     ui.label("Body name");
     ui.add(
         TextEdit::singleline(&mut wrapper.body.name)
@@ -1162,17 +1179,25 @@ fn new_body_window_phys(ui: &mut Ui, wrapper: &mut PreviewBody) {
     ui.end_row();
 
     ui.label("Mass");
-    let dv = DragValue::new(&mut wrapper.body.mass)
-        .range(0.0..=f64::MAX)
-        .suffix(" kg");
-    ui.add_sized((ui.available_width(), 16.0), dv);
+    drag_value_with_unit(
+        NEW_BODY_MASS_SALT,
+        ui,
+        &mut wrapper.body.mass,
+        &mut window_state.mass_unit,
+        |x| x.range(0.0..=f64::MAX),
+        |x| x,
+    );
     ui.end_row();
 
     ui.label("Radius");
-    let dv = DragValue::new(&mut wrapper.body.radius)
-        .range(0.0..=f64::MAX)
-        .suffix(" m");
-    ui.add_sized((ui.available_width(), 16.0), dv);
+    drag_value_with_unit(
+        NEW_BODY_RADIUS_SALT,
+        ui,
+        &mut wrapper.body.radius,
+        &mut window_state.radius_unit,
+        |x| x.range(0.0..=f64::MAX),
+        |x| x,
+    );
     ui.end_row();
 }
 
@@ -1182,7 +1207,7 @@ fn new_body_window_orbit(ui: &mut Ui, orbit: &mut Orbit) {
     let dv = DragValue::new(&mut eccentricity)
         .range(0.0..=f64::MAX)
         .speed(0.01);
-    let dv = ui.add_sized((ui.available_width(), 16.0), dv);
+    let dv = ui.add_sized((ui.available_width(), 18.0), dv);
     if dv.changed() {
         orbit.set_eccentricity(eccentricity);
     }
@@ -1193,7 +1218,7 @@ fn new_body_window_orbit(ui: &mut Ui, orbit: &mut Orbit) {
     let dv = DragValue::new(&mut periapsis)
         .range(0.0..=f64::MAX)
         .suffix(" m");
-    let dv = ui.add_sized((ui.available_width(), 16.0), dv);
+    let dv = ui.add_sized((ui.available_width(), 18.0), dv);
     if dv.changed() {
         orbit.set_periapsis(periapsis);
     }
@@ -1202,7 +1227,7 @@ fn new_body_window_orbit(ui: &mut Ui, orbit: &mut Orbit) {
     ui.label("Inclination");
     let mut inclination = orbit.get_inclination().to_degrees();
     let slider = Slider::new(&mut inclination, 0.0..=180.0).suffix('°');
-    let slider = ui.add_sized((ui.available_width(), 16.0), slider);
+    let slider = ui.add_sized((ui.available_width(), 18.0), slider);
     if slider.changed() {
         orbit.set_inclination(inclination.to_radians());
     }
@@ -1254,7 +1279,25 @@ fn drag_value_with_unit<'a, U>(
     id_salt: impl std::hash::Hash,
     ui: &mut Ui,
     base_val: &'a mut f64,
-    unit: &'a mut U,
+    unit: &'a mut AutoUnit<U>,
+    dv_init: impl FnOnce(DragValue) -> DragValue,
+    cb_init: impl FnOnce(ComboBox) -> ComboBox,
+) where
+    U: UnitEnum,
+{
+    ui.scope(|ui| {
+        ui.set_width(ui.available_width());
+        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+            drag_value_with_unit_inner(id_salt, ui, base_val, unit, dv_init, cb_init)
+        });
+    });
+}
+
+fn drag_value_with_unit_inner<'a, U>(
+    id_salt: impl std::hash::Hash,
+    ui: &mut Ui,
+    base_val: &'a mut f64,
+    unit: &'a mut AutoUnit<U>,
     dv_init: impl FnOnce(DragValue) -> DragValue,
     cb_init: impl FnOnce(ComboBox) -> ComboBox,
 ) where
@@ -1262,21 +1305,29 @@ fn drag_value_with_unit<'a, U>(
 {
     let unit_scale = unit.get_value();
     let mut scaled_val = *base_val / unit_scale;
-    let dv = DragValue::new(&mut scaled_val);
+    let dv = DragValue::new(&mut scaled_val)
+        .custom_formatter(|num, _| format!("{:3.8}", PrettyPrintFloat(num)));
     let dv = dv_init(dv);
-    let cb = ComboBox::from_id_salt((DRAG_VALUE_WITH_UNIT_PREFIX_SALT, id_salt));
+    let cb = ComboBox::from_id_salt((DRAG_VALUE_WITH_UNIT_PREFIX_SALT, id_salt))
+        .selected_text(unit.unit.to_string());
     let cb = cb_init(cb);
 
-    let dv = ui.add(dv);
-    cb.show_ui(ui, |ui| {
-        for thing in <U as IntoEnumIterator>::iter() {
-            let button = ui.selectable_label(thing == *unit, thing.to_string());
+    cb.show_ui(ui, |ui: &mut Ui| {
+        for unit_variant in <U as IntoEnumIterator>::iter() {
+            let button = ui.selectable_label(unit_variant == **unit, unit_variant.to_string());
 
             if button.clicked() {
-                *unit = thing;
+                unit.unit = unit_variant;
             }
         }
+        ui.separator();
+        let button = ui.selectable_label(unit.auto, "Auto-pick");
+        if button.clicked() {
+            unit.auto ^= true;
+        }
     });
+
+    let dv = ui.add_sized([ui.available_width(), 18.0], dv);
 
     if dv.changed() {
         *base_val = scaled_val * unit_scale;
