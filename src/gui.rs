@@ -1090,7 +1090,10 @@ fn new_body_window(ctx: &EguiContext, sim_state: &mut SimState) {
 
     let window = Window::new("New Body")
         .scroll([false, true])
+        .resizable([false, true])
+        .default_width(300.0)
         .min_width(300.0)
+        .max_width(300.0)
         .open(&mut open)
         .show(ctx, |ui| {
             ui.scope(|ui| {
@@ -1184,8 +1187,6 @@ fn new_body_window_phys(
         ui,
         &mut wrapper.body.mass,
         &mut window_state.mass_unit,
-        |x| x.range(0.0..=f64::MAX),
-        |x| x,
     );
     ui.end_row();
 
@@ -1195,8 +1196,6 @@ fn new_body_window_phys(
         ui,
         &mut wrapper.body.radius,
         &mut window_state.radius_unit,
-        |x| x.range(0.0..=f64::MAX),
-        |x| x,
     );
     ui.end_row();
 }
@@ -1280,15 +1279,13 @@ fn drag_value_with_unit<'a, U>(
     ui: &mut Ui,
     base_val: &'a mut f64,
     unit: &'a mut AutoUnit<U>,
-    dv_init: impl FnOnce(DragValue) -> DragValue,
-    cb_init: impl FnOnce(ComboBox) -> ComboBox,
 ) where
     U: UnitEnum,
 {
     ui.scope(|ui| {
         ui.set_width(ui.available_width());
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-            drag_value_with_unit_inner(id_salt, ui, base_val, unit, dv_init, cb_init)
+            drag_value_with_unit_inner(id_salt, ui, base_val, unit)
         });
     });
 }
@@ -1298,19 +1295,16 @@ fn drag_value_with_unit_inner<'a, U>(
     ui: &mut Ui,
     base_val: &'a mut f64,
     unit: &'a mut AutoUnit<U>,
-    dv_init: impl FnOnce(DragValue) -> DragValue,
-    cb_init: impl FnOnce(ComboBox) -> ComboBox,
 ) where
     U: UnitEnum,
 {
     let unit_scale = unit.get_value();
     let mut scaled_val = *base_val / unit_scale;
     let dv = DragValue::new(&mut scaled_val)
-        .custom_formatter(|num, _| format!("{:3.8}", PrettyPrintFloat(num)));
-    let dv = dv_init(dv);
+        .custom_formatter(|num, _| format!("{:3.8}", PrettyPrintFloat(num)))
+        .range(f64::MIN_POSITIVE..=f64::MAX);
     let cb = ComboBox::from_id_salt((DRAG_VALUE_WITH_UNIT_PREFIX_SALT, id_salt))
         .selected_text(unit.unit.to_string());
-    let cb = cb_init(cb);
 
     cb.show_ui(ui, |ui: &mut Ui| {
         for unit_variant in <U as IntoEnumIterator>::iter() {
@@ -1318,6 +1312,7 @@ fn drag_value_with_unit_inner<'a, U>(
 
             if button.clicked() {
                 unit.unit = unit_variant;
+                unit.auto = false;
             }
         }
         ui.separator();
@@ -1331,5 +1326,9 @@ fn drag_value_with_unit_inner<'a, U>(
 
     if dv.changed() {
         *base_val = scaled_val * unit_scale;
+    }
+
+    if !dv.dragged() && !dv.has_focus() {
+        unit.update(*base_val);
     }
 }
