@@ -64,6 +64,7 @@ declare_id!(salt_only, NEW_BODY_ORBIT, b"3111ptic");
 declare_id!(salt_only, DRAG_VALUE_WITH_UNIT_PREFIX, b"2ParSecs");
 declare_id!(salt_only, NEW_BODY_MASS, b"nMa551ve");
 declare_id!(salt_only, NEW_BODY_RADIUS, b"extraRad");
+declare_id!(salt_only, NEW_BODY_PARENT, b"TreeLike");
 
 const TIME_SPEED_DRAG_VALUE_TEXT_STYLE_NAME: &'static str = "TSDVF";
 
@@ -1136,7 +1137,9 @@ fn new_body_window_content(
             new_body_window_phys(ui, &mut wrapper, window_state)
         });
 
-    if let Some(orbit) = &mut wrapper.body.orbit {
+    if let Some(orbit) = &mut wrapper.body.orbit
+        && let Some(parent_id) = &mut wrapper.parent_id
+    {
         let text = RichText::new("Orbital Parameters").underline().size(16.0);
         let label = Label::new(text);
         ui.add_space(12.0);
@@ -1146,7 +1149,9 @@ fn new_body_window_content(
             .num_columns(2)
             .spacing([40.0, 4.0])
             .striped(true)
-            .show(ui, |ui| new_body_window_orbit(ui, orbit));
+            .show(ui, |ui| {
+                new_body_window_orbit(ui, orbit, parent_id, universe)
+            });
     }
 
     ui.add_space(16.0);
@@ -1163,6 +1168,7 @@ fn new_body_window_phys(
     wrapper: &mut PreviewBody,
     window_state: &mut NewBodyWindowState,
 ) {
+    // TODO: Hover popups
     ui.label("Body name");
     ui.add(
         TextEdit::singleline(&mut wrapper.body.name)
@@ -1200,7 +1206,24 @@ fn new_body_window_phys(
     ui.end_row();
 }
 
-fn new_body_window_orbit(ui: &mut Ui, orbit: &mut Orbit) {
+fn new_body_window_orbit(
+    ui: &mut Ui,
+    orbit: &mut Orbit,
+    parent_id: &mut UniverseId,
+    universe: &Universe,
+) {
+    // TODO: Hover popups
+    // TODO: Set parent body
+    ui.label("Parent body");
+    ui.label(
+        universe
+            .get_body(*parent_id)
+            .map(|w| &*w.body.name)
+            .unwrap_or("—"),
+    )
+    .on_hover_text("Changing parent body is a TODO");
+    ui.end_row();
+
     ui.label("Eccentricity");
     let mut eccentricity = orbit.get_eccentricity();
     let dv = DragValue::new(&mut eccentricity)
