@@ -12,16 +12,14 @@ use self::control::CameraControl;
 use self::universe::Universe;
 #[path = "assets/mod.rs"]
 mod assets;
-#[path = "autoscaling_sprites.rs"]
-mod autoscaling_sprites;
 #[path = "body.rs"]
 mod body;
 #[path = "control.rs"]
 mod control;
+#[path = "gfx/mod.rs"]
+mod gfx;
 #[path = "gui/mod.rs"]
 mod gui;
-#[path = "scene.rs"]
-mod scene;
 #[path = "units/mod.rs"]
 mod units;
 #[path = "universe.rs"]
@@ -266,7 +264,7 @@ impl Program {
             .clear(ClearState::color_and_depth(0.0, 0.0, 0.0, 1.0, 100000.0))
             .render(
                 &self.camera,
-                &self.generate_scene(&position_map),
+                &self.to_objects(&position_map),
                 &[&self.top_light, &self.ambient_light],
             )
             .write(|| self.gui.render())

@@ -10,11 +10,7 @@ use three_d::{
     Instances, Mat4, Mesh, Object, PhysicalMaterial, RenderStates, Srgba, Texture2DRef, Vec3, Vec4,
 };
 
-use super::Program;
-use super::autoscaling_sprites::AutoscalingSprites;
-use super::body::Body;
-use super::gui::PreviewBody;
-use super::universe::{BodyWrapper, Id};
+use super::{Body, BodyWrapper, Id, PreviewBody, Program, autoscaling_sprites::AutoscalingSprites};
 
 pub const LOD_LEVEL_COUNT: usize = 8;
 
@@ -184,8 +180,8 @@ fn get_matrix(position: DVec3, radius: f64) -> Mat4 {
     }
 }
 fn add_body_instance(
-    id: &super::universe::Id,
-    body_wrapper: &super::universe::BodyWrapper,
+    id: &Id,
+    body_wrapper: &BodyWrapper,
     camera_offset: DVec3,
     camera_pos: DVec3,
     position_map: &HashMap<Id, DVec3>,
@@ -231,7 +227,7 @@ fn add_body_instances(
 }
 
 impl Program {
-    pub(crate) fn generate_scene(&self, position_map: &HashMap<Id, DVec3>) -> Scene {
+    pub(crate) fn to_objects(&self, position_map: &HashMap<Id, DVec3>) -> Scene {
         let camera_offset = *position_map
             .get(&self.sim_state.focused_body())
             .unwrap_or(&DVec3::ZERO)
