@@ -1,6 +1,6 @@
 layout (location = 0) out vec4 outColor;
 
-uniform float u_line_width = 0.5;
+uniform float u_line_width;
 
 in vec3 bary;
 in vec3 pos;
