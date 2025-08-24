@@ -1,2 +1,2 @@
-mod heartbeat;
-mod panic_handler;
+pub(super) mod heartbeat;
+pub(super) mod panic_handler;

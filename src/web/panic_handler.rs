@@ -4,10 +4,10 @@ use std::{
 };
 
 use js_sys::Reflect;
-use wasm_bindgen::{prelude::wasm_bindgen, JsCast, JsValue};
+use wasm_bindgen::{JsCast, JsValue, prelude::wasm_bindgen};
 use web_sys::{
-    js_sys::{self, JsString},
     Node,
+    js_sys::{self, JsString},
 };
 
 const JS_STACK_TRACE_LIMIT: f64 = 256.0;
@@ -120,7 +120,7 @@ enum StackTrace {
     },
 }
 
-pub(super) fn init_panic_handler() {
+pub(crate) fn init_panic_handler() {
     let mut buf = match PANIC_BUFFER.lock() {
         Ok(b) => b,
         Err(e) => e.into_inner(),

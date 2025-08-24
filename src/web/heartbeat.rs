@@ -12,7 +12,7 @@ extern "C" {
     fn heartbeat();
 }
 
-pub(super) fn start_beating() {
+pub(crate) fn start_beating() {
     init_watchdog(
         HEARTBEAT_INTERVAL.as_secs_f64() * 1000.0,
         WATCHDOG_TIMEOUT.as_secs_f64() * 1000.0,
