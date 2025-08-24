@@ -1,8 +1,8 @@
 use std::{collections::HashMap, sync::Arc};
 
 use super::{
+    sim::universe::{Id as UniverseId, Universe},
     units::time::{TimeDisplayMode, TimeUnit},
-    universe::{Id as UniverseId, Universe},
 };
 pub(crate) use celestials::PreviewBody;
 use glam::DVec3;

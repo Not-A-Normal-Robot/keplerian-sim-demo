@@ -6,9 +6,11 @@ use three_d::egui::Context;
 use super::{
     super::{
         assets,
-        body::Body,
+        sim::{
+            body::Body,
+            universe::{Id as UniverseId, Universe},
+        },
         units,
-        universe::{Id as UniverseId, Universe},
     },
     SimState, declare_id,
 };

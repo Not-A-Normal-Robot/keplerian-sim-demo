@@ -7,23 +7,21 @@ use three_d::{
 
 use gui::SimState;
 
-use self::body::Body;
 use self::control::CameraControl;
-use self::universe::Universe;
+use self::sim::body::Body;
+use self::sim::universe::Universe;
 #[path = "assets/mod.rs"]
 mod assets;
-#[path = "body.rs"]
-mod body;
 #[path = "control.rs"]
 mod control;
 #[path = "gfx/mod.rs"]
 mod gfx;
 #[path = "gui/mod.rs"]
 mod gui;
+#[path = "sim/mod.rs"]
+mod sim;
 #[path = "units/mod.rs"]
 mod units;
-#[path = "universe.rs"]
-mod universe;
 
 #[cfg(not(target_family = "wasm"))]
 ::smol_macros::main! {
