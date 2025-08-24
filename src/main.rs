@@ -18,7 +18,7 @@ mod autoscaling_sprites;
 mod body;
 #[path = "control.rs"]
 mod control;
-#[path = "gui.rs"]
+#[path = "gui/mod.rs"]
 mod gui;
 #[path = "scene.rs"]
 mod scene;
