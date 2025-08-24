@@ -5,13 +5,12 @@ use wasm_bindgen::prelude::*;
 use web_sys::Document;
 
 mod main;
-mod web_heartbeat;
-mod web_panic_handler;
+mod web;
 
 #[wasm_bindgen(start)]
 async fn start() {
-    web_panic_handler::init_panic_handler();
-    web_heartbeat::start_beating();
+    web::panic_handler::init_panic_handler();
+    web::heartbeat::start_beating();
 
     let window = web_sys::window().expect("global `window` should exist");
     let document = window.document().expect("`window` should have `document`");
