@@ -1,4 +1,3 @@
-use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::f64::consts::TAU;
 use std::sync::LazyLock;
@@ -6,14 +5,11 @@ use std::sync::LazyLock;
 use glam::DVec3;
 use keplerian_sim::OrbitTrait;
 use three_d::{
-    Blend, ColorMaterial, Context, CpuMaterial, CpuMesh, Cull, Gm, InnerSpace as _, InstancedMesh,
-    Instances, Mat4, Mesh, Object, PhysicalMaterial, RenderStates, Srgba, Texture2DRef, Vec3, Vec4,
+    Blend, ColorMaterial, Context, CpuMaterial, CpuMesh, Cull, Gm, InstancedMesh, Instances, Mat4,
+    Mesh, Object, PhysicalMaterial, RenderStates, Srgba, Texture2DRef, Vec3, Vec4,
 };
 
-use super::{
-    Body, BodyWrapper, Id, PreviewBody, Program, autoscaling_sprites::AutoscalingSprites,
-    trajectory::Trajectory,
-};
+use super::{Body, BodyWrapper, Id, PreviewBody, Program, trajectory::Trajectory};
 
 pub const LOD_LEVEL_COUNT: usize = 8;
 
@@ -368,7 +364,7 @@ impl Program {
         Some(Trajectory::new(
             context,
             orbit,
-            parent_pos_s,
+            Vec3::new(0.0, 0.0, 0.0),
             eccentric_anomaly as f32,
             512,
             3.0,
