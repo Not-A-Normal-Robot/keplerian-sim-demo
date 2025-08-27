@@ -151,7 +151,7 @@ impl Trajectory {
         if self.eccentricity < 1.0 {
             core::f32::consts::TAU
         } else {
-            32.0
+            1.0
         }
     }
 }
