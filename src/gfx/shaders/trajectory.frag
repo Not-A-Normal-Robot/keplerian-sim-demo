@@ -23,8 +23,11 @@ float angle_diff(float a, float b) {
 }
 
 float get_alpha(float v_ecc_anom, float curr_ecc_anom) {
-    if (eccentricity >= 1.0 && v_ecc_anom > curr_ecc_anom) {
-        return MIN_ALPHA;
+    if (eccentricity >= 1.0) {
+        v_ecc_anom = -v_ecc_anom;
+        if (v_ecc_anom > curr_ecc_anom) {
+            return MIN_ALPHA;
+        }   
     }
 
     float diff = angle_diff(v_ecc_anom, curr_ecc_anom);
