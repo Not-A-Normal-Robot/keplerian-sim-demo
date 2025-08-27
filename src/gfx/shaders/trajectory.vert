@@ -22,7 +22,7 @@ float get_eccentric_anomaly(int idx) {
     if (u_eccentricity < 1.0) {
         return float(idx) / float(u_vertex_count) * u_ecc_anom_range;
     } else {
-        return float(idx) / float(u_vertex_count) * u_ecc_anom_range + u_start_ecc_anom;
+        return -float(idx) / float(u_vertex_count) * u_ecc_anom_range - u_start_ecc_anom;
     }
 }
 

@@ -14,12 +14,16 @@ layout (location = 0) out vec4 outColor;
 
 float angle_diff(float a, float b) {
     float d = a - b;
-    d = mod(d, anomaly_range);
+    if (eccentricity < 1.0) {
+        d = mod(d, anomaly_range);
+    } else {
+        d = 1.0 - d;
+    }
     return d;
 }
 
 float get_alpha(float v_ecc_anom, float curr_ecc_anom) {
-    if (eccentricity > 1.0 && v_ecc_anom > curr_ecc_anom) {
+    if (eccentricity >= 1.0 && v_ecc_anom > curr_ecc_anom) {
         return MIN_ALPHA;
     }
 
