@@ -140,7 +140,7 @@ impl Trajectory {
         if self.eccentricity < 1.0 {
             core::f32::consts::TAU
         } else {
-            32.0 + 1.75 * self.curr_ecc_anom.abs()
+            32.0
         }
     }
 }
