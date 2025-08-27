@@ -132,7 +132,7 @@ impl Program {
                 Body {
                     name: "Root".into(),
                     mass: 1e15,
-                    radius: 100.0 * 1e-3, // DEBUG
+                    radius: 100.0,
                     color: Srgba::new_opaque(255, 255, 255),
                     orbit: None,
                 },
@@ -144,49 +144,49 @@ impl Program {
                 Body {
                     name: "Alpha".into(),
                     mass: 1e12,
-                    radius: 30.0 * 1e-3, // DEBUG
+                    radius: 30.0,
                     color: Srgba::new_opaque(255, 196, 196),
                     orbit: Some(Orbit::new(0.0, 400.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
                 },
                 Some(root_id),
             )
             .unwrap();
-        // let beta_id = universe
-        //     .add_body(
-        //         Body {
-        //             name: "Beta".into(),
-        //             mass: 1e12,
-        //             radius: 30.0,
-        //             color: Srgba::new_opaque(196, 196, 255),
-        //             orbit: Some(Orbit::new(0.7, 600.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
-        //         },
-        //         Some(root_id),
-        //     )
-        //     .unwrap();
-        // universe
-        //     .add_body(
-        //         Body {
-        //             name: "Beta A".into(),
-        //             mass: 1e5,
-        //             radius: 3.0,
-        //             color: Srgba::new_opaque(196, 255, 196),
-        //             orbit: Some(Orbit::new(0.1, 40.0, 1.0, 1.0, 1.0, 1.0, 1.0)),
-        //         },
-        //         Some(beta_id),
-        //     )
-        //     .unwrap();
-        // universe
-        //     .add_body(
-        //         Body {
-        //             name: "Rogue".into(),
-        //             mass: 1e8,
-        //             radius: 8.0,
-        //             color: Srgba::new_opaque(255, 196, 255),
-        //             orbit: Some(Orbit::new(1.1, 120.0, 2.0, 2.0, 2.0, -4.0, 1.0)),
-        //         },
-        //         Some(root_id),
-        //     )
-        //     .unwrap();
+        let beta_id = universe
+            .add_body(
+                Body {
+                    name: "Beta".into(),
+                    mass: 1e12,
+                    radius: 30.0,
+                    color: Srgba::new_opaque(196, 196, 255),
+                    orbit: Some(Orbit::new(0.7, 600.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
+                },
+                Some(root_id),
+            )
+            .unwrap();
+        universe
+            .add_body(
+                Body {
+                    name: "Beta A".into(),
+                    mass: 1e5,
+                    radius: 3.0,
+                    color: Srgba::new_opaque(196, 255, 196),
+                    orbit: Some(Orbit::new(0.1, 40.0, 1.0, 1.0, 1.0, 1.0, 1.0)),
+                },
+                Some(beta_id),
+            )
+            .unwrap();
+        universe
+            .add_body(
+                Body {
+                    name: "Rogue".into(),
+                    mass: 1e8,
+                    radius: 8.0,
+                    color: Srgba::new_opaque(255, 196, 255),
+                    orbit: Some(Orbit::new(1.1, 120.0, 2.0, 2.0, 2.0, -4.0, 1.0)),
+                },
+                Some(root_id),
+            )
+            .unwrap();
 
         universe
     }
