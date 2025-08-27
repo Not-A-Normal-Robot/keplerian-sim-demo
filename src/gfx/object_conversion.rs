@@ -336,23 +336,19 @@ impl Program {
             None => return None,
         };
 
-        let parent_pos_d = parent_id
+        let parent_pos = parent_id
             .map(|id| *position_map.get(&id).unwrap_or(&DVec3::default()))
             .unwrap_or(DVec3::default());
 
-        let parent_pos_s = Vec3::new(
-            parent_pos_d.x as f32,
-            parent_pos_d.y as f32,
-            parent_pos_d.z as f32,
-        );
+        let offset_d = parent_pos - camera_offset;
 
-        let offset = parent_pos_d - camera_offset;
+        let offset_s = Vec3::new(offset_d.x as f32, offset_d.y as f32, offset_d.z as f32);
 
         let eccentric_anomaly = orbit.get_eccentric_anomaly_at_time(time);
 
         if orbit.get_eccentricity() < 1.0 {
             let semi_major_axis = orbit.get_semi_major_axis();
-            let distance_to_camera = (offset - camera_pos).length();
+            let distance_to_camera = (offset_d - camera_pos).length();
             let radial_size = get_radial_size(semi_major_axis, distance_to_camera);
             if radial_size < MIN_ORBIT_RADIAL_SIZE {
                 // Too small to see, skip
@@ -364,49 +360,11 @@ impl Program {
         Some(Trajectory::new(
             context,
             orbit,
-            Vec3::new(0.0, 0.0, 0.0),
+            offset_s,
             eccentric_anomaly as f32,
             512,
             3.0,
         ))
-    }
-
-    fn poll_orbit(
-        orbit: &impl OrbitTrait,
-        offset: DVec3,
-        time: f64,
-    ) -> [Vec3; Self::POINTS_PER_ORBIT] {
-        if orbit.get_eccentricity() < 1.0 {
-            Self::poll_orbit_elliptic(orbit, offset)
-        } else {
-            Self::poll_orbit_hyperbolic(orbit, offset, time)
-        }
-    }
-
-    fn poll_orbit_elliptic(
-        orbit: &impl OrbitTrait,
-        offset: DVec3,
-    ) -> [Vec3; Self::POINTS_PER_ORBIT] {
-        core::array::from_fn(|i| {
-            let ecc_anom = i as f64 * Self::RAD_PER_POINT;
-            let v = orbit.get_position_at_eccentric_anomaly(ecc_anom) + offset;
-            Vec3::new(v.x as f32, v.y as f32, v.z as f32)
-        })
-    }
-
-    fn poll_orbit_hyperbolic(
-        orbit: &impl OrbitTrait,
-        offset: DVec3,
-        time: f64,
-    ) -> [Vec3; Self::POINTS_PER_ORBIT] {
-        let cur_ecc_anom = orbit.get_eccentric_anomaly_at_time(time);
-        core::array::from_fn(|i| {
-            let signed_index = i as f64 - 0.5 * Self::POINTS_PER_ORBIT as f64;
-            let ecc_anom = cur_ecc_anom + signed_index * Self::RAD_PER_POINT;
-
-            let v = orbit.get_position_at_eccentric_anomaly(ecc_anom) + offset;
-            Vec3::new(v.x as f32, v.y as f32, v.z as f32)
-        })
     }
 
     fn generate_preview_body(

@@ -34,9 +34,19 @@ impl Trajectory {
         let matrix = orbit.get_transformation_matrix();
         let rp = orbit.get_periapsis();
         let matrix = Matrix4 {
-            x: Vec4::new((matrix.e11 * rp) as f32, (matrix.e12 * rp) as f32, 0.0, 0.0),
-            y: Vec4::new((matrix.e21 * rp) as f32, (matrix.e22 * rp) as f32, 0.0, 0.0),
-            z: Vec4::new((matrix.e31 * rp) as f32, (matrix.e32 * rp) as f32, 0.0, 0.0),
+            x: Vec4::new(
+                (matrix.e11 * rp) as f32,
+                (matrix.e21 * rp) as f32,
+                (matrix.e31 * rp) as f32,
+                0.0,
+            ),
+            y: Vec4::new(
+                (matrix.e12 * rp) as f32,
+                (matrix.e22 * rp) as f32,
+                (matrix.e32 * rp) as f32,
+                0.0,
+            ),
+            z: Vec4::new(0.0, 0.0, 0.0, 0.0),
             w: Vec4::new(parent_pos.x, parent_pos.y, parent_pos.z, 1.0),
         };
         let eccentricity = orbit.get_eccentricity();
