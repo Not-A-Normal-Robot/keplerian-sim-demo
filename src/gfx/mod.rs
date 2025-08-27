@@ -8,4 +8,4 @@ use super::{
 };
 mod autoscaling_sprites;
 mod object_conversion;
-mod wireframe;
+mod trajectory;
