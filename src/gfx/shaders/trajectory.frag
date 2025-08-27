@@ -14,7 +14,7 @@ layout (location = 0) out vec4 outColor;
 
 float angle_diff(float a, float b) {
     float d = a - b;
-    d = mod(d + anomaly_range / 2.0, anomaly_range);
+    d = mod(d, anomaly_range);
     return d;
 }
 
