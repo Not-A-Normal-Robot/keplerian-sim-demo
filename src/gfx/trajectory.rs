@@ -151,7 +151,15 @@ impl Trajectory {
         if self.eccentricity < 1.0 {
             core::f32::consts::TAU
         } else {
-            1.0
+            if self.curr_ecc_anom > 10.0 {
+                // We don't need a path anymore.
+                // It's way too far.
+                0.0
+            } else {
+                // Bell curve to prevent physical range from becoming
+                // too long too quickly.
+                (30.0 * 2.0_f64.powf(-0.15 * (self.curr_ecc_anom as f64).powi(2))) as f32
+            }
         }
     }
 }

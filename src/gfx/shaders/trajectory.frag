@@ -27,7 +27,12 @@ float get_alpha(float v_ecc_anom, float curr_ecc_anom) {
         v_ecc_anom = -v_ecc_anom;
         if (v_ecc_anom > curr_ecc_anom) {
             return MIN_ALPHA;
-        }   
+        }
+
+        float behind_amount = curr_ecc_anom - v_ecc_anom;
+        float behind_frac = behind_amount / (0.5 * anomaly_range);
+
+        return max(DIFF_MULTIPLIER * (1.0 - behind_frac) + MIN_ALPHA, MIN_ALPHA);
     }
 
     float diff = angle_diff(v_ecc_anom, curr_ecc_anom);
