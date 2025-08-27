@@ -10,7 +10,10 @@ use three_d::{
     Instances, Mat4, Mesh, Object, PhysicalMaterial, RenderStates, Srgba, Texture2DRef, Vec3, Vec4,
 };
 
-use super::{Body, BodyWrapper, Id, PreviewBody, Program, autoscaling_sprites::AutoscalingSprites};
+use super::{
+    Body, BodyWrapper, Id, PreviewBody, Program, autoscaling_sprites::AutoscalingSprites,
+    trajectory::Trajectory,
+};
 
 pub const LOD_LEVEL_COUNT: usize = 8;
 
@@ -29,7 +32,7 @@ pub const LOD_CUTOFFS: [f64; LOD_LEVEL_COUNT] =
 
 /// The minimum camera radial size to consider rendering an orbit.
 /// If an orbit is smaller than this, it is ignored.
-pub const MIN_ORBIT_RADIAL_SIZE: f64 = 0.007;
+pub const MIN_ORBIT_RADIAL_SIZE: f64 = 0.002;
 
 const fn get_lod_type(radial_size: f64) -> Option<usize> {
     let mut i = 0;
@@ -61,7 +64,7 @@ pub static SPHERE_MESHES: LazyLock<[CpuMesh; LOD_LEVEL_COUNT]> = LazyLock::new(|
 
 pub(crate) struct PreviewScene {
     body: Option<Gm<Mesh, ColorMaterial>>,
-    path: Option<Gm<AutoscalingSprites, ColorMaterial>>,
+    path: Option<Trajectory>,
 }
 
 impl<'a> IntoIterator for &'a PreviewScene {
@@ -71,26 +74,24 @@ impl<'a> IntoIterator for &'a PreviewScene {
             core::option::Iter<'a, Gm<Mesh, ColorMaterial>>,
             fn(&'a Gm<Mesh, ColorMaterial>) -> &'a dyn Object,
         >,
-        std::iter::Map<
-            core::option::Iter<'a, Gm<AutoscalingSprites, ColorMaterial>>,
-            fn(&'a Gm<AutoscalingSprites, ColorMaterial>) -> &'a dyn Object,
-        >,
+        std::iter::Map<core::option::Iter<'a, Trajectory>, fn(&'a Trajectory) -> &'a dyn Object>,
     >;
 
     fn into_iter(self) -> Self::IntoIter {
         self.body
             .iter()
             .map(gm_to_object::<Mesh, ColorMaterial> as fn(&Gm<Mesh, ColorMaterial>) -> &dyn Object)
-            .chain(self.path.iter().map(
-                gm_to_object::<AutoscalingSprites, ColorMaterial>
-                    as fn(&Gm<AutoscalingSprites, ColorMaterial>) -> &dyn Object,
-            ))
+            .chain(
+                self.path
+                    .iter()
+                    .map((|x| x) as fn(&'a Trajectory) -> &'a dyn Object),
+            )
     }
 }
 
 pub(crate) struct Scene {
     bodies: [Gm<InstancedMesh, PhysicalMaterial>; LOD_LEVEL_COUNT],
-    lines: Box<[Gm<AutoscalingSprites, ColorMaterial>]>,
+    lines: Box<[Trajectory]>,
     preview: Option<PreviewScene>,
 }
 
@@ -117,10 +118,7 @@ impl<'a> IntoIterator for &'a Scene {
                 core::slice::Iter<'a, Gm<InstancedMesh, PhysicalMaterial>>,
                 fn(&'a Gm<InstancedMesh, PhysicalMaterial>) -> &'a dyn Object,
             >,
-            std::iter::Map<
-                core::slice::Iter<'a, Gm<AutoscalingSprites, ColorMaterial>>,
-                fn(&'a Gm<AutoscalingSprites, ColorMaterial>) -> &'a dyn Object,
-            >,
+            std::iter::Map<core::slice::Iter<'a, Trajectory>, fn(&'a Trajectory) -> &'a dyn Object>,
         >,
         std::iter::Flatten<
             std::iter::Map<
@@ -133,8 +131,8 @@ impl<'a> IntoIterator for &'a Scene {
                         fn(&'a Gm<Mesh, ColorMaterial>) -> &'a dyn Object,
                     >,
                     std::iter::Map<
-                        core::option::Iter<'a, Gm<AutoscalingSprites, ColorMaterial>>,
-                        fn(&'a Gm<AutoscalingSprites, ColorMaterial>) -> &'a dyn Object,
+                        core::option::Iter<'a, Trajectory>,
+                        fn(&'a Trajectory) -> &'a dyn Object,
                     >,
                 >,
             >,
@@ -147,10 +145,11 @@ impl<'a> IntoIterator for &'a Scene {
                 gm_to_object::<InstancedMesh, PhysicalMaterial>
                     as fn(&Gm<InstancedMesh, PhysicalMaterial>) -> &dyn Object,
             )
-            .chain(self.lines.iter().map(
-                gm_to_object::<AutoscalingSprites, ColorMaterial>
-                    as fn(&Gm<AutoscalingSprites, ColorMaterial>) -> &dyn Object,
-            ))
+            .chain(
+                self.lines
+                    .iter()
+                    .map((|t| t) as fn(&'a Trajectory) -> &'a dyn Object),
+            )
             .chain(
                 self.preview
                     .as_ref()
@@ -294,7 +293,7 @@ impl Program {
         camera_offset: DVec3,
         camera_pos: DVec3,
         position_map: &HashMap<Id, DVec3>,
-    ) -> Box<[Gm<AutoscalingSprites, ColorMaterial>]> {
+    ) -> Box<[Trajectory]> {
         let circle_tex = &self.circle_tex;
         let view_direction = self.camera.view_direction();
 
@@ -323,28 +322,37 @@ impl Program {
             .collect()
     }
 
+    // TODO: Alter arguments
     fn generate_orbit_line(
         context: &Context,
         body: &Body,
         parent_id: Option<Id>,
         camera_offset: DVec3,
         camera_pos: DVec3,
-        view_direction: Vec3,
+        _view_direction: Vec3,
         position_map: &HashMap<Id, DVec3>,
-        texture: Option<Texture2DRef>,
+        _texture: Option<Texture2DRef>,
         time: f64,
-        point_scale: f32,
-    ) -> Option<Gm<AutoscalingSprites, ColorMaterial>> {
+        _point_scale: f32,
+    ) -> Option<Trajectory> {
         let orbit = match &body.orbit {
             Some(o) => o,
             None => return None,
         };
 
-        let parent_pos = parent_id
+        let parent_pos_d = parent_id
             .map(|id| *position_map.get(&id).unwrap_or(&DVec3::default()))
             .unwrap_or(DVec3::default());
 
-        let offset = parent_pos - camera_offset;
+        let parent_pos_s = Vec3::new(
+            parent_pos_d.x as f32,
+            parent_pos_d.y as f32,
+            parent_pos_d.z as f32,
+        );
+
+        let offset = parent_pos_d - camera_offset;
+
+        let eccentric_anomaly = orbit.get_eccentric_anomaly_at_time(time);
 
         if orbit.get_eccentricity() < 1.0 {
             let semi_major_axis = orbit.get_semi_major_axis();
@@ -356,28 +364,15 @@ impl Program {
             }
         }
 
-        let material = ColorMaterial {
-            color: body.color,
-            texture,
-            render_states: RenderStates {
-                cull: Cull::Back,
-                blend: Blend::TRANSPARENCY,
-                ..Default::default()
-            },
-            is_transparent: true,
-        };
-
-        let mut points: [Vec3; Self::POINTS_PER_ORBIT] = Self::poll_orbit(orbit, offset, time);
-        let points = points.as_mut_slice();
-        points.sort_unstable_by(|a, b| {
-            let dist_a = a.dot(view_direction);
-            let dist_b = b.dot(view_direction);
-            dist_b.partial_cmp(&dist_a).unwrap_or(Ordering::Equal)
-        });
-
-        let geometry = AutoscalingSprites::new(context, points, None, point_scale);
-
-        Some(Gm::new(geometry, material))
+        // TODO: Scale point count based on view size
+        Some(Trajectory::new(
+            context,
+            orbit,
+            parent_pos_s,
+            eccentric_anomaly as f32,
+            512,
+            3.0,
+        ))
     }
 
     fn poll_orbit(
