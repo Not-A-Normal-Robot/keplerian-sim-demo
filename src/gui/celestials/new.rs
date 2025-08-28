@@ -6,8 +6,8 @@ use float_pretty_print::PrettyPrintFloat;
 use keplerian_sim::{Orbit, OrbitTrait};
 use strum::IntoEnumIterator;
 use three_d::egui::{
-    Align, Color32, ComboBox, Context, DragValue, Grid, Label, Layout, RichText, Slider, TextEdit,
-    Ui, Window, color_picker::color_edit_button_srgb,
+    Align, Color32, ComboBox, Context, DragValue, Grid, Label, Layout, PopupCloseBehavior,
+    RichText, Slider, TextEdit, TextWrapMode, Ui, Window, color_picker::color_edit_button_srgb,
 };
 
 declare_id!(salt_only, NEW_BODY_PHYS, b"Creation");
@@ -176,10 +176,11 @@ fn new_body_window_orbit(
     universe: &Universe,
 ) {
     // TODO: Hover popups
-    // TODO: Set parent body
+    // TODO: Improve combobox close behavior (close when clicking on already-selected)
     ui.label("Parent body");
     ComboBox::from_id_salt(NEW_BODY_PARENT_COMBO_BOX_SALT)
-        .truncate()
+        .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
+        .wrap_mode(TextWrapMode::Extend)
         .selected_text(
             parent_id
                 .map(|parent_id| universe.get_body(parent_id))
@@ -293,6 +294,7 @@ fn drag_value_with_unit<'a, U>(
     });
 }
 
+// TODO: Improve popup close behavior (close when clicking on already-selected)
 fn drag_value_with_unit_inner<'a, U>(
     id_salt: impl std::hash::Hash,
     ui: &mut Ui,
@@ -307,6 +309,7 @@ fn drag_value_with_unit_inner<'a, U>(
         .custom_formatter(|num, _| format!("{:3.8}", PrettyPrintFloat(num)))
         .range(f64::MIN_POSITIVE..=f64::MAX);
     let cb = ComboBox::from_id_salt((DRAG_VALUE_WITH_UNIT_PREFIX_SALT, id_salt))
+        .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
         .selected_text(unit.unit.to_string());
 
     cb.show_ui(ui, |ui: &mut Ui| {
