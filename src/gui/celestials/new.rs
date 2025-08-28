@@ -1,5 +1,5 @@
 use super::{
-    PreviewBody, SimState, Universe, UniverseId, declare_id,
+    PreviewBody, SimState, Universe, UniverseId, declare_id, selectable_body_tree,
     units::{AutoUnit, UnitEnum, length::LengthUnit, mass::MassUnit},
 };
 use float_pretty_print::PrettyPrintFloat;
@@ -15,7 +15,8 @@ declare_id!(salt_only, NEW_BODY_ORBIT, b"3111ptic");
 declare_id!(salt_only, DRAG_VALUE_WITH_UNIT_PREFIX, b"2ParSecs");
 declare_id!(salt_only, NEW_BODY_MASS, b"nMa551ve");
 declare_id!(salt_only, NEW_BODY_RADIUS, b"extraRad");
-declare_id!(salt_only, NEW_BODY_PARENT, b"TreeLike");
+declare_id!(salt_only, NEW_BODY_PARENT_COMBO_BOX, b"dr0pChld");
+declare_id!(NEW_BODY_PARENT_TREE, b"treeL1K3");
 
 pub(in super::super) struct NewBodyWindowState {
     mass_unit: AutoUnit<MassUnit>,
@@ -98,22 +99,23 @@ fn new_body_window_content(
             new_body_window_phys(ui, &mut wrapper, window_state)
         });
 
-    if let Some(orbit) = &mut wrapper.body.orbit
-        && let Some(parent_id) = &mut wrapper.parent_id
-    {
-        let text = RichText::new("Orbital Parameters").underline().size(16.0);
-        let label = Label::new(text);
-        ui.add_space(12.0);
-        ui.add(label);
-        ui.add_space(8.0);
-        Grid::new(NEW_BODY_ORBIT_SALT)
-            .num_columns(2)
-            .spacing([40.0, 4.0])
-            .striped(true)
-            .show(ui, |ui| {
-                new_body_window_orbit(ui, orbit, parent_id, universe)
-            });
-    }
+    let text = RichText::new("Orbital Parameters").underline().size(16.0);
+    let label = Label::new(text);
+    ui.add_space(12.0);
+    ui.add(label);
+    ui.add_space(8.0);
+    Grid::new(NEW_BODY_ORBIT_SALT)
+        .num_columns(2)
+        .spacing([40.0, 4.0])
+        .striped(true)
+        .show(ui, |ui| {
+            new_body_window_orbit(
+                ui,
+                &mut wrapper.body.orbit,
+                &mut wrapper.parent_id,
+                universe,
+            )
+        });
 
     ui.add_space(16.0);
     if ui.button("Confirm").clicked() {
@@ -169,21 +171,38 @@ fn new_body_window_phys(
 
 fn new_body_window_orbit(
     ui: &mut Ui,
-    orbit: &mut Orbit,
-    parent_id: &mut UniverseId,
+    orbit: &mut Option<Orbit>,
+    parent_id: &mut Option<UniverseId>,
     universe: &Universe,
 ) {
     // TODO: Hover popups
     // TODO: Set parent body
     ui.label("Parent body");
-    ui.label(
-        universe
-            .get_body(*parent_id)
-            .map(|w| &*w.body.name)
-            .unwrap_or("—"),
-    )
-    .on_hover_text("Changing parent body is a TODO");
+    ComboBox::from_id_salt(NEW_BODY_PARENT_COMBO_BOX_SALT)
+        .truncate()
+        .selected_text(
+            parent_id
+                .map(|parent_id| universe.get_body(parent_id))
+                .flatten()
+                .map(|w| &*w.body.name)
+                .unwrap_or("—"),
+        )
+        .show_ui(ui, |ui| {
+            selectable_body_tree(ui, *NEW_BODY_PARENT_TREE_ID, universe, parent_id);
+        });
     ui.end_row();
+
+    let parent_id = match parent_id {
+        Some(id) => *id,
+        None => return,
+    };
+    let orbit = orbit.get_or_insert_with(|| {
+        let (periapsis, mu) = universe
+            .get_body(parent_id)
+            .map(|w| (w.body.radius * 2.0, w.body.mass * universe.g))
+            .unwrap_or((2.0, 1.0));
+        Orbit::new(0.0, periapsis, 0.0, 0.0, 0.0, 0.0, mu)
+    });
 
     ui.label("Eccentricity");
     let mut eccentricity = orbit.get_eccentricity();

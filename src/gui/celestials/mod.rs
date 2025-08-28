@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use glam::DVec3;
 use three_d::egui::{
-    Atom, AtomLayout, Button, Color32, Context, ImageButton, Pos2, Rect, Response, RichText,
-    Stroke, TextEdit, Ui, Vec2,
+    Atom, AtomLayout, Button, Color32, Context, Id as EguiId, ImageButton, Pos2, Rect, Response,
+    RichText, Stroke, TextEdit, Ui, Vec2, collapsing_header::CollapsingState,
 };
 
 use super::{
@@ -43,6 +43,90 @@ struct BodySelectableButtonResponse {
     button_response: Response,
     rename_response: Option<Response>,
     ellipsis_button: Option<Response>,
+}
+
+fn selectable_body_tree(
+    ui: &mut Ui,
+    egui_id: EguiId,
+    universe: &Universe,
+    selected: &mut Option<UniverseId>,
+) {
+    fn selectable_body_node(
+        ui: &mut Ui,
+        egui_id: EguiId,
+        universe: &Universe,
+        universe_id: UniverseId,
+        selected: &mut Option<UniverseId>,
+    ) {
+        let wrapper = match universe.get_body(universe_id) {
+            Some(w) => w,
+            None => return,
+        };
+
+        if wrapper.relations.satellites.is_empty() {
+            selectable_body_leaf(ui, &wrapper.body, universe_id, selected);
+        } else {
+            selectable_body_parent(ui, egui_id, universe, universe_id, selected);
+        }
+    }
+
+    fn selectable_body_leaf(
+        ui: &mut Ui,
+        body: &Body,
+        universe_id: UniverseId,
+        selected: &mut Option<UniverseId>,
+    ) {
+        let response =
+            selectable_body_button(ui, body, 16.0, *selected == Some(universe_id), false, None);
+
+        if response.button_response.clicked() {
+            *selected = Some(universe_id);
+        }
+    }
+
+    fn selectable_body_parent(
+        ui: &mut Ui,
+        egui_id: EguiId,
+        universe: &Universe,
+        universe_id: UniverseId,
+        selected: &mut Option<UniverseId>,
+    ) {
+        let wrapper = match universe.get_body(universe_id) {
+            Some(wrapper) => wrapper,
+            None => return,
+        };
+        let satellites = wrapper.relations.satellites.clone();
+
+        let this_egui_id = egui_id.with(universe_id);
+
+        CollapsingState::load_with_default_open(ui.ctx(), this_egui_id, true)
+            .show_header(ui, |ui| {
+                let response = selectable_body_button(
+                    ui,
+                    &wrapper.body,
+                    16.0,
+                    *selected == Some(universe_id),
+                    false,
+                    None,
+                );
+
+                if response.button_response.clicked() {
+                    *selected = Some(universe_id);
+                }
+            })
+            .body(|ui| {
+                for universe_id in satellites {
+                    selectable_body_node(ui, egui_id, universe, universe_id, selected);
+                }
+            });
+    }
+    universe
+        .get_bodies()
+        .iter()
+        .filter(|(_, w)| w.relations.parent.is_none())
+        .map(|(id, _)| id)
+        .copied()
+        .for_each(|universe_id| selectable_body_node(ui, egui_id, universe, universe_id, selected));
 }
 
 /// A selectable button used in celestial lists.
