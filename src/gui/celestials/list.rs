@@ -1,16 +1,15 @@
 use std::collections::HashMap;
 
 use super::{
-    Body, PreviewBody, RENAME_TEXTEDIT_ID, SimState, UniverseId, assets, declare_id,
-    selectable_body_button,
+    Body, PreviewBody, RENAME_TEXTEDIT_ID, SimState, UniverseId, declare_id, selectable_body_button,
 };
 use glam::DVec3;
 use keplerian_sim::Orbit;
 use three_d::{
     Srgba,
     egui::{
-        Atom, AtomLayout, Button, Color32, Context, Id as EguiId, ImageButton, IntoAtoms, Key,
-        Popup, Pos2, Rect, Response, RichText, Stroke, TextEdit, TextWrapMode, Ui, Vec2, Window,
+        Button, Color32, Context, Id as EguiId, IntoAtoms, Key, Popup, Response, TextWrapMode, Ui,
+        Window,
         collapsing_header::CollapsingState,
         text::{CCursor, CCursorRange},
         text_edit::TextEditState,

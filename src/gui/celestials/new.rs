@@ -6,7 +6,7 @@ use float_pretty_print::PrettyPrintFloat;
 use keplerian_sim::{Orbit, OrbitTrait};
 use strum::IntoEnumIterator;
 use three_d::egui::{
-    Align, Color32, ComboBox, Context, DragValue, Grid, Label, Layout, Popup, PopupCloseBehavior,
+    Align, Color32, ComboBox, Context, DragValue, Grid, Label, Layout, PopupCloseBehavior,
     RichText, Slider, TextEdit, TextWrapMode, Ui, Window, color_picker::color_edit_button_srgb,
 };
 
@@ -176,9 +176,7 @@ fn new_body_window_orbit(
     universe: &Universe,
 ) {
     // TODO: Hover popups
-    let mut clicked_selected = false;
     ui.label("Parent body");
-    ComboBox::popup_id()
     ComboBox::from_id_salt(NEW_BODY_PARENT_COMBO_BOX_SALT)
         .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
         .wrap_mode(TextWrapMode::Extend)
