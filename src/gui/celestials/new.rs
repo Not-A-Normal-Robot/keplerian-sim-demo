@@ -6,7 +6,7 @@ use float_pretty_print::PrettyPrintFloat;
 use keplerian_sim::{Orbit, OrbitTrait};
 use strum::IntoEnumIterator;
 use three_d::egui::{
-    Align, Color32, ComboBox, Context, DragValue, Grid, Label, Layout, PopupCloseBehavior,
+    Align, Color32, ComboBox, Context, DragValue, Grid, Label, Layout, Popup, PopupCloseBehavior,
     RichText, Slider, TextEdit, TextWrapMode, Ui, Window, color_picker::color_edit_button_srgb,
 };
 
@@ -176,8 +176,9 @@ fn new_body_window_orbit(
     universe: &Universe,
 ) {
     // TODO: Hover popups
-    // TODO: Improve combobox close behavior (close when clicking on already-selected)
+    let mut clicked_selected = false;
     ui.label("Parent body");
+    ComboBox::popup_id()
     ComboBox::from_id_salt(NEW_BODY_PARENT_COMBO_BOX_SALT)
         .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
         .wrap_mode(TextWrapMode::Extend)
@@ -294,7 +295,6 @@ fn drag_value_with_unit<'a, U>(
     });
 }
 
-// TODO: Improve popup close behavior (close when clicking on already-selected)
 fn drag_value_with_unit_inner<'a, U>(
     id_salt: impl std::hash::Hash,
     ui: &mut Ui,

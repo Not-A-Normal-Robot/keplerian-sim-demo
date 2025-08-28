@@ -45,18 +45,20 @@ struct BodySelectableButtonResponse {
     ellipsis_button: Option<Response>,
 }
 
+/// Returns whether the already-selected body was clicked again
 fn selectable_body_tree(
     ui: &mut Ui,
     egui_id: EguiId,
     universe: &Universe,
     selected: &mut Option<UniverseId>,
-) {
+) -> bool {
     fn selectable_body_node(
         ui: &mut Ui,
         egui_id: EguiId,
         universe: &Universe,
         universe_id: UniverseId,
         selected: &mut Option<UniverseId>,
+        clicked_selected: &mut bool,
     ) {
         let wrapper = match universe.get_body(universe_id) {
             Some(w) => w,
@@ -65,10 +67,17 @@ fn selectable_body_tree(
 
         if wrapper.relations.satellites.is_empty() {
             ui.indent((egui_id, [universe_id]), |ui| {
-                selectable_body_leaf(ui, &wrapper.body, universe_id, selected);
+                selectable_body_leaf(ui, &wrapper.body, universe_id, selected, clicked_selected);
             });
         } else {
-            selectable_body_parent(ui, egui_id, universe, universe_id, selected);
+            selectable_body_parent(
+                ui,
+                egui_id,
+                universe,
+                universe_id,
+                selected,
+                clicked_selected,
+            );
         }
     }
 
@@ -77,12 +86,17 @@ fn selectable_body_tree(
         body: &Body,
         universe_id: UniverseId,
         selected: &mut Option<UniverseId>,
+        clicked_selected: &mut bool,
     ) {
         let response =
             selectable_body_button(ui, body, 16.0, *selected == Some(universe_id), false, None);
 
         if response.button_response.clicked() {
-            *selected = Some(universe_id);
+            if *selected == Some(universe_id) {
+                **clicked_selected = true;
+            } else {
+                *selected = Some(universe_id);
+            }
         }
     }
 
@@ -92,6 +106,7 @@ fn selectable_body_tree(
         universe: &Universe,
         universe_id: UniverseId,
         selected: &mut Option<UniverseId>,
+        clicked_selected: &mut bool,
     ) {
         let wrapper = match universe.get_body(universe_id) {
             Some(wrapper) => wrapper,
@@ -113,22 +128,47 @@ fn selectable_body_tree(
                 );
 
                 if response.button_response.clicked() {
-                    *selected = Some(universe_id);
+                    if *selected == Some(universe_id) {
+                        *clicked_selected = true;
+                    } else {
+                        *selected = Some(universe_id);
+                    }
                 }
             })
             .body(|ui| {
                 for universe_id in satellites {
-                    selectable_body_node(ui, egui_id, universe, universe_id, selected);
+                    selectable_body_node(
+                        ui,
+                        egui_id,
+                        universe,
+                        universe_id,
+                        selected,
+                        clicked_selected,
+                    );
                 }
             });
     }
+
+    let mut clicked_selected = false;
+
     universe
         .get_bodies()
         .iter()
         .filter(|(_, w)| w.relations.parent.is_none())
         .map(|(id, _)| id)
         .copied()
-        .for_each(|universe_id| selectable_body_node(ui, egui_id, universe, universe_id, selected));
+        .for_each(|universe_id| {
+            selectable_body_node(
+                ui,
+                egui_id,
+                universe,
+                universe_id,
+                selected,
+                &mut clicked_selected,
+            )
+        });
+
+    clicked_selected
 }
 
 /// A selectable button used in celestial lists.
