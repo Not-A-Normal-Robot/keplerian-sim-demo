@@ -279,10 +279,8 @@ impl Program {
         })
     }
 
-    const POINTS_PER_ORBIT: usize = 512;
-    const RAD_PER_POINT: f64 = TAU / Self::POINTS_PER_ORBIT as f64;
-    const POINT_SCALE: f32 = 0.0005;
-    const FOCUSED_POINT_SCALE: f32 = Self::POINT_SCALE * 1.5;
+    const LINE_THICKNESS: f32 = 2.0;
+    const FOCUSED_THICKNESS: f32 = Self::LINE_THICKNESS * 1.5;
 
     fn generate_orbit_lines(
         &self,
@@ -309,9 +307,9 @@ impl Program {
                     Some(circle_tex.clone()),
                     self.sim_state.universe.time,
                     if id == self.sim_state.focused_body() {
-                        Self::FOCUSED_POINT_SCALE
+                        Self::FOCUSED_THICKNESS
                     } else {
-                        Self::POINT_SCALE
+                        Self::LINE_THICKNESS
                     },
                 )
             })
@@ -329,7 +327,7 @@ impl Program {
         position_map: &HashMap<Id, DVec3>,
         _texture: Option<Texture2DRef>,
         time: f64,
-        _point_scale: f32,
+        thickness: f32,
     ) -> Option<Trajectory> {
         let orbit = match &body.orbit {
             Some(o) => o,
@@ -363,7 +361,7 @@ impl Program {
             offset_s,
             eccentric_anomaly as f32,
             512,
-            3.0,
+            thickness,
             body.color,
         ))
     }
@@ -418,7 +416,7 @@ impl Program {
         Some(Gm::new(mesh, material))
     }
 
-    const PREVIEW_POINT_SCALE: f32 = Self::POINT_SCALE * 2.0;
+    const PREVIEW_POINT_SCALE: f32 = Self::LINE_THICKNESS * 2.0;
 
     fn generate_preview_scene(
         &self,
