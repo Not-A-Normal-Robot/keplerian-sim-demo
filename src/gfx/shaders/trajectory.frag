@@ -7,8 +7,9 @@ uniform float eccentricity;
 
 in float v_ecc_anom;
 
-const float MIN_ALPHA = 0.18;
-const float DIFF_MULTIPLIER = 1.0 - MIN_ALPHA;
+const float MIN_ALPHA = 0.1;
+const float MAX_ALPHA = 0.5;
+const float DIFF_MULTIPLIER = MAX_ALPHA - MIN_ALPHA;
 
 layout (location = 0) out vec4 outColor;
 
