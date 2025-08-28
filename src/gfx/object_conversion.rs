@@ -335,7 +335,7 @@ impl Program {
 
         let eccentric_anomaly = orbit.get_eccentric_anomaly_at_time(time);
 
-        if orbit.get_eccentricity() < 1.0 {
+        let point_count = if orbit.get_eccentricity() < 1.0 {
             let semi_major_axis = orbit.get_semi_major_axis();
             let distance_to_camera = (offset_d - camera_pos).length();
             let radial_size = get_radial_size(semi_major_axis, distance_to_camera);
@@ -343,15 +343,18 @@ impl Program {
                 // Too small to see, skip
                 return None;
             }
-        }
 
-        // TODO: Scale point count based on view size
+            (radial_size * 512.0).abs().max(1024.0) as u32
+        } else {
+            512
+        };
+
         Some(Trajectory::new(
             context,
             orbit,
             offset_s,
             eccentric_anomaly as f32,
-            512,
+            point_count,
             thickness,
             body.color,
         ))
