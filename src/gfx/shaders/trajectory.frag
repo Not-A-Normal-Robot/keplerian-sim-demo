@@ -40,11 +40,24 @@ float get_alpha(float v_ecc_anom, float curr_ecc_anom) {
     return max(DIFF_MULTIPLIER * diff / anomaly_range + MIN_ALPHA, MIN_ALPHA);
 }
 
+// Dropoff alpha as distances become extreme and
+// floats become imprecise
+float extreme_alpha_dropoff(float v_ecc_anom) {
+    float ecc_anom = abs(v_ecc_anom);
+
+    if (ecc_anom < 9.0) {
+        return 1.0;
+    }
+
+    return 10.0 - ecc_anom;
+}
+
 void main()
 {
     outColor = surface_color;
 
     outColor.a *= get_alpha(v_ecc_anom, curr_ecc_anom);
+    outColor.a *= extreme_alpha_dropoff(v_ecc_anom);
 
     // the definition of color_mapping is external
     // and added at runtime; ignore the error
