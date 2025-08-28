@@ -364,6 +364,7 @@ impl Program {
             eccentric_anomaly as f32,
             512,
             3.0,
+            body.color,
         ))
     }
 

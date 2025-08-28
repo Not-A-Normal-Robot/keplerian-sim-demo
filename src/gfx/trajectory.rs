@@ -30,6 +30,7 @@ impl Trajectory {
         eccentric_anomaly: f32,
         point_count: u32,
         thickness: f32,
+        color: Srgba,
     ) -> Self {
         let matrix = orbit.get_transformation_matrix();
         let rp = orbit.get_periapsis();
@@ -68,7 +69,7 @@ impl Trajectory {
             point_count,
             thickness,
             element_buffer,
-            color: Srgba::new_opaque(255, 255, 255),
+            color,
         }
     }
 
