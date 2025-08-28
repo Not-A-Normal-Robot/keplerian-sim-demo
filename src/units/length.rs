@@ -35,18 +35,6 @@ const TEXT_ASTRONOMICAL_UNIT: &str = "AU";
 const TEXT_LIGHT_YEAR: &str = "ly";
 
 impl LengthUnit {
-    pub(crate) const fn get_next_smaller(self) -> Option<Self> {
-        match self {
-            Self::Millimeters => None,
-            Self::Meters => Some(Self::Millimeters),
-            Self::Kilometers => Some(Self::Meters),
-            Self::EarthRadii => Some(Self::Kilometers),
-            Self::JupiterRadii => Some(Self::EarthRadii),
-            Self::SolarRadii => Some(Self::JupiterRadii),
-            Self::AstronomicalUnits => Some(Self::SolarRadii),
-            Self::LightYears => Some(Self::AstronomicalUnits),
-        }
-    }
     pub(crate) const fn get_value(self) -> f64 {
         match self {
             LengthUnit::Millimeters => MILLIMETER,
@@ -107,9 +95,6 @@ impl FromStr for LengthUnit {
 }
 
 impl UnitEnum for LengthUnit {
-    fn get_next_smaller(self) -> Option<Self> {
-        self.get_next_smaller()
-    }
     fn get_value(self) -> f64 {
         self.get_value()
     }

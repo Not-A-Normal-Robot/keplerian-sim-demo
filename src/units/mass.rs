@@ -35,18 +35,6 @@ const TEXT_JUPITER_MASS: &str = "Jupiter";
 const TEXT_SOLAR_MASS: &str = "Sun";
 
 impl MassUnit {
-    pub(crate) const fn get_next_smaller(self) -> Option<Self> {
-        match self {
-            Self::Micrograms => None,
-            Self::Milligrams => Some(Self::Micrograms),
-            Self::Grams => Some(Self::Milligrams),
-            Self::Kilograms => Some(Self::Grams),
-            Self::Tons => Some(Self::Kilograms),
-            Self::EarthMasses => Some(Self::Tons),
-            Self::JupiterMasses => Some(Self::EarthMasses),
-            Self::SolarMasses => Some(Self::JupiterMasses),
-        }
-    }
     pub(crate) const fn get_value(self) -> f64 {
         match self {
             MassUnit::Micrograms => MICROGRAM,
@@ -107,9 +95,6 @@ impl FromStr for MassUnit {
 }
 
 impl UnitEnum for MassUnit {
-    fn get_next_smaller(self) -> Option<Self> {
-        self.get_next_smaller()
-    }
     fn get_value(self) -> f64 {
         self.get_value()
     }

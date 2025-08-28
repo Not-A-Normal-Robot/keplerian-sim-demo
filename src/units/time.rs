@@ -108,9 +108,6 @@ impl FromStr for TimeUnit {
 }
 
 impl UnitEnum for TimeUnit {
-    fn get_next_smaller(self) -> Option<Self> {
-        self.get_next_smaller()
-    }
     fn get_value(self) -> f64 {
         self.get_value()
     }
