@@ -1,12 +1,11 @@
 use std::collections::HashMap;
-use std::f64::consts::TAU;
 use std::sync::LazyLock;
 
 use glam::DVec3;
 use keplerian_sim::OrbitTrait;
 use three_d::{
     Blend, ColorMaterial, Context, CpuMaterial, CpuMesh, Cull, Gm, InstancedMesh, Instances, Mat4,
-    Mesh, Object, PhysicalMaterial, RenderStates, Srgba, Texture2DRef, Vec3, Vec4,
+    Mesh, Object, PhysicalMaterial, RenderStates, Srgba, Vec3, Vec4,
 };
 
 use super::{Body, BodyWrapper, Id, PreviewBody, Program, trajectory::Trajectory};
@@ -288,9 +287,6 @@ impl Program {
         camera_pos: DVec3,
         position_map: &HashMap<Id, DVec3>,
     ) -> Box<[Trajectory]> {
-        let circle_tex = &self.circle_tex;
-        let view_direction = self.camera.view_direction();
-
         self.sim_state
             .universe
             .get_bodies()
@@ -302,9 +298,7 @@ impl Program {
                     body_wrapper.relations.parent,
                     camera_offset,
                     camera_pos,
-                    view_direction,
                     position_map,
-                    Some(circle_tex.clone()),
                     self.sim_state.universe.time,
                     if id == self.sim_state.focused_body() {
                         Self::FOCUSED_THICKNESS
@@ -323,9 +317,7 @@ impl Program {
         parent_id: Option<Id>,
         camera_offset: DVec3,
         camera_pos: DVec3,
-        _view_direction: Vec3,
         position_map: &HashMap<Id, DVec3>,
-        _texture: Option<Texture2DRef>,
         time: f64,
         thickness: f32,
     ) -> Option<Trajectory> {
@@ -434,9 +426,7 @@ impl Program {
             body_wrapper.parent_id,
             camera_offset,
             camera_pos,
-            self.camera.view_direction(),
             position_map,
-            Some(self.circle_tex.clone()),
             self.sim_state.universe.time,
             Self::PREVIEW_POINT_SCALE,
         );

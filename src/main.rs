@@ -1,7 +1,7 @@
 use keplerian_sim::Orbit;
 use three_d::{
-    AmbientLight, Camera, ClearState, Context, CpuTexture, Degrees, DirectionalLight, FrameInput,
-    FrameOutput, GUI, Srgba, Texture2DRef, TextureData, Vec3, Viewport,
+    AmbientLight, Camera, ClearState, Context, Degrees, DirectionalLight, FrameInput, FrameOutput,
+    GUI, Srgba, Vec3, Viewport,
     window::{Window, WindowSettings},
 };
 
@@ -36,8 +36,6 @@ fn main() {
     unreachable!();
 }
 
-const CIRCLE_TEX_SIZE: usize = 64;
-
 pub(crate) struct Program {
     window: Option<Window>,
     context: Context,
@@ -49,8 +47,6 @@ pub(crate) struct Program {
     ambient_light: AmbientLight,
 
     sim_state: SimState,
-
-    circle_tex: Texture2DRef,
 }
 
 impl Program {
@@ -92,35 +88,6 @@ impl Program {
     fn new_ambient_light(context: &Context) -> AmbientLight {
         AmbientLight::new(&context, 0.02, Srgba::WHITE)
     }
-    fn generate_circle_tex(context: &Context) -> Texture2DRef {
-        const CENTER: f32 = CIRCLE_TEX_SIZE as f32 - 1.0 / 4.0;
-        const RADIUS: f32 = CENTER;
-
-        let mut vec = Vec::with_capacity(CIRCLE_TEX_SIZE * CIRCLE_TEX_SIZE);
-        for y in 0..CIRCLE_TEX_SIZE {
-            for x in 0..CIRCLE_TEX_SIZE {
-                let dx = 2.0 * x as f32 - CENTER;
-                let dy = 2.0 * y as f32 - CENTER;
-                let dist = dx.hypot(dy);
-
-                if dist >= RADIUS {
-                    vec.push([255, 255, 255, 0]);
-                } else {
-                    vec.push([255, 255, 255, 255]);
-                }
-            }
-        }
-
-        let cpu_texture = CpuTexture {
-            width: CIRCLE_TEX_SIZE as u32,
-            height: CIRCLE_TEX_SIZE as u32,
-            data: TextureData::RgbaU8(vec),
-            ..Default::default()
-        };
-
-        Texture2DRef::from_cpu_texture(context, &cpu_texture)
-    }
-
     fn generate_sim_state() -> SimState {
         SimState::new(Self::generate_universe())
     }
@@ -203,8 +170,6 @@ impl Program {
 
         let sim_state = Self::generate_sim_state();
 
-        let circle_tex = Self::generate_circle_tex(&context);
-
         Self {
             window: Some(window),
             context,
@@ -214,7 +179,6 @@ impl Program {
             top_light,
             ambient_light,
             sim_state,
-            circle_tex,
         }
     }
 
