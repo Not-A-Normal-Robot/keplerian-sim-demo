@@ -310,7 +310,6 @@ impl Program {
             .collect()
     }
 
-    // TODO: Alter arguments
     fn generate_orbit_line(
         context: &Context,
         body: &Body,
