@@ -64,7 +64,9 @@ fn selectable_body_tree(
         };
 
         if wrapper.relations.satellites.is_empty() {
-            selectable_body_leaf(ui, &wrapper.body, universe_id, selected);
+            ui.indent((egui_id, [universe_id]), |ui| {
+                selectable_body_leaf(ui, &wrapper.body, universe_id, selected);
+            });
         } else {
             selectable_body_parent(ui, egui_id, universe, universe_id, selected);
         }
@@ -157,14 +159,16 @@ fn selectable_body_button(
 
     let circle_atom = Atom::custom(*CIRCLE_ICON_ID, Vec2::splat(height));
 
-    let ellipsis_atom = Atom::custom(
-        *ELLIPSIS_BUTTON_ID,
-        if ellipsis {
-            Vec2::splat(height)
-        } else {
-            Vec2::ZERO
-        },
-    );
+    let ellipsis_atom = ellipsis.then(|| {
+        Atom::custom(
+            *ELLIPSIS_BUTTON_ID,
+            if ellipsis {
+                Vec2::splat(height)
+            } else {
+                Vec2::ZERO
+            },
+        )
+    });
 
     let mut layout = AtomLayout::new(circle_atom);
 
@@ -173,7 +177,9 @@ fn selectable_body_button(
     layout.push_right(text);
 
     layout.push_right(Atom::grow());
-    layout.push_right(ellipsis_atom);
+    if let Some(atom) = ellipsis_atom {
+        layout.push_right(atom);
+    }
 
     let button_response = Button::selectable(selected, layout.atoms)
         .min_size(Vec2::new(ui.available_width(), height))
