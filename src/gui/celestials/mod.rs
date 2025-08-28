@@ -93,7 +93,7 @@ fn selectable_body_tree(
 
         if response.button_response.clicked() {
             if *selected == Some(universe_id) {
-                **clicked_selected = true;
+                *clicked_selected = true;
             } else {
                 *selected = Some(universe_id);
             }
