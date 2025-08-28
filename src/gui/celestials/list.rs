@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use super::{
-    Body, PreviewBody, RENAME_TEXTEDIT_ID, SimState, UniverseId, assets, body_selectable_button,
-    declare_id,
+    Body, PreviewBody, RENAME_TEXTEDIT_ID, SimState, UniverseId, assets, declare_id,
+    selectable_body_button,
 };
 use glam::DVec3;
 use keplerian_sim::Orbit;
@@ -120,7 +120,7 @@ fn body_tree_base_node(
 
     let selected = sim_state.focused_body == universe_id;
 
-    let response = body_selectable_button(
+    let response = selectable_body_button(
         ui,
         body,
         BODY_TREE_ICON_SIZE,

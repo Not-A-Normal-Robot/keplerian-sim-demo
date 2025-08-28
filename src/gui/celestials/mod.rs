@@ -53,7 +53,7 @@ struct BodySelectableButtonResponse {
 /// The caller is responsible for checking whether
 /// the current `ren_state` matches this button's
 /// `UniverseId`.
-fn body_selectable_button(
+fn selectable_body_button(
     ui: &mut Ui,
     body: &Body,
     height: f32,
@@ -66,9 +66,10 @@ fn body_selectable_button(
 
     let radius = height / 2.0;
     let center = Pos2::from([radius, radius]);
-    let fill_color = body.color;
-    let fill_color =
-        Color32::from_rgba_premultiplied(fill_color.r, fill_color.g, fill_color.b, fill_color.a);
+    let fill_color = {
+        let c = body.color;
+        Color32::from_rgba_unmultiplied(c.r, c.g, c.b, c.a)
+    };
 
     let circle_atom = Atom::custom(*CIRCLE_ICON_ID, Vec2::splat(height));
 
