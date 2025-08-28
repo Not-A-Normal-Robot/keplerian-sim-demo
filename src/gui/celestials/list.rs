@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use super::{Body, PreviewBody, SimState, UniverseId, assets, declare_id};
+use super::{
+    Body, PreviewBody, RENAME_TEXTEDIT_ID, SimState, UniverseId, assets, body_selectable_button,
+    declare_id,
+};
 use glam::DVec3;
 use keplerian_sim::Orbit;
 use three_d::{
@@ -15,14 +18,11 @@ use three_d::{
 };
 
 declare_id!(BODY_PREFIX, b"Planets!");
-declare_id!(CIRCLE_ICON, b"Circles!");
-declare_id!(ELLIPSIS_BUTTON, b"see_more");
-declare_id!(RENAME_TEXTEDIT, b"OmgRen??");
 
 pub(in super::super) struct RenameState {
-    universe_id: UniverseId,
-    name_buffer: String,
-    requesting_focus: bool,
+    pub universe_id: UniverseId,
+    pub name_buffer: String,
+    pub requesting_focus: bool,
 }
 
 fn get_body_egui_id(universe_id: UniverseId) -> EguiId {
@@ -126,89 +126,101 @@ fn body_tree_base_node(
     let fill_color =
         Color32::from_rgba_unmultiplied(fill_color.r, fill_color.g, fill_color.b, fill_color.a);
 
-    let circle_atom = Atom::custom(*CIRCLE_ICON_ID, Vec2::splat(BODY_TREE_ICON_SIZE));
+    // let circle_atom = Atom::custom(*CIRCLE_ICON_ID, Vec2::splat(BODY_TREE_ICON_SIZE));
 
-    let inner_button_atom = Atom::custom(*ELLIPSIS_BUTTON_ID, Vec2::splat(BODY_TREE_ICON_SIZE));
+    // let inner_button_atom = Atom::custom(*ELLIPSIS_BUTTON_ID, Vec2::splat(BODY_TREE_ICON_SIZE));
 
-    let mut layout = AtomLayout::new(circle_atom);
+    // let mut layout = AtomLayout::new(circle_atom);
 
-    let text = RichText::new(&body.name).color(Color32::WHITE);
-    let text = if selected { text.underline() } else { text };
-    layout.push_right(text);
+    // let text = RichText::new(&body.name).color(Color32::WHITE);
+    // let text = if selected { text.underline() } else { text };
+    // layout.push_right(text);
 
-    layout.push_right(Atom::grow());
-    layout.push_right(inner_button_atom);
+    // layout.push_right(Atom::grow());
+    // layout.push_right(inner_button_atom);
 
-    let res = Button::selectable(selected, layout.atoms)
-        .min_size(Vec2::new(ui.available_width(), BODY_TREE_ICON_SIZE))
-        .atom_ui(ui);
+    // let res = Button::selectable(selected, layout.atoms)
+    // .min_size(Vec2::new(ui.available_width(), BODY_TREE_ICON_SIZE))
+    // .atom_ui(ui);
 
-    if let Some(rect) = res.rect(*CIRCLE_ICON_ID) {
-        ui.painter().with_clip_rect(rect).circle_filled(
-            center + rect.min.to_vec2(),
-            RADIUS,
-            fill_color,
-        );
-    }
+    // if let Some(rect) = res.rect(*CIRCLE_ICON_ID) {
+    //     ui.painter().with_clip_rect(rect).circle_filled(
+    //         center + rect.min.to_vec2(),
+    //         RADIUS,
+    //         fill_color,
+    //     );
+    // }
 
-    let mut rect = res.response.rect;
-    let padding = BODY_TREE_ICON_SIZE * 1.5;
-    *rect.right_mut() -= padding;
-    *rect.left_mut() += padding;
+    // let mut rect = res.response.rect;
+    // let padding = BODY_TREE_ICON_SIZE * 1.5;
+    // *rect.right_mut() -= padding;
+    // *rect.left_mut() += padding;
 
-    if let Some(ren_state) = &mut sim_state.ui.listed_body_with_rename
-        && ren_state.universe_id == universe_id
-    {
-        let text_edit = TextEdit::singleline(&mut ren_state.name_buffer).id(*RENAME_TEXTEDIT_ID);
+    // if let Some(ren_state) = &mut sim_state.ui.listed_body_with_rename
+    //     && ren_state.universe_id == universe_id
+    // {
+    //     let text_edit = TextEdit::singleline(&mut ren_state.name_buffer).id(*RENAME_TEXTEDIT_ID);
 
-        let response = ui.put(rect, text_edit);
+    //     let response = ui.put(rect, text_edit);
 
-        if ren_state.requesting_focus {
-            response.request_focus();
+    //     if ren_state.requesting_focus {
+    //         response.request_focus();
 
-            if response.has_focus() {
-                ren_state.requesting_focus = false;
-            }
-        }
+    //         if response.has_focus() {
+    //             ren_state.requesting_focus = false;
+    //         }
+    //     }
 
-        if response.lost_focus() {
-            let string = sim_state
-                .ui
-                .listed_body_with_rename
-                .take()
-                .map(|s| s.name_buffer);
-            if let Some(string) = string
-                && !ui.input(|i| i.key_down(Key::Escape))
-            {
-                sim_state
-                    .universe
-                    .get_body_mut(universe_id)
-                    .map(|w| w.body.name = string);
-            }
-        }
-    }
+    //     if response.lost_focus() {
+    //         let string = sim_state
+    //             .ui
+    //             .listed_body_with_rename
+    //             .take()
+    //             .map(|s| s.name_buffer);
+    //         if let Some(string) = string
+    //             && !ui.input(|i| i.key_down(Key::Escape))
+    //         {
+    //             sim_state
+    //                 .universe
+    //                 .get_body_mut(universe_id)
+    //                 .map(|w| w.body.name = string);
+    //         }
+    //     }
+    // }
 
-    let response = &res.response;
+    // let response = &res.response;
 
-    if response.double_clicked() {
-        set_rename_state(ui, sim_state, universe_id);
-    } else if response.clicked() {
+    let response = body_selectable_button(
+        ui,
+        body,
+        BODY_TREE_ICON_SIZE,
+        selected,
+        true,
+        sim_state
+            .ui
+            .listed_body_with_rename
+            .as_mut()
+            .filter(|state| state.universe_id == universe_id),
+    );
+
+    if response.button_response.double_clicked() {
+        set_rename_state(ui.ctx(), sim_state, universe_id);
+    } else if response.button_response.clicked() {
         sim_state.switch_focus(universe_id, &position_map);
     }
 
-    if let Some(rect) = res.rect(*ELLIPSIS_BUTTON_ID) {
-        let inner_button = ellipsis_button(ui, rect);
+    if let Some(button) = response.ellipsis_button {
         ellipsis_popup(
             sim_state,
-            &inner_button,
-            response,
+            &button,
+            &response.button_response,
             universe_id,
             position_map,
         );
     }
 }
 
-fn set_rename_state(ui: &mut Ui, sim_state: &mut SimState, universe_id: UniverseId) {
+fn set_rename_state(ctx: &Context, sim_state: &mut SimState, universe_id: UniverseId) {
     let string = match sim_state.universe.get_body(universe_id) {
         Some(w) => w.body.name.clone(),
         None => return,
@@ -232,19 +244,7 @@ fn set_rename_state(ui: &mut Ui, sim_state: &mut SimState, universe_id: Universe
         CCursor::new(0),
         CCursor::new(strlen),
     )));
-    state.store(ui.ctx(), *RENAME_TEXTEDIT_ID);
-}
-
-fn ellipsis_button(ui: &mut Ui, rect: Rect) -> Response {
-    let ellipsis_button = ImageButton::new(assets::ELLIPSIS_IMAGE.clone());
-    ui.spacing_mut().button_padding = Vec2::ZERO;
-    let widget_styles = &mut ui.visuals_mut().widgets;
-    widget_styles.inactive.weak_bg_fill = Color32::TRANSPARENT;
-    widget_styles.inactive.bg_stroke = Stroke::NONE;
-    widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(64);
-    widget_styles.active.weak_bg_fill = Color32::from_white_alpha(128);
-
-    ui.put(rect, ellipsis_button)
+    state.store(ctx, *RENAME_TEXTEDIT_ID);
 }
 
 fn ellipsis_popup(
@@ -446,7 +446,7 @@ fn ellipsis_popup(
             sim_state.ui.listed_body_with_popup = None;
         }
         if rename_button.clicked() {
-            set_rename_state(ui, sim_state, universe_id);
+            set_rename_state(ui.ctx(), sim_state, universe_id);
             sim_state.ui.listed_body_with_popup = None;
         }
     });
