@@ -48,11 +48,6 @@ impl CameraControl {
                 handled,
                 ..
             } => {
-                #[cfg(target_family = "wasm")]
-                web_sys::console::log_1(&web_sys::js_sys::JsString::from(format!(
-                    "camera info: {:?}",
-                    &camera,
-                )));
                 if *handled {
                     return;
                 }
