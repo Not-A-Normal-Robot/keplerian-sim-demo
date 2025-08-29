@@ -21,7 +21,7 @@ use three_d::egui::{
 declare_id!(BOTTOM_PANEL, b"BluRigel");
 declare_id!(salt_only, TIME_CONTROL_COMBO_BOX, b"Solstice");
 
-pub(super) struct BottomBarData {
+pub(super) struct BottomBarState {
     time_disp: TimeDisplayMode,
     time_slider_pos: f64,
     time_speed_amount: f64,
@@ -29,7 +29,7 @@ pub(super) struct BottomBarData {
     time_speed_unit_auto: bool,
 }
 
-impl Default for BottomBarData {
+impl Default for BottomBarState {
     fn default() -> Self {
         Self {
             time_disp: TimeDisplayMode::SingleUnit,
@@ -127,11 +127,11 @@ fn time_manager(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64) {
     let string = format!(
         "{time:5.5}{unit}\n{rate:6.6}/s",
         time = PrettyPrintFloat(
-            sim_state.universe.time / sim_state.ui.bottom_bar_data.time_speed_unit.get_value()
+            sim_state.universe.time / sim_state.ui.bottom_bar_state.time_speed_unit.get_value()
         ),
-        unit = sim_state.ui.bottom_bar_data.time_speed_unit,
+        unit = sim_state.ui.bottom_bar_state.time_speed_unit,
         rate = PrettyPrintFloat(
-            sim_state.sim_speed / sim_state.ui.bottom_bar_data.time_speed_unit.get_value()
+            sim_state.sim_speed / sim_state.ui.bottom_bar_state.time_speed_unit.get_value()
         ),
     );
     let text = RichText::new(string).monospace().color(Color32::WHITE);
@@ -175,7 +175,7 @@ fn time_display(ui: &mut Ui, sim_state: &mut SimState) {
 
     let string = sim_state
         .ui
-        .bottom_bar_data
+        .bottom_bar_state
         .time_disp
         .format_time(sim_state.universe.time);
 
@@ -186,7 +186,7 @@ fn time_display(ui: &mut Ui, sim_state: &mut SimState) {
 
     let hover_string = format!(
         "Currently in {} mode\nLeft click to cycle, right click to cycle backwards",
-        sim_state.ui.bottom_bar_data.time_disp
+        sim_state.ui.bottom_bar_state.time_disp
     );
 
     let hover_text = RichText::new(hover_string).color(Color32::WHITE).size(16.0);
@@ -204,12 +204,12 @@ fn time_display(ui: &mut Ui, sim_state: &mut SimState) {
         let button_instance = ui.add(button).on_hover_text(hover_text);
 
         if button_instance.clicked() {
-            sim_state.ui.bottom_bar_data.time_disp =
-                sim_state.ui.bottom_bar_data.time_disp.get_next();
+            sim_state.ui.bottom_bar_state.time_disp =
+                sim_state.ui.bottom_bar_state.time_disp.get_next();
         }
         if button_instance.secondary_clicked() {
-            sim_state.ui.bottom_bar_data.time_disp =
-                sim_state.ui.bottom_bar_data.time_disp.get_prev();
+            sim_state.ui.bottom_bar_state.time_disp =
+                sim_state.ui.bottom_bar_state.time_disp.get_prev();
         }
     });
 }
@@ -236,7 +236,7 @@ fn time_slider(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64, column_
     .size(16.0);
     ui.spacing_mut().interact_size.y = MIN_TOUCH_TARGET_LEN;
     let slider = Slider::new(
-        &mut sim_state.ui.bottom_bar_data.time_slider_pos,
+        &mut sim_state.ui.bottom_bar_state.time_slider_pos,
         -1.0..=1.0,
     )
     .show_value(false)
@@ -249,16 +249,16 @@ fn time_slider(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64, column_
     let slider_instance = ui.add(slider).on_hover_text(hover_text);
 
     if slider_instance.is_pointer_button_down_on() {
-        let base = 10.0f64.powf(sim_state.ui.bottom_bar_data.time_slider_pos);
+        let base = 10.0f64.powf(sim_state.ui.bottom_bar_state.time_slider_pos);
         sim_state.sim_speed *= base.powf(elapsed_time / 1000.0);
     } else {
-        sim_state.ui.bottom_bar_data.time_slider_pos *= (-5.0 * elapsed_time / 1000.0).exp();
+        sim_state.ui.bottom_bar_state.time_slider_pos *= (-5.0 * elapsed_time / 1000.0).exp();
     }
 }
 fn time_drag_value(ui: &mut Ui, sim_state: &mut SimState) {
-    sim_state.ui.bottom_bar_data.time_speed_amount =
-        sim_state.sim_speed / sim_state.ui.bottom_bar_data.time_speed_unit.get_value();
-    let prev_speed_amt = sim_state.ui.bottom_bar_data.time_speed_amount;
+    sim_state.ui.bottom_bar_state.time_speed_amount =
+        sim_state.sim_speed / sim_state.ui.bottom_bar_state.time_speed_unit.get_value();
+    let prev_speed_amt = sim_state.ui.bottom_bar_state.time_speed_amount;
 
     let dv_instance = ui.scope(|ui| time_drag_value_inner(ui, sim_state)).inner;
 
@@ -271,16 +271,16 @@ fn time_drag_value(ui: &mut Ui, sim_state: &mut SimState) {
     .size(16.0);
     let dv_instance = dv_instance.on_hover_text(hover_text);
 
-    if prev_speed_amt != sim_state.ui.bottom_bar_data.time_speed_amount {
-        sim_state.sim_speed = sim_state.ui.bottom_bar_data.time_speed_amount
-            * sim_state.ui.bottom_bar_data.time_speed_unit.get_value();
+    if prev_speed_amt != sim_state.ui.bottom_bar_state.time_speed_amount {
+        sim_state.sim_speed = sim_state.ui.bottom_bar_state.time_speed_amount
+            * sim_state.ui.bottom_bar_state.time_speed_unit.get_value();
     }
 
-    if sim_state.ui.bottom_bar_data.time_speed_unit_auto && !dv_instance.dragged() {
-        sim_state.ui.bottom_bar_data.time_speed_unit =
+    if sim_state.ui.bottom_bar_state.time_speed_unit_auto && !dv_instance.dragged() {
+        sim_state.ui.bottom_bar_state.time_speed_unit =
             TimeUnit::largest_unit_from_base(sim_state.sim_speed);
-        sim_state.ui.bottom_bar_data.time_speed_amount =
-            sim_state.sim_speed / sim_state.ui.bottom_bar_data.time_speed_unit.get_value();
+        sim_state.ui.bottom_bar_state.time_speed_amount =
+            sim_state.sim_speed / sim_state.ui.bottom_bar_state.time_speed_unit.get_value();
     }
 }
 fn time_drag_value_inner(ui: &mut Ui, sim_state: &mut SimState) -> Response {
@@ -298,13 +298,13 @@ fn time_drag_value_inner(ui: &mut Ui, sim_state: &mut SimState) -> Response {
     widget_styles.hovered.bg_stroke = Stroke::NONE;
     widget_styles.active.weak_bg_fill = Color32::from_white_alpha(64);
 
-    let drag_value = DragValue::new(&mut sim_state.ui.bottom_bar_data.time_speed_amount)
+    let drag_value = DragValue::new(&mut sim_state.ui.bottom_bar_state.time_speed_amount)
         .update_while_editing(false)
         .custom_formatter(format_dv_number);
     ui.add_sized(dv_size, drag_value)
 }
 fn time_unit_box(ui: &mut Ui, sim_state: &mut SimState) {
-    let unit_string = format!("{}/s", sim_state.ui.bottom_bar_data.time_speed_unit);
+    let unit_string = format!("{}/s", sim_state.ui.bottom_bar_state.time_speed_unit);
 
     let unit_text = RichText::new(unit_string).color(Color32::WHITE).size(16.0);
 
@@ -334,30 +334,30 @@ fn time_unit_box_inner(ui: &mut Ui, sim_state: &mut SimState, per_second: bool) 
         };
         let text = RichText::new(string).font(font.clone());
 
-        let label = Button::selectable(sim_state.ui.bottom_bar_data.time_speed_unit == unit, text);
+        let label = Button::selectable(sim_state.ui.bottom_bar_state.time_speed_unit == unit, text);
         let label = ui.add_sized(MIN_TOUCH_TARGET_VEC, label);
 
         if label.clicked() {
-            sim_state.ui.bottom_bar_data.time_speed_unit_auto = false;
-            sim_state.ui.bottom_bar_data.time_speed_unit = unit;
+            sim_state.ui.bottom_bar_state.time_speed_unit_auto = false;
+            sim_state.ui.bottom_bar_state.time_speed_unit = unit;
         }
     }
 
     ui.separator();
 
     let text = RichText::new("Auto-pick").font(font);
-    let label = Button::selectable(sim_state.ui.bottom_bar_data.time_speed_unit_auto, text);
+    let label = Button::selectable(sim_state.ui.bottom_bar_state.time_speed_unit_auto, text);
     let auto = ui.add_sized(MIN_TOUCH_TARGET_VEC, label);
     if auto.clicked() {
-        sim_state.ui.bottom_bar_data.time_speed_unit_auto =
-            !sim_state.ui.bottom_bar_data.time_speed_unit_auto;
+        sim_state.ui.bottom_bar_state.time_speed_unit_auto =
+            !sim_state.ui.bottom_bar_state.time_speed_unit_auto;
     }
 }
 fn time_unit_box_popup(ui: &mut Ui, sim_state: &mut SimState) {
     let font = FontId::proportional(16.0);
 
-    let unit = sim_state.ui.bottom_bar_data.time_speed_unit;
-    let title_string = if sim_state.ui.bottom_bar_data.time_speed_unit_auto {
+    let unit = sim_state.ui.bottom_bar_state.time_speed_unit;
+    let title_string = if sim_state.ui.bottom_bar_state.time_speed_unit_auto {
         format!("Select unit ({unit}; auto)")
     } else {
         format!("Select unit ({unit})")
