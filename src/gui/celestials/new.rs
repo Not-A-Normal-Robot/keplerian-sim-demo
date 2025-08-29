@@ -41,8 +41,8 @@ impl Default for NewBodyWindowState {
 }
 
 pub(super) fn new_body_window(ctx: &Context, sim_state: &mut SimState) {
-    let wrapper = match sim_state.preview_body.take() {
-        Some(w) => w,
+    let mut wrapper = match sim_state.preview_body.take() {
+        Some(w) => Some(w),
         None => {
             sim_state.ui.new_body_window_state = None;
             return;
@@ -59,30 +59,31 @@ pub(super) fn new_body_window(ctx: &Context, sim_state: &mut SimState) {
         .default_width(300.0)
         .min_width(300.0)
         .max_width(300.0)
+        .min_height(200.0)
         .open(&mut open)
-        .collapsible(false)
         .show(ctx, |ui| {
+            let wrapper = match wrapper.take() {
+                Some(w) => w,
+                None => return,
+            };
             ui.scope(|ui| {
                 sim_state.preview_body =
                     new_body_window_content(ui, &mut sim_state.universe, wrapper, window_state);
-            })
+            });
         });
+
+    if let Some(w) = wrapper {
+        sim_state.preview_body = Some(w);
+    }
 
     if !open {
         sim_state.preview_body = None;
     }
 
-    if let Some(w) = &window {
-        println!("current: {}", w.response.has_focus()); // DEBUG
-    }
     if let Some(w) = window
         && window_state.request_focus
     {
-        // DEBUG
-        println!("pre-request focus: {}", w.response.has_focus());
         w.response.request_focus();
-        // DEBUG
-        println!("post-request focus: {}", w.response.has_focus());
 
         if w.response.has_focus() {
             window_state.request_focus = false;
