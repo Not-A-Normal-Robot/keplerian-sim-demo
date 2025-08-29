@@ -55,3 +55,6 @@ pub(crate) static TIME_IMAGE: LazyLock<Image<'static>> =
     LazyLock::new(|| Image::new(TIME_IMAGE_SOURCE));
 
 use_img!(ELLIPSIS_IMAGE, "more.svg");
+use_img!(TREE_LIST_IMAGE, "tree-list.svg");
+use_img!(ADD_ORBIT_IMAGE, "add-orbit.svg");
+use_img!(EDIT_ORBIT_IMAGE, "edit-orbit.svg");
