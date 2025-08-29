@@ -1,9 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use super::{
-    sim::universe::{Id as UniverseId, Universe},
-    units::time::{TimeDisplayMode, TimeUnit},
-};
+use super::sim::universe::{Id as UniverseId, Universe};
 pub(crate) use celestials::PreviewBody;
 use glam::DVec3;
 use ordered_float::NotNan;
@@ -38,11 +35,7 @@ const MIN_TOUCH_TARGET_LEN: f32 = 48.0;
 const MIN_TOUCH_TARGET_VEC: Vec2 = Vec2::splat(MIN_TOUCH_TARGET_LEN);
 
 struct UiState {
-    time_disp: TimeDisplayMode,
-    time_slider_pos: f64,
-    time_speed_amount: f64,
-    time_speed_unit: TimeUnit,
-    time_speed_unit_auto: bool,
+    bottom_bar_data: bottom_bar::BottomBarData,
     frame_data: fps::FrameData,
     listed_body_with_popup: Option<UniverseId>,
     listed_body_with_rename: Option<celestials::list::RenameState>,
@@ -53,11 +46,7 @@ struct UiState {
 impl Default for UiState {
     fn default() -> Self {
         Self {
-            time_disp: TimeDisplayMode::SingleUnit,
-            time_slider_pos: 0.0,
-            time_speed_amount: 1.0,
-            time_speed_unit: TimeUnit::Seconds,
-            time_speed_unit_auto: true,
+            bottom_bar_data: bottom_bar::BottomBarData::default(),
             frame_data: fps::FrameData::new(),
             listed_body_with_popup: None,
             listed_body_with_rename: None,
