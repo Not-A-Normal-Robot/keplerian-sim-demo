@@ -21,6 +21,7 @@ declare_id!(NEW_BODY_PARENT_TREE, b"treeL1K3");
 pub(in super::super) struct NewBodyWindowState {
     mass_unit: AutoUnit<MassUnit>,
     radius_unit: AutoUnit<LengthUnit>,
+    pub(super) request_focus: bool,
 }
 
 impl Default for NewBodyWindowState {
@@ -34,6 +35,7 @@ impl Default for NewBodyWindowState {
                 auto: true,
                 unit: LengthUnit::Meters,
             },
+            request_focus: true,
         }
     }
 }
@@ -58,6 +60,7 @@ pub(super) fn new_body_window(ctx: &Context, sim_state: &mut SimState) {
         .min_width(300.0)
         .max_width(300.0)
         .open(&mut open)
+        .collapsible(false)
         .show(ctx, |ui| {
             ui.scope(|ui| {
                 sim_state.preview_body =
@@ -69,11 +72,21 @@ pub(super) fn new_body_window(ctx: &Context, sim_state: &mut SimState) {
         sim_state.preview_body = None;
     }
 
+    if let Some(w) = &window {
+        println!("current: {}", w.response.has_focus()); // DEBUG
+    }
     if let Some(w) = window
-        && sim_state.ui.new_body_window_request_focus
+        && window_state.request_focus
     {
+        // DEBUG
+        println!("pre-request focus: {}", w.response.has_focus());
         w.response.request_focus();
-        sim_state.ui.new_body_window_request_focus = false;
+        // DEBUG
+        println!("post-request focus: {}", w.response.has_focus());
+
+        if w.response.has_focus() {
+            window_state.request_focus = false;
+        }
     }
 }
 

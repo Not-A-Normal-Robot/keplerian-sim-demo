@@ -39,7 +39,6 @@ struct UiState {
     frame_data: fps::FrameData,
     listed_body_with_popup: Option<UniverseId>,
     listed_body_with_rename: Option<celestials::list::RenameState>,
-    new_body_window_request_focus: bool,
     new_body_window_state: Option<celestials::new::NewBodyWindowState>,
 }
 
@@ -50,7 +49,6 @@ impl Default for UiState {
             frame_data: fps::FrameData::new(),
             listed_body_with_popup: None,
             listed_body_with_rename: None,
-            new_body_window_request_focus: false,
             new_body_window_state: None,
         }
     }

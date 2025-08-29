@@ -321,7 +321,9 @@ fn ellipsis_popup(
                 parent_id: Some(universe_id),
             });
             sim_state.ui.listed_body_with_popup = None;
-            sim_state.ui.new_body_window_request_focus = true;
+            if let Some(state) = &mut sim_state.ui.new_body_window_state {
+                state.request_focus = true;
+            }
         }
         if new_sibling_button.clicked() {
             let parent = parent_id
@@ -346,7 +348,9 @@ fn ellipsis_popup(
                 parent_id: parent_id,
             });
             sim_state.ui.listed_body_with_popup = None;
-            sim_state.ui.new_body_window_request_focus = true;
+            if let Some(state) = &mut sim_state.ui.new_body_window_state {
+                state.request_focus = true;
+            }
         }
         if let Some(parent_id) = parent_id
             && let Some(cur_idx) = cur_sibling_idx
