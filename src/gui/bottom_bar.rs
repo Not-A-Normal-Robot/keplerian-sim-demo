@@ -6,16 +6,23 @@ use std::{
 use super::{
     super::{
         assets,
+        sim::body::Body,
         units::time::{TimeDisplayMode, TimeUnit},
     },
-    MIN_TOUCH_TARGET_LEN, MIN_TOUCH_TARGET_VEC, SimState, declare_id,
+    MIN_TOUCH_TARGET_LEN, MIN_TOUCH_TARGET_VEC, SimState,
+    celestials::PreviewBody,
+    declare_id,
 };
 use float_pretty_print::PrettyPrintFloat;
+use keplerian_sim::Orbit;
 use strum::IntoEnumIterator;
-use three_d::egui::{
-    Button, Color32, ComboBox, Context, CornerRadius, DragValue, FontId, Frame, Image, ImageButton,
-    Margin, Popup, PopupCloseBehavior, Response, RichText, ScrollArea, Slider, Stroke, TextStyle,
-    TopBottomPanel, Ui, Vec2, style::HandleShape,
+use three_d::{
+    Srgba,
+    egui::{
+        Button, Color32, ComboBox, Context, CornerRadius, DragValue, FontId, Frame, Image,
+        ImageButton, Margin, Popup, PopupCloseBehavior, Response, RichText, ScrollArea, Slider,
+        Stroke, TextStyle, TopBottomPanel, Ui, Vec2, style::HandleShape,
+    },
 };
 
 declare_id!(BOTTOM_PANEL, b"BluRigel");
@@ -27,6 +34,7 @@ pub(super) struct BottomBarState {
     time_speed_amount: f64,
     time_speed_unit: TimeUnit,
     time_speed_unit_auto: bool,
+    expanded: bool,
 }
 
 impl Default for BottomBarState {
@@ -37,6 +45,7 @@ impl Default for BottomBarState {
             time_speed_amount: 1.0,
             time_speed_unit: TimeUnit::Seconds,
             time_speed_unit_auto: true,
+            expanded: true,
         }
     }
 }
@@ -51,7 +60,6 @@ fn format_dv_number(number: f64, _: RangeInclusive<usize>) -> String {
 
 pub(super) fn bottom_bar(ctx: &Context, sim_state: &mut SimState, elapsed_time: f64) {
     let height = 64.0;
-    // TODO: Bottom panel expansion using show_animated
     TopBottomPanel::bottom(*BOTTOM_PANEL_ID)
         .show_separator_line(false)
         .exact_height(height)
@@ -63,11 +71,11 @@ pub(super) fn bottom_bar(ctx: &Context, sim_state: &mut SimState, elapsed_time: 
             fill: Color32::from_black_alpha(192),
             ..Default::default()
         })
-        .show(ctx, |ui| {
+        .show_animated(ctx, sim_state.ui.bottom_bar_state.expanded, |ui| {
             ScrollArea::horizontal()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                    ui.horizontal(|ui| bottom_panel_contents(ui, sim_state, elapsed_time))
+                    ui.horizontal_centered(|ui| bottom_panel_contents(ui, sim_state, elapsed_time))
                 })
         });
 }
@@ -90,6 +98,12 @@ fn bottom_panel_contents(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f6
         time_manager(ui, sim_state, elapsed_time);
         ui.separator();
     }
+
+    ui.centered_and_justified(|ui| {
+        ui.horizontal_centered(|ui| {
+            window_toggles(ui, sim_state);
+        });
+    });
 }
 
 fn time_manager(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64) {
@@ -370,4 +384,71 @@ fn time_unit_box_popup(ui: &mut Ui, sim_state: &mut SimState) {
     ui.menu_button(title_text, |ui| {
         time_unit_box_inner(ui, sim_state, false);
     });
+}
+
+fn window_toggles(ui: &mut Ui, sim_state: &mut SimState) {
+    ui.spacing_mut().button_padding = Vec2::ZERO;
+    let widget_styles = &mut ui.visuals_mut().widgets;
+    widget_styles.inactive.weak_bg_fill = Color32::TRANSPARENT;
+    widget_styles.inactive.bg_stroke = Stroke::NONE;
+    widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(16);
+    widget_styles.hovered.bg_stroke = Stroke::NONE;
+    widget_styles.active.weak_bg_fill = Color32::from_white_alpha(64);
+
+    let list_open = &mut sim_state.ui.body_list_window_state.window_open;
+    let list_button = ImageButton::new(assets::TREE_LIST_IMAGE.clone()).selected(*list_open);
+
+    if ui.add(list_button).clicked() {
+        *list_open ^= true;
+    }
+
+    let add_open = sim_state.preview_body.is_some();
+    let add_button = ImageButton::new(assets::ADD_ORBIT_IMAGE.clone()).selected(add_open);
+
+    if ui.add(add_button).clicked() {
+        if sim_state.preview_body.is_some() {
+            sim_state.preview_body = None;
+        } else {
+            // let root = sim_state.universe.get_bodies().iter().next();
+            let root = sim_state
+                .universe
+                .get_bodies()
+                .iter()
+                .min_by_key(|(id, _)| **id);
+
+            if let Some((&root_id, root_wrapper)) = root {
+                let root_body = &root_wrapper.body;
+                sim_state.preview_body = Some(PreviewBody {
+                    body: Body {
+                        mass: 1.0,
+                        name: format!("Child of {}", &root_body.name),
+                        radius: root_body.radius * 0.1,
+                        color: Srgba::WHITE,
+                        orbit: Some(Orbit::new(
+                            0.0,
+                            root_body.radius * 2.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            root_body.mass * sim_state.universe.g,
+                        )),
+                    },
+                    parent_id: Some(root_id),
+                })
+            } else {
+                sim_state.preview_body = Some(PreviewBody {
+                    body: Body::default(),
+                    parent_id: None,
+                })
+            }
+        }
+    }
+
+    let edit_open = &mut sim_state.ui.edit_body_window_state.window_open;
+    let edit_button = ImageButton::new(assets::EDIT_ORBIT_IMAGE.clone()).selected(*edit_open);
+
+    if ui.add(edit_button).clicked() {
+        *edit_open ^= true;
+    }
 }

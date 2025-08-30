@@ -39,6 +39,7 @@ struct UiState {
     frame_data: fps::FrameData,
     body_list_window_state: celestials::list::BodyListWindowState,
     new_body_window_state: Option<celestials::new::NewBodyWindowState>,
+    edit_body_window_state: celestials::edit::EditBodyWindowState,
 }
 
 impl Default for UiState {
@@ -48,6 +49,7 @@ impl Default for UiState {
             frame_data: fps::FrameData::new(),
             body_list_window_state: celestials::list::BodyListWindowState::default(),
             new_body_window_state: None,
+            edit_body_window_state: celestials::edit::EditBodyWindowState::default(),
         }
     }
 }

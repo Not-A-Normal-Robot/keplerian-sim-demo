@@ -57,7 +57,7 @@ impl Default for Body {
             mass: 5.972e24,
             radius: 6.371e6,
             orbit: None,
-            color: Srgba::new_opaque(255, 255, 255),
+            color: Srgba::new_opaque(51, 108, 245),
         }
     }
 }

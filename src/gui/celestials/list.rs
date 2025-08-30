@@ -24,10 +24,20 @@ pub(super) struct RenameState {
     pub requesting_focus: bool,
 }
 
-#[derive(Default)]
 pub(in super::super) struct BodyListWindowState {
     listed_body_with_popup: Option<UniverseId>,
     listed_body_with_rename: Option<RenameState>,
+    pub(in super::super) window_open: bool,
+}
+
+impl Default for BodyListWindowState {
+    fn default() -> Self {
+        Self {
+            listed_body_with_popup: None,
+            listed_body_with_rename: None,
+            window_open: true,
+        }
+    }
 }
 
 fn get_body_egui_id(universe_id: UniverseId) -> EguiId {
@@ -40,12 +50,17 @@ pub(super) fn body_tree_window(
     sim_state: &mut SimState,
     position_map: &HashMap<UniverseId, DVec3>,
 ) {
-    let window = Window::new("Celestial Bodies").scroll(true);
+    let mut open = sim_state.ui.body_list_window_state.window_open;
+
+    let window = Window::new("Celestial Bodies").scroll(true).open(&mut open);
+
     window.show(ctx, |ui| {
         ui.scope(|ui| {
             body_tree_window_contents(ui, sim_state, position_map);
         })
     });
+
+    sim_state.ui.body_list_window_state.window_open = open;
 }
 
 fn body_tree_window_contents(

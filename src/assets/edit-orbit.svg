@@ -1,5 +1,5 @@
 <!-- TODO: This looks bad, improve it? -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1.1 -1.1 5.2 5.2" fill="white">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1.6 -1.6 3.2 3.2" fill="white">
     <circle cx="0" cy="0" r="0.4" />
     <circle r="1" fill="none" stroke="#fff4" stroke-width="0.1" />
     <circle class="a" cx="0.707106781186" cy="-0.707106781186" r="0.2" />
