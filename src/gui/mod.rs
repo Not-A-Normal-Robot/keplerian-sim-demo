@@ -37,8 +37,7 @@ const MIN_TOUCH_TARGET_VEC: Vec2 = Vec2::splat(MIN_TOUCH_TARGET_LEN);
 struct UiState {
     bottom_bar_state: bottom_bar::BottomBarState,
     frame_data: fps::FrameData,
-    listed_body_with_popup: Option<UniverseId>,
-    listed_body_with_rename: Option<celestials::list::RenameState>,
+    body_list_window_state: celestials::list::BodyListWindowState,
     new_body_window_state: Option<celestials::new::NewBodyWindowState>,
 }
 
@@ -47,8 +46,7 @@ impl Default for UiState {
         Self {
             bottom_bar_state: bottom_bar::BottomBarState::default(),
             frame_data: fps::FrameData::new(),
-            listed_body_with_popup: None,
-            listed_body_with_rename: None,
+            body_list_window_state: celestials::list::BodyListWindowState::default(),
             new_body_window_state: None,
         }
     }

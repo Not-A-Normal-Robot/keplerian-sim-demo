@@ -18,10 +18,16 @@ use three_d::{
 
 declare_id!(BODY_PREFIX, b"Planets!");
 
-pub(in super::super) struct RenameState {
+pub(super) struct RenameState {
     pub universe_id: UniverseId,
     pub name_buffer: String,
     pub requesting_focus: bool,
+}
+
+#[derive(Default)]
+pub(in super::super) struct BodyListWindowState {
+    listed_body_with_popup: Option<UniverseId>,
+    listed_body_with_rename: Option<RenameState>,
 }
 
 fn get_body_egui_id(universe_id: UniverseId) -> EguiId {
@@ -127,6 +133,7 @@ fn body_tree_base_node(
         true,
         sim_state
             .ui
+            .body_list_window_state
             .listed_body_with_rename
             .as_mut()
             .filter(|state| state.universe_id == universe_id),
@@ -143,6 +150,7 @@ fn body_tree_base_node(
     {
         let string = sim_state
             .ui
+            .body_list_window_state
             .listed_body_with_rename
             .take()
             .map(|s| s.name_buffer);
@@ -173,14 +181,19 @@ fn set_rename_state(ctx: &Context, sim_state: &mut SimState, universe_id: Univer
         None => return,
     };
     let strlen = string.chars().count();
-    if let Some(state) = sim_state.ui.listed_body_with_rename.take() {
+    if let Some(state) = sim_state
+        .ui
+        .body_list_window_state
+        .listed_body_with_rename
+        .take()
+    {
         sim_state
             .universe
             .get_body_mut(state.universe_id)
             .map(|w| w.body.name = state.name_buffer);
     }
 
-    sim_state.ui.listed_body_with_rename = Some(RenameState {
+    sim_state.ui.body_list_window_state.listed_body_with_rename = Some(RenameState {
         universe_id,
         name_buffer: string,
         requesting_focus: true,
@@ -201,13 +214,13 @@ fn ellipsis_popup(
     universe_id: UniverseId,
     position_map: &HashMap<UniverseId, DVec3>,
 ) {
-    let open = sim_state.ui.listed_body_with_popup == Some(universe_id);
+    let open = sim_state.ui.body_list_window_state.listed_body_with_popup == Some(universe_id);
 
     if inner_response.clicked() || outer_response.secondary_clicked() {
         if open {
-            sim_state.ui.listed_body_with_popup = None;
+            sim_state.ui.body_list_window_state.listed_body_with_popup = None;
         } else {
-            sim_state.ui.listed_body_with_popup = Some(universe_id);
+            sim_state.ui.body_list_window_state.listed_body_with_popup = Some(universe_id);
         }
     }
 
@@ -320,7 +333,7 @@ fn ellipsis_popup(
                 },
                 parent_id: Some(universe_id),
             });
-            sim_state.ui.listed_body_with_popup = None;
+            sim_state.ui.body_list_window_state.listed_body_with_popup = None;
             if let Some(state) = &mut sim_state.ui.new_body_window_state {
                 state.request_focus = true;
             }
@@ -347,7 +360,7 @@ fn ellipsis_popup(
                 },
                 parent_id: parent_id,
             });
-            sim_state.ui.listed_body_with_popup = None;
+            sim_state.ui.body_list_window_state.listed_body_with_popup = None;
             if let Some(state) = &mut sim_state.ui.new_body_window_state {
                 state.request_focus = true;
             }
@@ -371,10 +384,10 @@ fn ellipsis_popup(
         }
         if duplicate_button.clicked() {
             let result = sim_state.universe.duplicate_body(universe_id);
-            sim_state.ui.listed_body_with_popup = None;
+            sim_state.ui.body_list_window_state.listed_body_with_popup = None;
 
             if let Ok(universe_id) = result {
-                sim_state.ui.listed_body_with_rename = Some(RenameState {
+                sim_state.ui.body_list_window_state.listed_body_with_rename = Some(RenameState {
                     universe_id,
                     name_buffer: sim_state
                         .universe
@@ -394,11 +407,11 @@ fn ellipsis_popup(
                 sim_state.preview_body = None;
             }
             sim_state.switch_focus(parent_id.unwrap_or(0), position_map);
-            sim_state.ui.listed_body_with_popup = None;
+            sim_state.ui.body_list_window_state.listed_body_with_popup = None;
         }
         if rename_button.clicked() {
             set_rename_state(ui.ctx(), sim_state, universe_id);
-            sim_state.ui.listed_body_with_popup = None;
+            sim_state.ui.body_list_window_state.listed_body_with_popup = None;
         }
     });
     if outer_response.clicked_elsewhere()
@@ -407,6 +420,6 @@ fn ellipsis_popup(
             .map(|p| p.response.clicked_elsewhere())
             .unwrap_or(false)
     {
-        sim_state.ui.listed_body_with_popup = None;
+        sim_state.ui.body_list_window_state.listed_body_with_popup = None;
     }
 }
