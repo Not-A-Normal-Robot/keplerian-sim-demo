@@ -156,6 +156,6 @@ fn handle_ui(
     position_map: &HashMap<UniverseId, DVec3>,
 ) {
     fps::fps_area(ctx, &sim_state.ui.frame_data);
-    bottom_bar::bottom_bar(ctx, sim_state, elapsed_time);
+    bottom_bar::draw(ctx, sim_state, elapsed_time);
     celestials::celestial_windows(ctx, sim_state, position_map);
 }

@@ -19,13 +19,14 @@ use strum::IntoEnumIterator;
 use three_d::{
     Srgba,
     egui::{
-        Button, Color32, ComboBox, Context, CornerRadius, DragValue, FontId, Frame, Image,
-        ImageButton, Margin, Popup, PopupCloseBehavior, Response, RichText, ScrollArea, Slider,
-        Stroke, TextStyle, TopBottomPanel, Ui, Vec2, style::HandleShape,
+        Align, Align2, Area, Button, Color32, ComboBox, Context, CornerRadius, DragValue, FontId,
+        Frame, Image, ImageButton, Layout, Margin, Popup, PopupCloseBehavior, Response, RichText,
+        ScrollArea, Slider, Stroke, TextStyle, TopBottomPanel, Ui, Vec2, style::HandleShape,
     },
 };
 
 declare_id!(BOTTOM_PANEL, b"BluRigel");
+declare_id!(PANEL_SHOW_AREA, b"Huzzah!!");
 declare_id!(salt_only, TIME_CONTROL_COMBO_BOX, b"Solstice");
 
 pub(super) struct BottomBarState {
@@ -58,7 +59,20 @@ fn format_dv_number(number: f64, _: RangeInclusive<usize>) -> String {
     format!("{number:5.1}")
 }
 
-pub(super) fn bottom_bar(ctx: &Context, sim_state: &mut SimState, elapsed_time: f64) {
+pub(super) fn draw(ctx: &Context, sim_state: &mut SimState, elapsed_time: f64) {
+    if sim_state.ui.bottom_bar_state.expanded {
+        bottom_panel(ctx, sim_state, elapsed_time);
+    } else {
+        Area::new(*PANEL_SHOW_AREA_ID)
+            .anchor(Align2::RIGHT_BOTTOM, [0.0, 0.0])
+            .default_size(COLLAPSE_TOGGLE_SIZE)
+            .show(ctx, |ui| {
+                collapse_toggle(ui, sim_state);
+            });
+    }
+}
+
+fn bottom_panel(ctx: &Context, sim_state: &mut SimState, elapsed_time: f64) {
     let height = 64.0;
     TopBottomPanel::bottom(*BOTTOM_PANEL_ID)
         .show_separator_line(false)
@@ -71,12 +85,13 @@ pub(super) fn bottom_bar(ctx: &Context, sim_state: &mut SimState, elapsed_time: 
             fill: Color32::from_black_alpha(192),
             ..Default::default()
         })
-        .show_animated(ctx, sim_state.ui.bottom_bar_state.expanded, |ui| {
+        .show(ctx, |ui| {
+            ui.style_mut().always_scroll_the_only_direction = true;
             ScrollArea::horizontal()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
                     ui.horizontal_centered(|ui| bottom_panel_contents(ui, sim_state, elapsed_time))
-                })
+                });
         });
 }
 
@@ -99,11 +114,16 @@ fn bottom_panel_contents(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f6
         ui.separator();
     }
 
-    ui.centered_and_justified(|ui| {
-        ui.horizontal_centered(|ui| {
-            window_toggles(ui, sim_state);
-        });
-    });
+    let mut remaining_width = ui.available_width();
+    remaining_width -= END_ITEMS_SIZE.x + ui.spacing().item_spacing.x * 4.0;
+    remaining_width -= WINDOW_TOGGLES_TOTAL_SIZE.x;
+    let spacing = remaining_width.max(0.0) / 2.0;
+
+    ui.add_space(spacing);
+    window_toggles(ui, sim_state);
+    ui.add_space(spacing);
+
+    end_items(ui, sim_state);
 }
 
 fn time_manager(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64) {
@@ -386,6 +406,11 @@ fn time_unit_box_popup(ui: &mut Ui, sim_state: &mut SimState) {
     });
 }
 
+const WINDOW_TOGGLES_TOTAL_SIZE: Vec2 = Vec2::new(
+    WINDOW_TOGGLE_BUTTON_SIZE.x * 3.0,
+    WINDOW_TOGGLE_BUTTON_SIZE.y,
+);
+const WINDOW_TOGGLE_BUTTON_SIZE: Vec2 = MIN_TOUCH_TARGET_VEC;
 fn window_toggles(ui: &mut Ui, sim_state: &mut SimState) {
     ui.spacing_mut().button_padding = Vec2::ZERO;
     let widget_styles = &mut ui.visuals_mut().widgets;
@@ -397,15 +422,17 @@ fn window_toggles(ui: &mut Ui, sim_state: &mut SimState) {
 
     let list_open = &mut sim_state.ui.body_list_window_state.window_open;
     let list_button = ImageButton::new(assets::TREE_LIST_IMAGE.clone()).selected(*list_open);
+    let list_button = ui.add_sized(WINDOW_TOGGLE_BUTTON_SIZE, list_button);
 
-    if ui.add(list_button).clicked() {
+    if list_button.clicked() {
         *list_open ^= true;
     }
 
     let add_open = sim_state.preview_body.is_some();
     let add_button = ImageButton::new(assets::ADD_ORBIT_IMAGE.clone()).selected(add_open);
+    let add_button = ui.add_sized(WINDOW_TOGGLE_BUTTON_SIZE, add_button);
 
-    if ui.add(add_button).clicked() {
+    if add_button.clicked() {
         if sim_state.preview_body.is_some() {
             sim_state.preview_body = None;
         } else {
@@ -447,8 +474,57 @@ fn window_toggles(ui: &mut Ui, sim_state: &mut SimState) {
 
     let edit_open = &mut sim_state.ui.edit_body_window_state.window_open;
     let edit_button = ImageButton::new(assets::EDIT_ORBIT_IMAGE.clone()).selected(*edit_open);
+    let edit_button = ui.add_sized(WINDOW_TOGGLE_BUTTON_SIZE, edit_button);
 
-    if ui.add(edit_button).clicked() {
+    if edit_button.clicked() {
         *edit_open ^= true;
+    }
+}
+
+const END_ITEMS_SIZE: Vec2 = Vec2::new(
+    OPTIONS_BUTTON_SIZE.x + COLLAPSE_TOGGLE_SIZE.x,
+    MIN_TOUCH_TARGET_VEC.y,
+);
+
+fn end_items(ui: &mut Ui, sim_state: &mut SimState) {
+    options_button(ui, sim_state);
+    collapse_toggle(ui, sim_state);
+}
+
+const OPTIONS_BUTTON_SIZE: Vec2 = MIN_TOUCH_TARGET_VEC;
+fn options_button(ui: &mut Ui, _sim_state: &mut SimState) {
+    // TODO: Icon for this
+    let button = Button::new("O").min_size(OPTIONS_BUTTON_SIZE);
+
+    let button = ui.add_sized(OPTIONS_BUTTON_SIZE, button);
+
+    if button.clicked() {
+        // TODO: Options popup
+    }
+}
+
+const COLLAPSE_TOGGLE_SIZE: Vec2 = MIN_TOUCH_TARGET_VEC;
+fn collapse_toggle(ui: &mut Ui, sim_state: &mut SimState) {
+    // TODO: Proper icon for this
+    ui.spacing_mut().button_padding = Vec2::ZERO;
+    let widget_styles = &mut ui.visuals_mut().widgets;
+    widget_styles.inactive.weak_bg_fill = Color32::TRANSPARENT;
+    widget_styles.inactive.bg_stroke = Stroke::NONE;
+    widget_styles.hovered.weak_bg_fill = Color32::from_white_alpha(16);
+    widget_styles.hovered.bg_stroke = Stroke::NONE;
+    widget_styles.active.weak_bg_fill = Color32::from_white_alpha(64);
+
+    let icon = if sim_state.ui.bottom_bar_state.expanded {
+        "V"
+    } else {
+        "^"
+    };
+
+    let button = Button::new(icon).min_size(COLLAPSE_TOGGLE_SIZE);
+
+    let button = ui.add_sized(COLLAPSE_TOGGLE_SIZE, button);
+
+    if button.clicked() {
+        sim_state.ui.bottom_bar_state.expanded ^= true;
     }
 }
