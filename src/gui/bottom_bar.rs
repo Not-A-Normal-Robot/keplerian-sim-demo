@@ -19,15 +19,16 @@ use strum::IntoEnumIterator;
 use three_d::{
     Srgba,
     egui::{
-        Align2, Area, Button, Color32, ComboBox, Context, CornerRadius, DragValue, FontId, Frame,
-        Image, ImageButton, Margin, Popup, PopupCloseBehavior, Response, RichText, ScrollArea,
-        Slider, Stroke, TextStyle, TopBottomPanel, Ui, Vec2, style::HandleShape,
+        Align2, Area, Atom, Button, Color32, ComboBox, Context, CornerRadius, DragValue, FontId,
+        Frame, Image, ImageButton, Margin, Popup, PopupCloseBehavior, Rect, Response, RichText,
+        ScrollArea, Shape, Slider, Stroke, TextStyle, TopBottomPanel, Ui, Vec2, style::HandleShape,
     },
 };
 
 declare_id!(BOTTOM_PANEL, b"BluRigel");
 declare_id!(PANEL_SHOW_AREA, b"Huzzah!!");
 declare_id!(salt_only, TIME_CONTROL_COMBO_BOX, b"Solstice");
+declare_id!(BOTTOM_BAR_TOGGLE_BUTTON, b"$D0wn^Up");
 
 pub(super) struct BottomBarState {
     time_disp: TimeDisplayMode,
@@ -64,7 +65,7 @@ pub(super) fn draw(ctx: &Context, sim_state: &mut SimState, elapsed_time: f64) {
         bottom_panel(ctx, sim_state, elapsed_time);
     } else {
         Area::new(*PANEL_SHOW_AREA_ID)
-            .anchor(Align2::RIGHT_BOTTOM, [0.0, 0.0])
+            .anchor(Align2::RIGHT_BOTTOM, [-16.0, -4.0])
             .default_size(COLLAPSE_TOGGLE_SIZE)
             .show(ctx, |ui| {
                 collapse_toggle(ui, sim_state);
@@ -114,9 +115,11 @@ fn bottom_panel_contents(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f6
         ui.separator();
     }
 
-    let mut remaining_width = ui.available_width();
-    remaining_width -= END_ITEMS_SIZE.x + ui.spacing().item_spacing.x * 4.0;
-    remaining_width -= WINDOW_TOGGLES_TOTAL_SIZE.x;
+    let remaining_width = ui.available_width()
+        - END_ITEMS_SIZE.x
+        - ui.spacing().item_spacing.x * 4.0
+        - WINDOW_TOGGLES_TOTAL_SIZE.x
+        - 16.0; // 16.0 from the space before the pause button
     let spacing = remaining_width.max(0.0) / 2.0;
 
     ui.add_space(spacing);
@@ -514,17 +517,29 @@ fn collapse_toggle(ui: &mut Ui, sim_state: &mut SimState) {
     widget_styles.hovered.bg_stroke = Stroke::NONE;
     widget_styles.active.weak_bg_fill = Color32::from_white_alpha(64);
 
-    let icon = if sim_state.ui.bottom_bar_state.expanded {
-        "V"
-    } else {
-        "^"
-    };
+    let atom = Atom::custom(*BOTTOM_BAR_TOGGLE_BUTTON_ID, COLLAPSE_TOGGLE_SIZE);
+    let button = Button::new(atom).min_size(COLLAPSE_TOGGLE_SIZE);
+    let button = button.atom_ui(ui);
 
-    let button = Button::new(icon).min_size(COLLAPSE_TOGGLE_SIZE);
+    let open = &mut sim_state.ui.bottom_bar_state.expanded;
 
-    let button = ui.add_sized(COLLAPSE_TOGGLE_SIZE, button);
+    if let Some(rect) = button.rect(*BOTTOM_BAR_TOGGLE_BUTTON_ID) {
+        let rect =
+            Rect::from_center_size(rect.center(), Vec2::new(rect.width(), rect.height()) * 0.25);
+        let points = if *open {
+            vec![rect.left_top(), rect.right_top(), rect.center_bottom()]
+        } else {
+            vec![rect.left_bottom(), rect.right_bottom(), rect.center_top()]
+        };
 
-    if button.clicked() {
-        sim_state.ui.bottom_bar_state.expanded ^= true;
+        ui.painter().add(Shape::convex_polygon(
+            points,
+            ui.style().interact(&button.response).fg_stroke.color,
+            Stroke::NONE,
+        ));
+    }
+
+    if button.response.clicked() {
+        *open ^= true;
     }
 }
