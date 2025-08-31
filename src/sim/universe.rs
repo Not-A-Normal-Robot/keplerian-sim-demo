@@ -396,10 +396,11 @@ impl Default for Universe {
 ///
 /// If you want to keep the current position and velocity, you can use the
 /// `KeepStateVectors` mode.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, EnumIter)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, EnumIter)]
 pub enum BulkMuSetterMode {
     KeepElements,
     KeepPosition,
+    #[default]
     KeepStateVectors,
 }
 
@@ -414,9 +415,9 @@ impl BulkMuSetterMode {
 
     pub const fn name(self) -> &'static str {
         match self {
-            BulkMuSetterMode::KeepElements => "Keep Keplerian elements",
+            BulkMuSetterMode::KeepElements => "Keep elements",
             BulkMuSetterMode::KeepPosition => "Keep positions",
-            BulkMuSetterMode::KeepStateVectors => "Keep state vectors",
+            BulkMuSetterMode::KeepStateVectors => "Keep pos+vel",
         }
     }
 

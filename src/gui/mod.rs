@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use super::sim::universe::{Id as UniverseId, Universe};
+use super::sim::universe::{BulkMuSetterMode, Id as UniverseId, Universe};
 pub(crate) use celestials::PreviewBody;
 use glam::DVec3;
 use ordered_float::NotNan;
@@ -56,6 +56,7 @@ impl Default for UiState {
 
 pub(crate) struct SimState {
     pub universe: Universe,
+    pub mu_setter_mode: BulkMuSetterMode,
     pub sim_speed: f64,
     pub running: bool,
     focused_body: UniverseId,
@@ -101,6 +102,7 @@ impl Default for SimState {
     fn default() -> Self {
         Self {
             universe: Universe::default(),
+            mu_setter_mode: BulkMuSetterMode::default(),
             sim_speed: 1.0,
             running: true,
             focused_body: 0,

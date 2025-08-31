@@ -6,7 +6,7 @@ use std::{
 use super::{
     super::{
         assets,
-        sim::body::Body,
+        sim::{body::Body, universe::BulkMuSetterMode},
         units::time::{TimeDisplayMode, TimeUnit},
     },
     MIN_TOUCH_TARGET_LEN, MIN_TOUCH_TARGET_VEC, SimState,
@@ -20,8 +20,9 @@ use three_d::{
     Srgba,
     egui::{
         Align2, Area, Atom, Button, Color32, ComboBox, Context, CornerRadius, DragValue, FontId,
-        Frame, Image, ImageButton, Margin, Popup, PopupCloseBehavior, Rect, Response, RichText,
-        ScrollArea, Shape, Slider, Stroke, TextStyle, TopBottomPanel, Ui, Vec2, style::HandleShape,
+        Frame, Image, ImageButton, Margin, Popup, PopupCloseBehavior, Rect, RectAlign, Response,
+        RichText, ScrollArea, Shape, Slider, Stroke, TextStyle, TopBottomPanel, Ui, Vec2,
+        style::HandleShape,
     },
 };
 
@@ -29,6 +30,8 @@ declare_id!(BOTTOM_PANEL, b"BluRigel");
 declare_id!(PANEL_SHOW_AREA, b"Huzzah!!");
 declare_id!(salt_only, TIME_CONTROL_COMBO_BOX, b"Solstice");
 declare_id!(BOTTOM_BAR_TOGGLE_BUTTON, b"$D0wn^Up");
+declare_id!(OPTIONS_POPUP, b"M0D1F13D");
+declare_id!(salt_only, MU_SETTER_COMBO_BOX, b"whichWAY");
 
 pub(super) struct BottomBarState {
     time_disp: TimeDisplayMode,
@@ -37,6 +40,7 @@ pub(super) struct BottomBarState {
     time_speed_unit: TimeUnit,
     time_speed_unit_auto: bool,
     expanded: bool,
+    options_open: bool,
 }
 
 impl Default for BottomBarState {
@@ -48,6 +52,7 @@ impl Default for BottomBarState {
             time_speed_unit: TimeUnit::Seconds,
             time_speed_unit_auto: true,
             expanded: true,
+            options_open: false,
         }
     }
 }
@@ -495,20 +500,120 @@ fn end_items(ui: &mut Ui, sim_state: &mut SimState) {
 }
 
 const OPTIONS_BUTTON_SIZE: Vec2 = MIN_TOUCH_TARGET_VEC;
-fn options_button(ui: &mut Ui, _sim_state: &mut SimState) {
-    // TODO: Icon for this
-    let button = Button::new("O").min_size(OPTIONS_BUTTON_SIZE);
+fn options_button(ui: &mut Ui, sim_state: &mut SimState) {
+    // TODO: Hover tooltip
+    let button = ImageButton::new(assets::OPTIONS.clone())
+        .selected(sim_state.ui.bottom_bar_state.options_open);
 
     let button = ui.add_sized(OPTIONS_BUTTON_SIZE, button);
 
     if button.clicked() {
-        // TODO: Options popup
+        sim_state.ui.bottom_bar_state.options_open ^= true;
     }
+
+    let popup = Popup::menu(&button)
+        .align(RectAlign::TOP_END)
+        .open(sim_state.ui.bottom_bar_state.options_open)
+        .show(|ui| {
+            ui.scope(|ui| {
+                ui.visuals_mut().override_text_color = Some(Color32::WHITE);
+                ui.spacing_mut().interact_size = MIN_TOUCH_TARGET_VEC;
+                options_menu(ui, sim_state)
+            })
+        });
+
+    if let Some(popup) = popup {
+        let force_open = popup.inner.inner || button.clicked();
+
+        if popup.response.clicked_elsewhere() && !force_open {
+            sim_state.ui.bottom_bar_state.options_open = false;
+        }
+    }
+}
+
+/// Whether or not this menu should be forced open.
+fn options_menu(ui: &mut Ui, sim_state: &mut SimState) -> bool {
+    ui.style_mut().drag_value_text_style = TextStyle::Heading;
+    const G_TOOLTIP: &'static str = "Gravity multiplier.\n\
+        Change how strong the \"force\" of gravity is.\n\
+        Default: 6.67e-11";
+    let tooltip = Arc::new(RichText::new(G_TOOLTIP).color(Color32::WHITE).size(16.0));
+
+    let label_text = RichText::new("Gravity multi.")
+        .color(Color32::WHITE)
+        .size(16.0);
+    ui.label(label_text).on_hover_text(Arc::clone(&tooltip));
+    let initial_g = sim_state.universe.get_gravitational_constant();
+    let mut g = initial_g.clone();
+    let dv = DragValue::new(&mut g)
+        .speed(initial_g * 1e-3)
+        .range(1e-20..=f64::MAX)
+        .custom_formatter(|g, _| format!("{:15.15}", PrettyPrintFloat(g)))
+        .update_while_editing(false);
+
+    ui.add(dv).on_hover_text(tooltip);
+
+    if g != initial_g {
+        sim_state
+            .universe
+            .set_gravitational_constant(g, sim_state.mu_setter_mode);
+    }
+
+    ui.separator();
+
+    const MU_TOOLTIP: &str = "Gravitational parameter (µ) setter mode.\n\
+        Change the behavior of celestial bodies when their \
+        gravitational parameter (parent mass × gravitational multiplier) is modified.";
+
+    let tooltip = Arc::new(RichText::new(MU_TOOLTIP).color(Color32::WHITE).size(16.0));
+
+    let label_text = RichText::new("µ setter mode")
+        .color(Color32::WHITE)
+        .size(16.0);
+
+    ui.label(label_text).on_hover_text(Arc::clone(&tooltip));
+
+    let mode_text = RichText::new(sim_state.mu_setter_mode.name())
+        .color(Color32::WHITE)
+        .size(16.0);
+
+    let cb = ComboBox::from_id_salt(MU_SETTER_COMBO_BOX_SALT)
+        .selected_text(mode_text)
+        .show_ui(ui, |ui| mu_mode_menu(ui, &mut sim_state.mu_setter_mode));
+
+    cb.response.on_hover_text(Arc::clone(&tooltip));
+
+    cb.inner.unwrap_or(false)
+}
+
+/// Returns whether or not any button was clicked
+fn mu_mode_menu(ui: &mut Ui, mu_setter_mode: &mut BulkMuSetterMode) -> bool {
+    ui.visuals_mut().override_text_color = Some(Color32::WHITE);
+    ui.spacing_mut().interact_size = MIN_TOUCH_TARGET_VEC;
+
+    let mut clicked = false;
+
+    for mode in BulkMuSetterMode::iter() {
+        let text = RichText::new(mode.name()).size(16.0);
+        let button = Button::selectable(*mu_setter_mode == mode, text);
+        let button = ui.add(button).on_hover_text(
+            RichText::new(mode.description())
+                .color(Color32::WHITE)
+                .size(16.0),
+        );
+
+        if button.clicked() {
+            *mu_setter_mode = mode;
+            clicked = true;
+        }
+    }
+
+    clicked
 }
 
 const COLLAPSE_TOGGLE_SIZE: Vec2 = MIN_TOUCH_TARGET_VEC;
 fn collapse_toggle(ui: &mut Ui, sim_state: &mut SimState) {
-    // TODO: Proper icon for this
+    // TODO: Hover tooltip
     ui.spacing_mut().button_padding = Vec2::ZERO;
     let widget_styles = &mut ui.visuals_mut().widgets;
     widget_styles.inactive.weak_bg_fill = Color32::TRANSPARENT;
