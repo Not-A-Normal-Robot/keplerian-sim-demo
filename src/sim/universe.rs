@@ -1,11 +1,12 @@
 #![allow(dead_code)]
 
-use std::fmt::{self, Debug};
+use std::fmt::{self, Debug, Display};
 use std::{collections::HashMap, error::Error};
 
 use super::body::Body;
 use glam::DVec3;
 use keplerian_sim::{MuSetterMode, OrbitTrait};
+use strum_macros::EnumIter;
 pub type Id = u64;
 
 const GRAVITATIONAL_CONSTANT: f64 = 6.6743e-11;
@@ -23,7 +24,7 @@ pub struct Universe {
     pub time: f64,
 
     /// The gravitational constant, in m^3 kg^-1 s^-2.
-    pub g: f64,
+    g: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -114,7 +115,7 @@ impl Universe {
             if let Some(ref mut o) = body.orbit {
                 o.set_gravitational_parameter(
                     self.g * parent.body.mass,
-                    MuSetterMode::KeepPositionAtTime(self.time),
+                    MuSetterMode::KeepElements,
                 );
             }
         }
@@ -284,6 +285,86 @@ impl Universe {
         }
         new_index
     }
+
+    #[inline]
+    pub fn get_gravitational_constant(&self) -> f64 {
+        self.g
+    }
+
+    pub fn set_gravitational_constant(&mut self, new_g: f64, mode: BulkMuSetterMode) {
+        self.g = new_g;
+        self.update_all_gravitational_parameters(mode);
+    }
+
+    /// Resynchronizes bodies' gravitational parameters to a calculated value.
+    pub fn update_all_gravitational_parameters(&mut self, mode: BulkMuSetterMode) {
+        let mode = mode.to_mu_setter(self.time);
+
+        struct MuChange {
+            body_id: Id,
+            new_mu: f64,
+        }
+
+        let g = self.g;
+        self.bodies
+            .iter()
+            .filter_map(|(&id, wrapper)| {
+                let parent_id = wrapper.relations.parent?;
+                let parent_mass = self.bodies.get(&parent_id)?.body.mass;
+                let old_mu = wrapper.body.orbit.as_ref()?.get_gravitational_parameter();
+                let new_mu = g * parent_mass;
+                (old_mu != new_mu).then(|| MuChange {
+                    body_id: id,
+                    new_mu,
+                })
+            })
+            .collect::<Box<[MuChange]>>()
+            .into_iter()
+            .for_each(|change| {
+                let wrapper = match self.bodies.get_mut(&change.body_id) {
+                    Some(w) => w,
+                    None => return,
+                };
+                let orbit = match wrapper.body.orbit.as_mut() {
+                    Some(o) => o,
+                    None => return,
+                };
+                orbit.set_gravitational_parameter(change.new_mu, mode);
+            });
+    }
+
+    pub fn update_children_gravitational_parameters(
+        &mut self,
+        parent_id: Id,
+        mode: BulkMuSetterMode,
+    ) -> Result<(), ()> {
+        let mode = mode.to_mu_setter(self.time);
+
+        let parent = self.bodies.get(&parent_id).ok_or(())?;
+
+        let mu = parent.body.mass * self.g;
+
+        parent
+            .relations
+            .satellites
+            .iter()
+            .copied()
+            .collect::<Box<[Id]>>()
+            .iter()
+            .for_each(|child_id| {
+                let wrapper = match self.bodies.get_mut(&child_id) {
+                    Some(w) => w,
+                    None => return,
+                };
+                let orbit = match &mut wrapper.body.orbit {
+                    Some(o) => o,
+                    None => return,
+                };
+                orbit.set_gravitational_parameter(mu, mode);
+            });
+
+        Ok(())
+    }
 }
 
 impl Default for Universe {
@@ -295,5 +376,71 @@ impl Default for Universe {
             g: GRAVITATIONAL_CONSTANT,
             next_id: 0,
         }
+    }
+}
+
+/// A mode to describe how the gravitational parameter setter should behave.
+///
+/// This is used to describe how the setter should behave when setting the
+/// gravitational parameter of the parent body.
+///
+/// # Which mode should I use?
+/// The mode you should use depends on what you expect from setting the mu value
+/// to a different value.
+///
+/// If you just want to set the mu value naïvely (without touching the
+/// other orbital elements), you can use the `KeepElements` variant.
+///
+/// If you want to keep the current position
+/// (not caring about the velocity), you can use the `KeepPosition` variant.
+///
+/// If you want to keep the current position and velocity, you can use the
+/// `KeepStateVectors` mode.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, EnumIter)]
+pub enum BulkMuSetterMode {
+    KeepElements,
+    KeepPosition,
+    KeepStateVectors,
+}
+
+impl BulkMuSetterMode {
+    pub fn to_mu_setter(self, time: f64) -> MuSetterMode {
+        match self {
+            BulkMuSetterMode::KeepElements => MuSetterMode::KeepElements,
+            BulkMuSetterMode::KeepPosition => MuSetterMode::KeepPositionAtTime(time),
+            BulkMuSetterMode::KeepStateVectors => MuSetterMode::KeepStateVectorsAtTime(time),
+        }
+    }
+
+    pub const fn name(self) -> &'static str {
+        match self {
+            BulkMuSetterMode::KeepElements => "Keep Keplerian elements",
+            BulkMuSetterMode::KeepPosition => "Keep positions",
+            BulkMuSetterMode::KeepStateVectors => "Keep state vectors",
+        }
+    }
+
+    pub const fn description(self) -> &'static str {
+        match self {
+            BulkMuSetterMode::KeepElements => {
+                "Keep the current orbits' Keplerian elements.\n\
+                This will change the position and velocity of the orbiting body abruptly.\n\
+                It will not, however, change the trajectory of the bodies."
+            }
+            BulkMuSetterMode::KeepPosition => {
+                "Keep the overall shape of the orbit(s), but make the bodies stay at the same position.\n\
+                This will change the velocity of the orbiting body abruptly."
+            }
+            BulkMuSetterMode::KeepStateVectors => {
+                "Keep the position and velocity of the orbit(s).\n\
+                This will change the orbit's overall trajectory."
+            }
+        }
+    }
+}
+
+impl Display for BulkMuSetterMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.name())
     }
 }

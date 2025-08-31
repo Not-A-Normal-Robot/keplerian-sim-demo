@@ -335,7 +335,7 @@ fn ellipsis_popup(
                 .map(|w| format!("Child of {}", w.body.name))
                 .unwrap_or_else(|| "Child body".to_owned());
             let mu = body_wrapper
-                .map(|w| w.body.mass * sim_state.universe.g)
+                .map(|w| w.body.mass * sim_state.universe.get_gravitational_constant())
                 .unwrap_or(1.0);
 
             sim_state.preview_body = Some(PreviewBody {
@@ -359,7 +359,7 @@ fn ellipsis_popup(
                 .flatten();
             let parent_radius = parent.map(|w| w.body.radius).unwrap_or(1.0);
             let mu = parent
-                .map(|w| w.body.mass * sim_state.universe.g)
+                .map(|w| w.body.mass * sim_state.universe.get_gravitational_constant())
                 .unwrap_or(1.0);
             let sibling_name = parent
                 .map(|w| format!("Child of {}", w.body.name))

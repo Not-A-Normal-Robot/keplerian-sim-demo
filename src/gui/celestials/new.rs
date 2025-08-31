@@ -213,7 +213,12 @@ fn new_body_window_orbit(
     let orbit = orbit.get_or_insert_with(|| {
         let (periapsis, mu) = universe
             .get_body(parent_id)
-            .map(|w| (w.body.radius * 2.0, w.body.mass * universe.g))
+            .map(|w| {
+                (
+                    w.body.radius * 2.0,
+                    w.body.mass * universe.get_gravitational_constant(),
+                )
+            })
             .unwrap_or((2.0, 1.0));
         Orbit::new(0.0, periapsis, 0.0, 0.0, 0.0, 0.0, mu)
     });

@@ -461,7 +461,7 @@ fn window_toggles(ui: &mut Ui, sim_state: &mut SimState) {
                             0.0,
                             0.0,
                             0.0,
-                            root_body.mass * sim_state.universe.g,
+                            root_body.mass * sim_state.universe.get_gravitational_constant(),
                         )),
                     },
                     parent_id: Some(root_id),
