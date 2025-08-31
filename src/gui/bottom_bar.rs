@@ -19,9 +19,9 @@ use strum::IntoEnumIterator;
 use three_d::{
     Srgba,
     egui::{
-        Align, Align2, Area, Button, Color32, ComboBox, Context, CornerRadius, DragValue, FontId,
-        Frame, Image, ImageButton, Layout, Margin, Popup, PopupCloseBehavior, Response, RichText,
-        ScrollArea, Slider, Stroke, TextStyle, TopBottomPanel, Ui, Vec2, style::HandleShape,
+        Align2, Area, Button, Color32, ComboBox, Context, CornerRadius, DragValue, FontId, Frame,
+        Image, ImageButton, Margin, Popup, PopupCloseBehavior, Response, RichText, ScrollArea,
+        Slider, Stroke, TextStyle, TopBottomPanel, Ui, Vec2, style::HandleShape,
     },
 };
 
