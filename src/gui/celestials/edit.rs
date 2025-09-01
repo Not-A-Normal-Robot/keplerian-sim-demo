@@ -1,13 +1,28 @@
-use super::SimState;
+use super::{
+    super::super::units::{AutoUnit, length::LengthUnit, mass::MassUnit},
+    SimState,
+};
 use three_d::egui::{Context, Window};
 
 pub(in super::super) struct EditBodyWindowState {
+    _mass_unit: AutoUnit<MassUnit>,
+    _radius_unit: AutoUnit<LengthUnit>,
     pub(in super::super) window_open: bool,
 }
 
 impl Default for EditBodyWindowState {
     fn default() -> Self {
-        Self { window_open: false }
+        Self {
+            _mass_unit: AutoUnit {
+                auto: true,
+                unit: MassUnit::Kilograms,
+            },
+            _radius_unit: AutoUnit {
+                auto: true,
+                unit: LengthUnit::Meters,
+            },
+            window_open: true,
+        }
     }
 }
 
