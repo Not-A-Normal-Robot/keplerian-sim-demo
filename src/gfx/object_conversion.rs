@@ -344,7 +344,7 @@ impl Program {
                 return None;
             }
 
-            (radial_size * 512.0).abs().max(1024.0) as u32
+            (radial_size * 512.0).abs().clamp(16.0, 1024.0) as u32
         } else {
             512
         };
