@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use super::{
     PreviewBody, SimState, Universe, UniverseId, declare_id, selectable_body_tree,
     units::{AutoUnit, UnitEnum, length::LengthUnit, mass::MassUnit},
@@ -7,7 +9,8 @@ use keplerian_sim::{Orbit, OrbitTrait};
 use strum::IntoEnumIterator;
 use three_d::egui::{
     Align, Color32, ComboBox, Context, DragValue, Grid, Label, Layout, PopupCloseBehavior,
-    RichText, Slider, TextEdit, TextWrapMode, Ui, Window, color_picker::color_edit_button_srgb,
+    RichText, Slider, TextEdit, TextWrapMode, Ui, WidgetText, Window,
+    color_picker::color_edit_button_srgb,
 };
 
 declare_id!(salt_only, NEW_BODY_PHYS, b"Creation");
@@ -17,6 +20,7 @@ declare_id!(salt_only, NEW_BODY_MASS, b"nMa551ve");
 declare_id!(salt_only, NEW_BODY_RADIUS, b"extraRad");
 declare_id!(salt_only, NEW_BODY_PARENT_COMBO_BOX, b"dr0pChld");
 declare_id!(NEW_BODY_PARENT_TREE, b"treeL1K3");
+declare_id!(salt_only, NEW_BODY_INFO_GRID, b"NEEEERD!");
 
 pub(in super::super) struct NewBodyWindowState {
     mass_unit: AutoUnit<MassUnit>,
@@ -130,6 +134,24 @@ fn new_body_window_content(
                 universe,
             )
         });
+
+    ui.add_space(12.0);
+
+    let derived_info = RichText::new("Derived Information")
+        .color(Color32::WHITE)
+        .size(16.0)
+        .underline();
+
+    ui.collapsing(derived_info, |ui| {
+        ui.set_min_width(ui.available_width());
+        Grid::new(NEW_BODY_INFO_GRID_SALT)
+            .num_columns(2)
+            // .spacing([40.0, 4.0])
+            .striped(true)
+            .show(ui, |ui| {
+                new_body_window_info(ui, &wrapper, universe);
+            });
+    });
 
     ui.add_space(16.0);
     if ui.button("Confirm").clicked() {
@@ -294,6 +316,69 @@ fn new_body_window_orbit(
         }
     }
     ui.end_row();
+}
+
+fn new_body_window_info(ui: &mut Ui, preview_body: &PreviewBody, universe: &Universe) {
+    // TODO: Finish
+    ui.visuals_mut().override_text_color = Some(Color32::WHITE);
+    let mu = preview_body.body.mass * universe.get_gravitational_constant();
+
+    fn add_value(ui: &mut Ui, text: impl Into<WidgetText>, hover: impl Into<WidgetText>) {
+        let label = Label::new(text);
+        ui.add_sized(ui.available_size(), label)
+            .on_hover_text(hover);
+    }
+
+    fn format_number(number: f64, suffix: &str) -> String {
+        let number = PrettyPrintFloat(number);
+        if suffix.is_empty() {
+            number.to_string()
+        } else {
+            format!("{number} {suffix}")
+        }
+    }
+
+    fn add_row(ui: &mut Ui, measurement: &str, value: f64, unit: &str, hover: &str) {
+        let hover = Arc::new(RichText::new(hover).color(Color32::WHITE).size(16.0));
+        ui.label(measurement).on_hover_text(Arc::clone(&hover));
+        let value_text = format_number(value, unit);
+        add_value(ui, value_text, Arc::clone(&hover));
+        ui.end_row();
+    }
+
+    add_row(
+        ui,
+        "Grav. param.",
+        mu,
+        "m^3 s^-2",
+        "Standard gravitational parameter (µ).\n\
+        This is a multiplier to the gravity experienced by bodies that \
+        orbit this one.\n\
+        \n\
+        µ = GM.\n\
+        ...where:\n\
+        G = gravitational constant/multiplier\n\
+        M = this body's mass",
+    );
+
+    let orbit = match &preview_body.body.orbit {
+        Some(o) => o,
+        None => return,
+    };
+    add_row(
+        ui,
+        "Semi-major axis",
+        orbit.get_semi_major_axis(),
+        "m",
+        "Semi-major axis (a) of the orbit.\n\
+        For elliptic orbits (e < 1), this is half of the length \
+        of the orbital ellipse.\n\
+        \n\
+        a = r_p / (1 - e)\n\
+        ...where:\n\
+        r_p = periapsis radius/distance\n\
+        e = eccentricity",
+    );
 }
 
 fn drag_value_with_unit<'a, U>(
