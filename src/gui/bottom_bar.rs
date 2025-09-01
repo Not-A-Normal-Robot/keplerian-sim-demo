@@ -30,7 +30,6 @@ declare_id!(BOTTOM_PANEL, b"BluRigel");
 declare_id!(PANEL_SHOW_AREA, b"Huzzah!!");
 declare_id!(salt_only, TIME_CONTROL_COMBO_BOX, b"Solstice");
 declare_id!(BOTTOM_BAR_TOGGLE_BUTTON, b"$D0wn^Up");
-declare_id!(OPTIONS_POPUP, b"M0D1F13D");
 declare_id!(salt_only, MU_SETTER_COMBO_BOX, b"whichWAY");
 
 pub(super) struct BottomBarState {
