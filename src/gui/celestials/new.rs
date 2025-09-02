@@ -318,6 +318,7 @@ fn new_body_window_orbit(
     ui.end_row();
 }
 
+// TODO: Generalize to own file
 fn new_body_window_info(ui: &mut Ui, preview_body: &PreviewBody, universe: &Universe) {
     // TODO: Finish
     ui.visuals_mut().override_text_color = Some(Color32::WHITE);
@@ -346,25 +347,117 @@ fn new_body_window_info(ui: &mut Ui, preview_body: &PreviewBody, universe: &Univ
         ui.end_row();
     }
 
+    use core::f64::consts::{PI, TAU};
+
     add_row(
         ui,
-        "Grav. param.",
+        "Circumference",
+        2.0 * PI * preview_body.body.radius,
+        "m",
+        "Circumference (C) of the spherical planet.\n\
+        A perfect sphere is assumed.\n\n    \
+        C = 2 × pi × r.\n\n\
+        ...where:\n\
+        r = this body's radius",
+    );
+
+    add_row(
+        ui,
+        "Surface area",
+        4.0 * PI * preview_body.body.radius.powi(2),
+        "m^2",
+        "Surface area (A) of the spherical planet.\n\n    \
+        A = 4 × pi × r.\n\n\
+        ...where:\n\
+        r = this body's radius",
+    );
+
+    add_row(
+        ui,
+        "Volume",
+        4.0 / 3.0 * PI * preview_body.body.radius.powi(3),
+        "m^3",
+        "Volume (V) of the spherical planet.\n\n    \
+        V = 4/3 × pi × r^2.\n\n\
+        ...where:\n\
+        r = this body's radius",
+    );
+
+    add_row(
+        ui,
+        "Density",
+        preview_body.body.mass / (4.0 / 3.0 * PI * preview_body.body.radius.powi(3)),
+        "kg/m^3",
+        "Density (ρ) of the spherical planet.\n\n    \
+        V = m ÷ V.\n\n\
+        ...where:\n\
+        m = this body's mass\n\
+        V = this body's volume",
+    );
+
+    add_row(
+        ui,
+        "Ideal surface gravity",
+        mu / preview_body.body.radius.powi(2),
+        "m/s^2",
+        "Surface gravity of the celestial body.\n\
+        This assumes an ideal sphere of constant density.\n\
+        This is inaccurate to real-life as real planets have\
+        an uneven mass distribution.\n\n    \
+        g = G × M ÷ r^2.\n\n\
+        ...where:\n\
+        G = gravitational constant/multiplier\n\
+        M = this body's mass\n\
+        r = this body's radius",
+    );
+
+    add_row(
+        ui,
+        "Gravitational parameter",
         mu,
         "m^3 s^-2",
         "Standard gravitational parameter (µ).\n\
-        This is a multiplier to the gravity experienced by bodies that \
-        orbit this one.\n\
-        \n\
-        µ = GM.\n\
+        This partially describes the magnitude of gravity experienced by bodies that \
+        orbit this one, prior to accounting for distance.\n\n    \
+        µ = GM.\n\n\
         ...where:\n\
         G = gravitational constant/multiplier\n\
         M = this body's mass",
+    );
+
+    add_row(
+        ui,
+        "Escape velocity",
+        (2.0 * mu / preview_body.body.mass).sqrt(),
+        "m/s",
+        "Escape velocity (v_e) at the surface.\n\n    \
+        v_e = √(2µ/d)\n\n\
+        ...where:\n\
+        μ = standard gravitational parameter of this body\n\
+        d = distance (in this case, set to the body's radius)",
     );
 
     let orbit = match &preview_body.body.orbit {
         Some(o) => o,
         None => return,
     };
+
+    add_row(
+        ui,
+        "Apoapsis",
+        orbit.get_apoapsis(),
+        "m",
+        "Apoapsis distance (r_a).\n\
+        For elliptic orbits, this is the maximum distance between the parent \
+        body and this body.
+        For parabolic orbits, this value is not finite, and for hyperbolic \
+        orbits this is negative.\n\n    \
+        r_a = a × (1 - e)\n\n\
+        ...where:
+        a = semi-major axis\n\
+        e = eccentricity",
+    );
+
     add_row(
         ui,
         "Semi-major axis",
@@ -372,13 +465,139 @@ fn new_body_window_info(ui: &mut Ui, preview_body: &PreviewBody, universe: &Univ
         "m",
         "Semi-major axis (a) of the orbit.\n\
         For elliptic orbits (e < 1), this is half of the length \
-        of the orbital ellipse.\n\
-        \n\
-        a = r_p / (1 - e)\n\
+        of the orbital ellipse.\n\n    \
+        a = r_p ÷ (1 - e)\n\n\
         ...where:\n\
         r_p = periapsis radius/distance\n\
         e = eccentricity",
     );
+
+    add_row(
+        ui,
+        "Semi-minor axis",
+        orbit.get_semi_minor_axis(),
+        "m",
+        "Semi-minor axis (b) of the orbit.\n\
+        For elliptic orbits (e < 1), this is half of the width \
+        of the orbital ellipse.\n\n    \
+        b = a √|1 - e^2|\n\n\
+        ...where:\n\
+        a = semi-major axis\n\
+        e = eccentricity",
+    );
+
+    add_row(
+        ui,
+        "Linear eccentricity",
+        orbit.get_linear_eccentricity(),
+        "m",
+        "Linear eccentricity (c) of the orbit.\n\
+        In an elliptic orbit, the linear eccentricity is the distance \
+        between its center and either of its two foci (focuses).\n\n    \
+        c = a - r_p\n\n\
+        ...where:\n\
+        a = semi-major axis\n\
+        r_p = periapsis",
+    );
+
+    add_row(
+        ui,
+        "Semi-latus rectum",
+        orbit.get_semi_latus_rectum(),
+        "m",
+        "Semi-latus rectum (ℓ) of the orbit.\n\
+        The semi-latus rectum is half of the length of the \
+        chord parallel to the directrix and passing through a focus.\n\n    \
+        ℓ = a * (1 - e^2)\n\n\
+        ..where:\n\
+        a = semi-major axis\n\
+        e = eccentricity",
+    );
+
+    if orbit.get_eccentricity() <= 1.0 {
+        add_row(
+            ui,
+            "Orbital period",
+            orbit.get_orbital_period(),
+            "s",
+            "Period (T) of the orbit.\n\
+            The time it takes to complete one revolution of the orbit.\n\
+            Infinite for parabolic trajectories and NaN for hyperbolic trajectories.\n\n    \
+            T = 2 × pi × sqrt(a^3 ÷ μ)\n\n\
+            ...where:\n\
+            a = semi-major axis\n\
+            μ = standard gravitational parameter of parent body",
+        );
+    }
+
+    let measurement = if orbit.get_eccentricity() < 1.0 {
+        "Curr. mean anomaly"
+    } else {
+        "Curr. hyp. m. anomaly"
+    };
+
+    let hover = if orbit.get_eccentricity() < 1.0 {
+        "The current mean anomaly (M) of the orbit.\n\
+        The mean anomaly is the fraction of an elliptical orbit's period \
+        that has elapsed since the orbiting body passed periapsis.\n\n    \
+        M = t × sqrt(μ ÷ |a^3|) + M_0\n\n\
+        ...where:
+        t = the current time since epoch\n\
+        μ = standard gravitational parameter of parent body\n\
+        a = semi-major axis\n\
+        M_0 = mean anomaly at epoch\n\
+        (This equation is a generalization for all non-parabolic orbits)"
+    } else {
+        "The current hyperbolic mean anomaly (M_h) of the orbit.\n\
+        The mean anomaly is the fraction of an elliptical orbit's period \
+        that has elapsed since the orbiting body passed periapsis.\n\
+        The hyperbolic mean anomaly is a generalization of this idea to \
+        hyperbolic trajectories\n\n    \
+        M = t × sqrt(μ ÷ |a^3|) + M_0\n\n\
+        ...where:
+        t = the current time since epoch\n\
+        μ = standard gravitational parameter of parent body\n\
+        a = semi-major axis\n\
+        M_0 = mean anomaly at epoch\n\
+        (This equation is a generalization for all non-parabolic orbits)"
+    };
+
+    let mean_anomaly = orbit.get_mean_anomaly_at_time(universe.time);
+
+    let mean_anomaly = if orbit.get_eccentricity() < 1.0 {
+        mean_anomaly.rem_euclid(TAU)
+    } else {
+        mean_anomaly
+    };
+
+    add_row(ui, measurement, mean_anomaly, "rad", &hover);
+
+    // TODO:
+    // Display:
+    // - Eccentric anomaly `E` or `H`
+    // - True anomaly `f`
+    // - Relative position (x, y, z)
+    // - Relative velocity (x, y, z)
+    // - Relative PQW position (p, q)
+    // - Relative PQW velocity (p, q)
+    // - Altitude
+    // - Speed
+    // Research:
+    // - Time until SOI exit (if any)
+    // - Time until periapsis (signed if open)
+    // - Time until apoapsis (if any)
+    // - Time until AN, DN (signed if open)
+    // - Focal parameter
+    // - True anomaly range, if hyperbolic
+    // - Velocity at periapsis `v_p`
+    // - Velocity at apoapsis `v_a` or infinity `v_inf`
+    // - Specific orbital energy `ε`
+    // - Specific angular momentum `h`
+    // - Mean motion `n`
+    // - Area swept per unit time
+    // - Longitude of periapsis
+    // - True longitude
+    // - This SOI radius
 }
 
 fn drag_value_with_unit<'a, U>(
