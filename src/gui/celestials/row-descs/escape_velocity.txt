@@ -1,6 +1,6 @@
 Escape velocity (v_e) at the surface.
 
-    v_e = √(2µ/d)
+    v_e = √(2μ/d)
 
 ...where:
 μ = standard gravitational parameter of this body
