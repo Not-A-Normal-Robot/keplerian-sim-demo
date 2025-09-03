@@ -1,6 +1,6 @@
 Density (ρ) of the spherical planet.
 
-    ρ = m / V.
+    ρ = m / V
 
 ...where:
 m = this body's mass

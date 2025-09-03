@@ -1,7 +1,7 @@
 The current altitude/radius (r) of the orbit.
 The altitude is the distance between this body and the body that it orbits, measured from their centers (not the surface).
 
-    r = |ℓ / (1 + e cos ν)|.
+    r = |ℓ / (1 + e cos ν)|
 
 ...where:
 ℓ = semi-latus rectum

@@ -1,7 +1,7 @@
 Semi-minor axis (b) of the orbit.
 For elliptic orbits (e < 1), this is half of the width of the orbital ellipse.
 
-    b = a √|1 - e^2|.
+    b = a √|1 - e^2|
 
 ...where:
 a = semi-major axis

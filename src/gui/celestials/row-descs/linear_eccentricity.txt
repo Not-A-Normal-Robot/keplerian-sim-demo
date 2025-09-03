@@ -1,7 +1,7 @@
 Linear eccentricity (c) of the orbit.
 In an elliptic orbit, the linear eccentricity is the distance between its center and either of its two foci (focuses).
 
-    c = a - r_p.
+    c = a - r_p
 
 ...where:
 a = semi-major axis

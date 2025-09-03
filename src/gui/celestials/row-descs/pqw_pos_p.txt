@@ -1,7 +1,7 @@
 The current P-position relative to the parent body.
 P-axis, in the perifocal coordinate system, points towards the periapsis point in the orbit.
 
-    o.p = r cos ν.
+    o.p = r cos ν
 
 ...where:
 r = distance to parent body center

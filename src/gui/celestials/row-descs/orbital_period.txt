@@ -2,7 +2,7 @@ Period (T) of the orbit.
 The time it takes to complete one revolution of the orbit.
 Infinite for parabolic trajectories and NaN for hyperbolic trajectories.
 
-    T = 2 × pi × sqrt(a^3 / μ).
+    T = 2 × pi × sqrt(a^3 / μ)
 
 ...where:
 a = semi-major axis

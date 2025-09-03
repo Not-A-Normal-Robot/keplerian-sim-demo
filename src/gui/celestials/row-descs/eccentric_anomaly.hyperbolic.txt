@@ -2,7 +2,7 @@ The current hyperbolic eccentric anomaly (H) of the orbit.
 The hyperbolic eccentric anomaly is a generalization of the elliptic eccentric anomaly (M) for hyperbolic orbits, where the elliptic eccentric anomaly is defined as the angle measured at the center of the ellipse between the orbit's periapsis and the current position when projected into a circle fully containing the orbit ellipse.
 The value is derived from the mean anomaly using numerical approach methods and is used to derive the true anomaly.
 
-    M_h = H - e sinh (H) - H.
+    M_h = H - e sinh (H) - H
 
 ...where:
 M_h = current hyperbolic mean anomaly

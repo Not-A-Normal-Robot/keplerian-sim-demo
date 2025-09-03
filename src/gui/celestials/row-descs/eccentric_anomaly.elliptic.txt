@@ -2,7 +2,7 @@ The current eccentric anomaly (E) of the orbit.
 The eccentric anomaly is the angle measured at the center of the ellipse between the orbit's periapsis and the current position when projected into a circle fully containing the orbit ellipse.
 This value is derived from the mean anomaly using numerical approach methods and is used to derive the true anomaly.
 
-    M = E − e sin E.
+    M = E − e sin E
 
 ...where:
 M = current mean anomaly

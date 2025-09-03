@@ -1,7 +1,7 @@
 Semi-major axis (a) of the orbit.
 For elliptic orbits (e < 1), this is half of the length of the orbital ellipse.
 
-    a = r_p / (1 - e).
+    a = r_p / (1 - e)
 
 ...where:
 r_p = periapsis radius/distance
