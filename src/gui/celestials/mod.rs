@@ -21,6 +21,7 @@ use super::{
 declare_id!(RENAME_TEXTEDIT, b"OmgRen??");
 
 pub(super) mod edit;
+mod info;
 pub(super) mod list;
 pub(super) mod new;
 
