@@ -1,7 +1,7 @@
 Standard gravitational parameter (µ).
 This partially describes the magnitude of gravity experienced by bodies that orbit this one, prior to accounting for distance.
 
-    µ = GM.
+    μ = GM.
 
 ...where:
 G = gravitational constant/multiplier
