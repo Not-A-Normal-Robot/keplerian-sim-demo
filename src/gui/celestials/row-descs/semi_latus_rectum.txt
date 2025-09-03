@@ -3,6 +3,6 @@ The semi-latus rectum is half of the length of the chord parallel to the directr
 
     ℓ = a ∙ (1 - e^2).
 
-..where:
+...where:
 a = semi-major axis
 e = eccentricity
