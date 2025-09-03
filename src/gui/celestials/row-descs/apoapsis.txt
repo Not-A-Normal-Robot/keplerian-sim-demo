@@ -1,0 +1,9 @@
+Apoapsis distance (r_a).
+For elliptic orbits, this is the maximum distance between the parent body and this body.
+For parabolic orbits, this value is not finite, and for hyperbolic orbits this is negative.
+
+    r_a = a ∙ (1 - e).
+
+...where:
+a = semi-major axis
+e = eccentricity

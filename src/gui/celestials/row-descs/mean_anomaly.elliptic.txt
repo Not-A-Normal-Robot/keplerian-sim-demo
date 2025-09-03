@@ -1,0 +1,11 @@
+The current mean anomaly (M) of the orbit.
+The mean anomaly is the fraction of an elliptical orbit's period that has elapsed since the orbiting body passed periapsis.
+
+    M = t × sqrt(μ / |a^3|) + M_0.
+
+...where:
+t = the current time since epoch
+μ = standard gravitational parameter of parent body
+a = semi-major axis
+M_0 = mean anomaly at epoch
+(This equation is a generalization for all non-parabolic orbits)

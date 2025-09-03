@@ -1,0 +1,14 @@
+The current P-velocity relative to the parent body.
+P-axis, in the perifocal coordinate system, points towards the periapsis point in the orbit.
+
+    o'.p = -ms.
+    m = √|μa| / r.
+    s = e < 1: sin E; else: sinh H.
+
+...where:
+μ = standard gravitational parameter of parent body
+a = semi-major axis
+r = distance to parent body center
+e = eccentricity
+E = current (elliptic) eccentric anomaly
+H = current hyperbolic eccentric anomaly

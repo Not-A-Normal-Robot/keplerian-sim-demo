@@ -1,0 +1,17 @@
+Short description (var_name).
+Longer description of this thing.
+Don't manually wrap mid-sentence or it will look weird in the GUI.
+Even if a sentence goes on and on and on and on quite long—like this one—the GUI will take care of wrapping by itself, and so wrapping long sentences manually can make text look cut-off in weird places, which obviously isn't ideal, so this should not happen.
+Next up is an equation, which must always begin with 4 spaces.
+Unless if it's a conditional equation (probably for elliptical vs hyperbolic), in which case 2 spaces before the "case", a newline, and 4 spaces before the equation line.
+After the equation section is the variable name section, along with optional remarks.
+Don't forget: leave an empty line before and after the equation section.
+
+  Example condition:
+    i = √(-1)
+  Another condition:
+    i^2 = -1
+
+...where:
+i = a variable name
+(This is an example)

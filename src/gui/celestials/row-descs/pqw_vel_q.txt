@@ -1,0 +1,15 @@
+The current Q-velocity relative to the parent body.
+Q-axis, in the perifocal coordinate system, points perpendicular to the periapsis point in the orbit, on the orbital plane.
+
+    o'.q = mqc.
+    m = √(|μa|) / r.
+    q = √(|1 - e^2|)
+    c = e < 1: cos E; else: cosh H.
+
+...where:
+μ = standard gravitational parameter of parent body
+a = semi-major axis
+r = distance to parent body center
+e = eccentricity
+E = current (elliptic) eccentric anomaly
+H = current hyperbolic eccentric anomaly

@@ -41,11 +41,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Circumference",
         2.0 * PI * body.radius,
         "m",
-        "Circumference (C) of the spherical planet.\n\
-        A perfect sphere is assumed.\n\n    \
-        C = 2 ∙ pi ∙ r.\n\n\
-        ...where:\n\
-        r = this body's radius",
+        include_str!("row-descs/circumference.txt"),
     );
 
     add_row(
@@ -53,10 +49,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Surface area",
         4.0 * PI * body.radius.powi(2),
         "m^2",
-        "Surface area (A) of the spherical planet.\n\n    \
-        A = 4 ∙ pi ∙ r.\n\n\
-        ...where:\n\
-        r = this body's radius",
+        include_str!("row-descs/surface_area.txt"),
     );
 
     add_row(
@@ -64,10 +57,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Volume",
         4.0 / 3.0 * PI * body.radius.powi(3),
         "m^3",
-        "Volume (V) of the spherical planet.\n\n    \
-        V = 4/3 ∙ pi ∙ r^2.\n\n\
-        ...where:\n\
-        r = this body's radius",
+        include_str!("row-descs/volume.txt"),
     );
 
     add_row(
@@ -75,11 +65,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Density",
         body.mass / (4.0 / 3.0 * PI * body.radius.powi(3)),
         "kg/m^3",
-        "Density (ρ) of the spherical planet.\n\n    \
-        ρ = m / V.\n\n\
-        ...where:\n\
-        m = this body's mass\n\
-        V = this body's volume",
+        include_str!("row-descs/density.txt"),
     );
 
     add_row(
@@ -87,15 +73,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Ideal surface gravity",
         mu / body.radius.powi(2),
         "m/s^2",
-        "Surface gravity of the celestial body.\n\
-        This assumes an ideal sphere of constant density.\n\
-        This is inaccurate to real-life as real planets have\
-        an uneven mass distribution.\n\n    \
-        g = G ∙ M / r^2.\n\n\
-        ...where:\n\
-        G = gravitational constant/multiplier\n\
-        M = this body's mass\n\
-        r = this body's radius",
+        include_str!("row-descs/ideal_surface_gravity.txt"),
     );
 
     add_row(
@@ -103,13 +81,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Gravitational parameter",
         mu,
         "m^3 s^-2",
-        "Standard gravitational parameter (µ).\n\
-        This partially describes the magnitude of gravity experienced by bodies that \
-        orbit this one, prior to accounting for distance.\n\n    \
-        µ = GM.\n\n\
-        ...where:\n\
-        G = gravitational constant/multiplier\n\
-        M = this body's mass",
+        include_str!("row-descs/gravitational_parameter.txt"),
     );
 
     add_row(
@@ -117,11 +89,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Escape velocity",
         (2.0 * mu / body.mass).sqrt(),
         "m/s",
-        "Escape velocity (v_e) at the surface.\n\n    \
-        v_e = √(2µ/d).\n\n\
-        ...where:\n\
-        μ = standard gravitational parameter of this body\n\
-        d = distance (in this case, set to the body's radius)",
+        include_str!("row-descs/escape_velocity.txt"),
     );
 
     let orbit = match &body.orbit {
@@ -134,15 +102,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Apoapsis",
         orbit.get_apoapsis(),
         "m",
-        "Apoapsis distance (r_a).\n\
-        For elliptic orbits, this is the maximum distance between the parent \
-        body and this body.
-        For parabolic orbits, this value is not finite, and for hyperbolic \
-        orbits this is negative.\n\n    \
-        r_a = a ∙ (1 - e).\n\n\
-        ...where:
-        a = semi-major axis\n\
-        e = eccentricity",
+        include_str!("row-descs/apoapsis.txt"),
     );
 
     add_row(
@@ -150,13 +110,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Semi-major axis",
         orbit.get_semi_major_axis(),
         "m",
-        "Semi-major axis (a) of the orbit.\n\
-        For elliptic orbits (e < 1), this is half of the length \
-        of the orbital ellipse.\n\n    \
-        a = r_p / (1 - e).\n\n\
-        ...where:\n\
-        r_p = periapsis radius/distance\n\
-        e = eccentricity",
+        include_str!("row-descs/semi_major_axis.txt"),
     );
 
     add_row(
@@ -164,13 +118,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Semi-minor axis",
         orbit.get_semi_minor_axis(),
         "m",
-        "Semi-minor axis (b) of the orbit.\n\
-        For elliptic orbits (e < 1), this is half of the width \
-        of the orbital ellipse.\n\n    \
-        b = a √|1 - e^2|.\n\n\
-        ...where:\n\
-        a = semi-major axis\n\
-        e = eccentricity",
+        include_str!("row-descs/semi_minor_axis.txt"),
     );
 
     add_row(
@@ -178,13 +126,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Linear eccentricity",
         orbit.get_linear_eccentricity(),
         "m",
-        "Linear eccentricity (c) of the orbit.\n\
-        In an elliptic orbit, the linear eccentricity is the distance \
-        between its center and either of its two foci (focuses).\n\n    \
-        c = a - r_p.\n\n\
-        ...where:\n\
-        a = semi-major axis\n\
-        r_p = periapsis",
+        include_str!("row-descs/linear_eccentricity.txt"),
     );
 
     add_row(
@@ -192,13 +134,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Semi-latus rectum",
         orbit.get_semi_latus_rectum(),
         "m",
-        "Semi-latus rectum (ℓ) of the orbit.\n\
-        The semi-latus rectum is half of the length of the \
-        chord parallel to the directrix and passing through a focus.\n\n    \
-        ℓ = a ∙ (1 - e^2).\n\n\
-        ..where:\n\
-        a = semi-major axis\n\
-        e = eccentricity",
+        include_str!("row-descs/semi_latus_rectum.txt"),
     );
 
     if orbit.get_eccentricity() <= 1.0 {
@@ -207,13 +143,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
             "Orbital period",
             orbit.get_orbital_period(),
             "s",
-            "Period (T) of the orbit.\n\
-            The time it takes to complete one revolution of the orbit.\n\
-            Infinite for parabolic trajectories and NaN for hyperbolic trajectories.\n\n    \
-            T = 2 × pi × sqrt(a^3 / μ).\n\n\
-            ...where:\n\
-            a = semi-major axis\n\
-            μ = standard gravitational parameter of parent body",
+            include_str!("row-descs/orbital_period.txt"),
         );
     }
 
@@ -224,29 +154,9 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
     };
 
     let hover = if orbit.get_eccentricity() < 1.0 {
-        "The current mean anomaly (M) of the orbit.\n\
-        The mean anomaly is the fraction of an elliptical orbit's period \
-        that has elapsed since the orbiting body passed periapsis.\n\n    \
-        M = t × sqrt(μ / |a^3|) + M_0.\n\n\
-        ...where:
-        t = the current time since epoch\n\
-        μ = standard gravitational parameter of parent body\n\
-        a = semi-major axis\n\
-        M_0 = mean anomaly at epoch\n\
-        (This equation is a generalization for all non-parabolic orbits)"
+        include_str!("row-descs/mean_anomaly.elliptic.txt")
     } else {
-        "The current hyperbolic mean anomaly (M_h) of the orbit.\n\
-        The mean anomaly is the fraction of an elliptical orbit's period \
-        that has elapsed since the orbiting body passed periapsis.\n\
-        The hyperbolic mean anomaly is a generalization of this idea to \
-        hyperbolic trajectories\n\n    \
-        M = t × sqrt(μ / |a^3|) + M_0.\n\n\
-        ...where:
-        t = the current time since epoch\n\
-        μ = standard gravitational parameter of parent body\n\
-        a = semi-major axis\n\
-        M_0 = mean anomaly at epoch\n\
-        (This equation is a generalization for all non-parabolic orbits)"
+        include_str!("row-descs/mean_anomaly.hyperbolic.txt")
     };
 
     let mean_anomaly = orbit.get_mean_anomaly_at_time(universe.time);
@@ -266,30 +176,9 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
     };
 
     let hover = if orbit.get_eccentricity() < 1.0 {
-        "The current eccentric anomaly (E) of the orbit.\n\
-        The eccentric anomaly is the angle measured at the center of the \
-        ellipse between the orbit's periapsis and the current position when projected \
-        into a circle fully containing the orbit ellipse.\n\
-        This value is derived from the mean anomaly using \
-        numerical approach methods and is \
-        used to derive the true anomaly.\n\n    \
-        M = E − e sin E.\n\n\
-        ...where:\n\
-        M = current mean anomaly\n\
-        e = eccentricity\n"
+        include_str!("row-descs/eccentric_anomaly.elliptic.txt")
     } else {
-        "The current hyperbolic eccentric anomaly (H) of the orbit.\n\
-        The hyperbolic eccentric anomaly is a generalization of the elliptic \
-        eccentric anomaly (M) for hyperbolic orbits, where the elliptic eccentric \
-        anomaly is defined as the angle measured at the center of the ellipse \
-        between the orbit's periapsis and the current position when projected \
-        into a circle fully containing the orbit ellipse.\n\
-        The value is derived from the mean anomaly using \
-        numerical approach methods and is used to derive the true anomaly.\n\n    \
-        M_h = H - e sinh (H) - H.\n\n\
-        ...where:\n\
-        M_h = current hyperbolic mean anomaly\n\
-        e = eccentricity"
+        include_str!("row-descs/eccentric_anomaly.hyperbolic.txt")
     };
 
     let eccentric_anomaly = orbit.get_eccentric_anomaly_at_mean_anomaly(mean_anomaly);
@@ -303,18 +192,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Curr. true anomaly",
         true_anomaly,
         "rad",
-        "The current true anomaly (ν) of the orbit.\n\
-        The true anomaly of the orbit is defined as the angle measured at the parent body \
-        between the periapsis and the current position of this body.\n\n  \
-        Elliptic case (e < 1):\n    \
-        ν = 2 arctan((β sin E) / (1 - β cos E)).\n    \
-        β = e / (1 + √(1 - e^2)).\n  \
-        Hyperbolic case (e > 1):\n    \
-        ν = 2 arctan(tanh(H / 2) ∙ √((e + 1) / (e - 1))).\n\n\
-        ...where:\n\
-        E = current eccentric anomaly\n\
-        H = current hyperbolic eccentric anomaly\n\
-        e = eccentricity",
+        include_str!("row-descs/true_anomaly.txt"),
     );
 
     let altitude = orbit.get_altitude_at_true_anomaly(true_anomaly);
@@ -324,14 +202,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Curr. altitude",
         altitude,
         "m",
-        "The current altitude/radius (r) of the orbit.\n\
-        The altitude is the distance between this body and the body that it orbits,\n\
-        measured from their centers (not the surface).\n\n    \
-        r = |ℓ / (1 + e cos ν)|.\n\n\
-        ...where:\n\
-        ℓ = semi-latus rectum\n\
-        e = eccentricity\n\
-        ν = current true anomaly",
+        include_str!("row-descs/altitude.txt"),
     );
 
     let speed = orbit.get_speed_at_altitude(altitude);
@@ -341,13 +212,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Curr. speed",
         speed,
         "m/s",
-        "The current orbital speed, in meters per second.\n\
-        This is relative to the parent body and not an absolute speed.\n\n    \
-        v = sqrt(μ * (2/r - 1/a)).\n\
-        ...where:\n\
-        μ = standard gravitational parameter of the parent body\n\
-        r = current altitude\n\
-        a = semi-major axis",
+        include_str!("row-descs/speed.txt"),
     );
 
     let true_sincos = true_anomaly.sin_cos();
@@ -359,13 +224,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Cur. PQW pos P",
         pqw_position.x,
         "m",
-        "The current P-position relative to the parent body.\n\
-        P-axis, in the perifocal coordinate system, \
-        points towards the periapsis point in the orbit.\n\n    \
-        o.p = r cos ν.\n\n\
-        ...where:\n
-        r = distance to parent body center\n\
-        ν = true anomaly",
+        include_str!("row-descs/pqw_pos_p.txt"),
     );
 
     add_row(
@@ -373,13 +232,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Cur. PQW pos Q",
         pqw_position.y,
         "m",
-        "The current Q-position relative to the parent body.\n\
-        Q-axis, in the perifocal coordinate system, \
-        points perpendicular to the periapsis point in the orbit, on the orbital plane.\n\n    \
-        o.q = r sin ν.\n\n\
-        ...where:\n
-        r = distance to parent body center\n\
-        ν = true anomaly",
+        include_str!("row-descs/pqw_pos_q.txt"),
     );
 
     let pqw_velocity = orbit.get_pqw_velocity_at_eccentric_anomaly(eccentric_anomaly);
@@ -389,19 +242,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Cur. PQW vel P",
         pqw_velocity.x,
         "m/s",
-        "The current P-velocity relative to the parent body.\n\
-        P-axis, in the perifocal coordinate system, \
-        points towards the periapsis point in the orbit.\n\n    \
-        o'.p = -ms.\n    \
-        m = √|μa| / r.\n    \
-        s = e < 1: sin E; else: sinh H.\n\n\
-        ...where:\n\
-        μ = standard gravitational parameter of parent body\n\
-        a = semi-major axis\n\
-        r = distance to parent body center\n\
-        e = eccentricity\n\
-        E = current (elliptic) eccentric anomaly\n\
-        H = current hyperbolic eccentric anomaly",
+        include_str!("row-descs/pqw_vel_p.txt"),
     );
 
     add_row(
@@ -409,20 +250,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         "Cur. PQW vel Q",
         pqw_velocity.y,
         "m/s",
-        "The current Q-velocity relative to the parent body.\n\
-        Q-axis, in the perifocal coordinate system, \
-        points perpendicular to the periapsis point in the orbit, on the orbital plane.\n\n    \
-        o'.q = mqc.\n    \
-        m = √(|μa|) / r.\n    \
-        q = √(|1 - e^2|)
-        c = e < 1: cos E; else: cosh H.\n\n\
-        ...where:\n\
-        μ = standard gravitational parameter of parent body\n\
-        a = semi-major axis\n\
-        r = distance to parent body center\n\
-        e = eccentricity\n\
-        E = current (elliptic) eccentric anomaly\n\
-        H = current hyperbolic eccentric anomaly",
+        include_str!("row-descs/pqw_vel_q.txt"),
     );
 
     // TODO:
