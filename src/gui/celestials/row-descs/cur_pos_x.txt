@@ -1,0 +1,12 @@
+The current X-position relative to the parent body (r.x).
+
+    v.x = e_11 ∙ o.p + e_12 ∙ o.q
+    e_11 = cos(ω) cos(Ω) - sin(ω) cos(i) sin(Ω)
+    e_12 = -sin(ω) cos(Ω) - cos(ω) cos(i) sin(Ω)
+
+...where:
+ω = argument of periapsis
+Ω = longitude of ascending node
+i = inclination
+o.p = PQW position's P-component
+o.q = PQW position's Q-component

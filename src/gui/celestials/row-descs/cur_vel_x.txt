@@ -1,0 +1,12 @@
+The current X-velocity relative to the parent body (v.x).
+
+    v.x = e_11 ∙ o′.p + e_12 ∙ o′.q
+    e_11 = cos(ω) cos(Ω) - sin(ω) cos(i) sin(Ω)
+    e_12 = -sin(ω) cos(Ω) - cos(ω) cos(i) sin(Ω)
+
+...where:
+ω = argument of periapsis
+Ω = longitude of ascending node
+i = inclination
+o′.p = PQW velocity's P-component
+o′.q = PQW velocity's Q-component

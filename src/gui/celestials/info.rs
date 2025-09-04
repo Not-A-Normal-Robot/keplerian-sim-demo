@@ -253,10 +253,54 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
         include_str!("row-descs/pqw_vel_q.txt"),
     );
 
+    let position = orbit.transform_pqw_vector(pqw_position);
+    let velocity = orbit.transform_pqw_vector(pqw_velocity);
+
+    add_row(
+        ui,
+        "Cur. pos X",
+        position.x,
+        "m",
+        include_str!("row-descs/cur_pos_x.txt"),
+    );
+    add_row(
+        ui,
+        "Cur. pos Y",
+        position.y,
+        "m",
+        include_str!("row-descs/cur_pos_y.txt"),
+    );
+    add_row(
+        ui,
+        "Cur. pos Z",
+        position.z,
+        "m",
+        include_str!("row-descs/cur_pos_z.txt"),
+    );
+
+    add_row(
+        ui,
+        "Cur. vel X",
+        velocity.x,
+        "m/s",
+        include_str!("row-descs/cur_vel_x.txt"),
+    );
+    add_row(
+        ui,
+        "Cur. vel Y",
+        velocity.y,
+        "m/s",
+        include_str!("row-descs/cur_vel_y.txt"),
+    );
+    add_row(
+        ui,
+        "Cur. vel Z",
+        velocity.z,
+        "m/s",
+        include_str!("row-descs/cur_vel_z.txt"),
+    );
+
     // TODO:
-    // Display:
-    // - Relative position (x, y, z)
-    // - Relative velocity (x, y, z)
     // Research:
     // - Time until SOI exit (if any)
     // - Time until periapsis (signed if open)

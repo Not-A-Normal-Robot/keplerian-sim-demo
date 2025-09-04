@@ -1,7 +1,7 @@
 The current P-velocity relative to the parent body.
 P-axis, in the perifocal coordinate system, points towards the periapsis point in the orbit.
 
-    o'.p = -ms
+    o′.p = -ms
     m = √|μa| / r
     s = e < 1: sin E; else: sinh H
 
