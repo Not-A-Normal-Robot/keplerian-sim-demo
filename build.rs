@@ -234,38 +234,51 @@ fn check_discouraged_chars(line: Option<&str>, state: &RowDescState) {
         discouraged_name: &'a str,
         suggested: char,
         suggested_name: &'a str,
+        section_filter: Option<RowDescSection>,
     }
 
-    const DISCOURAGED_CHARS: [DiscouragedChar; 5] = [
+    const DISCOURAGED_CHARS: [DiscouragedChar; 6] = [
         DiscouragedChar {
             discouraged: 'µ',
             discouraged_name: "U+00B5 MICRO SIGN",
             suggested: 'μ',
             suggested_name: "U+03BC GREEK SMALL LETTER MU",
+            section_filter: None,
         },
         DiscouragedChar {
             discouraged: '*',
             discouraged_name: "U+002A ASTERISK",
             suggested: '⋅',
             suggested_name: "U+22C5 DOT OPERATOR",
+            section_filter: None,
         },
         DiscouragedChar {
             discouraged: '∙',
             discouraged_name: "U+2219 BULLET OPERATOR",
             suggested: '⋅',
             suggested_name: "U+22C5 DOT OPERATOR",
+            section_filter: None,
         },
         DiscouragedChar {
             discouraged: '·',
             discouraged_name: "U+00B7 MIDDLE DOT",
             suggested: '⋅',
             suggested_name: "U+22C5 DOT OPERATOR",
+            section_filter: None,
         },
         DiscouragedChar {
             discouraged: '•',
             discouraged_name: "U+2022 BULLET",
             suggested: '⋅',
             suggested_name: "U+22C5 DOT OPERATOR",
+            section_filter: None,
+        },
+        DiscouragedChar {
+            discouraged: '\'',
+            discouraged_name: "U+0027 APOSTROPHE",
+            suggested: '′',
+            suggested_name: "U+2032 PRIME",
+            section_filter: Some(RowDescSection::Equation),
         },
     ];
 
@@ -289,7 +302,14 @@ fn check_discouraged_chars(line: Option<&str>, state: &RowDescState) {
             discouraged_name,
             suggested,
             suggested_name,
+            section_filter,
         } = discouraged_char;
+
+        if let Some(section_filter) = section_filter
+            && *section_filter != state.section
+        {
+            continue;
+        }
 
         let char_num = index + 1;
 
