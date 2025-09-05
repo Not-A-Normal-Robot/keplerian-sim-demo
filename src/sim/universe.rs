@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use std::f64::INFINITY;
 use std::fmt::{self, Debug, Display};
 use std::{collections::HashMap, error::Error};
 
@@ -225,6 +226,35 @@ impl Universe {
         }
 
         Some(position)
+    }
+
+    /// Gets the radius of the Sphere of Influence (SOI) of the body
+    /// at the specified index.
+    ///
+    /// Returns None in some cases:
+    /// - The body at the specified index was not found.
+    /// - The parent was specified but a parent with that id was not found.
+    pub fn get_soi_radius(&self, body_index: Id) -> Option<f64> {
+        let wrapper = self.bodies.get(&body_index)?;
+
+        let parent_id = match wrapper.relations.parent {
+            Some(id) => id,
+            None => return Some(INFINITY),
+        };
+
+        let orbit = match &wrapper.body.orbit {
+            Some(id) => id,
+            None => return Some(INFINITY),
+        };
+
+        let parent = self.bodies.get(&parent_id)?;
+        let parent_mass = parent.body.mass;
+
+        let body_mass = wrapper.body.mass;
+
+        // Equation from https://en.wikipedia.org/wiki/Sphere_of_influence_(astrodynamics)
+        // r_SOI \approx a (m/M)^(2/5)
+        Some(orbit.get_semi_major_axis() * (body_mass / parent_mass).powf(2.0 / 5.0))
     }
 
     fn get_body_position_memoized(&self, index: Id, map: &mut HashMap<Id, DVec3>) -> Option<DVec3> {
