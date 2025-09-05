@@ -1,4 +1,4 @@
-The current P-velocity relative to the parent body.
+The current P-velocity (o′.p) relative to the parent body.
 P-axis, in the perifocal coordinate system, points towards the periapsis point in the orbit.
 
     o′.p = -ms

@@ -1,7 +1,7 @@
 Semi-latus rectum (ℓ) of the orbit.
 The semi-latus rectum is half of the length of the chord parallel to the directrix and passing through a focus.
 
-    ℓ = a ∙ (1 - e^2)
+    ℓ = a ⋅ (1 - e^2)
 
 ...where:
 a = semi-major axis

@@ -1,4 +1,4 @@
-The current Q-position relative to the parent body.
+The current Q-position (o.q) relative to the parent body.
 Q-axis, in the perifocal coordinate system, points perpendicular to the periapsis point in the orbit, on the orbital plane.
 
     o.q = r sin ν

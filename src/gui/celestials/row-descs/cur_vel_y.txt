@@ -1,6 +1,6 @@
 The current Y-velocity relative to the parent body (v.y).
 
-    v.y = e_21 ∙ o′.p + e_22 ∙ o′.q
+    v.y = e_21 ⋅ o′.p + e_22 ⋅ o′.q
     e_21 = cos(ω) sin(Ω) + sin(ω) cos(i) cos(Ω)
     e_22 = cos(ω) cos(i) cos(Ω) - sin(ω) sin(Ω)
 
