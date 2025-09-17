@@ -1,6 +1,6 @@
 The current X-position relative to the parent body (r.x).
 
-    v.x = e_11 × o.p + e_12 × o.q
+    v.x = e_11 ⋅ o.p + e_12 ⋅ o.q
     e_11 = cos(ω) cos(Ω) - sin(ω) cos(i) sin(Ω)
     e_12 = -sin(ω) cos(Ω) - cos(ω) cos(i) sin(Ω)
 

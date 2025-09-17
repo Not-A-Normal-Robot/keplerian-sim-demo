@@ -1,7 +1,7 @@
 The current orbital speed (v), in meters per second.
 This is relative to the parent body and not an absolute speed.
 
-    v = √(μ × (2/r - 1/a))
+    v = √(μ ⋅ (2/r - 1/a))
 
 ...where:
 μ = standard gravitational parameter of the parent body

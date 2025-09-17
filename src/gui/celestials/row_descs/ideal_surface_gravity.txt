@@ -2,7 +2,7 @@ Surface gravity (g) of the celestial body.
 This assumes an ideal sphere of constant density.
 This is inaccurate to real-life values as real planets have an uneven mass distribution.
 
-    g = G × M / r^2
+    g = G ⋅ M / r^2
 
 ...where:
 G = gravitational constant/multiplier

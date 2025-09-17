@@ -1,6 +1,6 @@
 The speed of the orbit at apoapsis (v_a).
 
-    v_a = |1 - e| sqrt(μ / (r_p × (1 + e)))
+    v_a = |1 - e| sqrt(μ / (r_p ⋅ (1 + e)))
 
 ...where:
 e = eccentricity

@@ -1,7 +1,7 @@
 The speed of the hyperbolic trajectory at its asymptote (v_∞).
 As the time approaches infinity, the hyperbolic trajectory approaches a certain time but never quite reaches it.
 
-    v_∞ = sqrt(μ × (e - 1) / r_p)
+    v_∞ = sqrt(μ ⋅ (e - 1) / r_p)
 
 ...where:
 μ = standard gravitational parameter of parent body

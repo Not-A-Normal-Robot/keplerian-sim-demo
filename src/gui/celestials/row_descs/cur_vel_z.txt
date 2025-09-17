@@ -1,6 +1,6 @@
 The current Z-velocity relative to the parent body (v.z).
 
-    v.z = e_31 × o′.p + e_32 × o′.q
+    v.z = e_31 ⋅ o′.p + e_32 ⋅ o′.q
     e_31 = sin(ω) sin(i)
     e_32 = cos(ω) sin(i)
 

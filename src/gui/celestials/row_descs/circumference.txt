@@ -1,7 +1,7 @@
 Circumference (C) of the spherical planet.
 A perfect sphere is assumed.
 
-    C = 2 × pi × r
+    C = 2 ⋅ pi ⋅ r
 
 ...where:
 r = this body's radius
