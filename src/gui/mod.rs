@@ -6,7 +6,10 @@ use glam::DVec3;
 use ordered_float::NotNan;
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
-    egui::{self, Context as EguiContext, FontId, Vec2},
+    egui::{
+        self, Context as EguiContext, FontData, FontFamily, FontId, Vec2,
+        epaint::text::{FontInsert, FontPriority, InsertFontFamily},
+    },
 };
 
 mod bottom_bar;
@@ -123,6 +126,16 @@ pub(super) fn create(context: &ThreeDContext) -> GUI {
             )),
             FontId::monospace(16.0),
         );
+    });
+    gui.context().add_font(FontInsert {
+        name: String::from("DejaVuSans"),
+        data: FontData::from_static(include_bytes!(
+            "../assets/deja_vu_sans/DejaVuSans-subset.ttf"
+        )),
+        families: vec![InsertFontFamily {
+            family: FontFamily::Proportional,
+            priority: FontPriority::Lowest,
+        }],
     });
     gui
 }
