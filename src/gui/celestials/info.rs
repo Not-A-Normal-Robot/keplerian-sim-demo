@@ -11,7 +11,7 @@ use super::{Body, Universe};
 pub(super) fn body_window_info(
     ui: &mut Ui,
     body: &Body,
-    _parent_id: Option<UniverseId>,
+    parent_id: Option<UniverseId>,
     universe: &Universe,
 ) {
     // TODO: Finish
@@ -144,11 +144,13 @@ pub(super) fn body_window_info(
         include_str!("row_descs/semi_latus_rectum.txt"),
     );
 
+    let period = orbit.get_orbital_period();
+
     if orbit.get_eccentricity() <= 1.0 {
         add_row(
             ui,
             "Orbital period",
-            orbit.get_orbital_period(),
+            period,
             "s",
             include_str!("row_descs/orbital_period.txt"),
         );
@@ -335,18 +337,184 @@ pub(super) fn body_window_info(
         include_str!("row_descs/true_longitude.txt"),
     );
 
-    // TODO:
-    // Display:
-    // - Time to SOI exit (if any)
-    // - This SOI radius
-    // - Time until AN, DN (signed if open)
-    // - Mean motion `n`
-    // - Velocity at periapsis `v_p`
-    // - Velocity at apoapsis `v_a` or infinity `v_inf`
-    // - Time until periapsis (signed if open)
-    // - Time until apoapsis (if any)
-    // - Focal parameter
-    // - Specific orbital energy `ε`
-    // - Specific angular momentum `h`
-    // - Area swept per unit time
+    let soi_radius = parent_id.map(|id| universe.get_soi_radius(id)).flatten();
+
+    if let Some(soi_radius) = soi_radius
+        && soi_radius.is_finite()
+        && (orbit.is_open() || orbit.get_apoapsis() > soi_radius)
+        && let soi_true_anom = orbit.get_true_anomaly_at_altitude(soi_radius)
+        && soi_true_anom.is_finite()
+    {
+        let exit_time = orbit.get_time_at_true_anomaly(soi_true_anom);
+        let entry_time = orbit.get_time_at_true_anomaly(-soi_true_anom);
+
+        if orbit.is_open() {
+            add_row(
+                ui,
+                "Time since SOI entry",
+                universe.time - entry_time,
+                "s",
+                include_str!("row_descs/soi_entry_time.txt"),
+            );
+            add_row(
+                ui,
+                "Time to SOI exit",
+                exit_time - universe.time,
+                "s",
+                include_str!("row_descs/soi_exit_time.txt"),
+            );
+        } else {
+            add_row(
+                ui,
+                "Time since SOI entry",
+                (universe.time - entry_time).rem_euclid(period),
+                "s",
+                include_str!("row_descs/soi_entry_time.txt"),
+            );
+
+            add_row(
+                ui,
+                "Time to SOI exit",
+                (exit_time - universe.time).rem_euclid(period),
+                "s",
+                include_str!("row_descs/soi_exit_time.txt"),
+            );
+        }
+    }
+
+    if let Some(parent_wrapper) = parent_id.map(|id| universe.get_body(id)).flatten() {
+        // Equation from https://en.wikipedia.org/wiki/Sphere_of_influence_(astrodynamics)
+        // r_SOI \approx a (m/M)^(2/5)
+        let soi_radius =
+            orbit.get_semi_major_axis() * (body.mass / parent_wrapper.body.mass).powf(2.0 / 5.0);
+
+        add_row(
+            ui,
+            "SOI radius",
+            soi_radius,
+            "s",
+            include_str!("row_descs/soi_radius.txt"),
+        );
+    }
+
+    let an_time = orbit.get_time_at_true_anomaly(orbit.get_true_anomaly_at_asc_node());
+    let dn_time = orbit.get_time_at_true_anomaly(orbit.get_true_anomaly_at_asc_node());
+
+    let (an_time_rel, dn_time_rel) = if orbit.is_open() {
+        (an_time - universe.time, dn_time - universe.time)
+    } else {
+        (
+            (an_time - universe.time).rem_euclid(period),
+            (dn_time - universe.time).rem_euclid(period),
+        )
+    };
+
+    add_row(
+        ui,
+        "Time to AN",
+        an_time_rel,
+        "s",
+        include_str!("row_descs/time_to_an.txt"),
+    );
+    add_row(
+        ui,
+        "Time to DN",
+        dn_time_rel,
+        "s",
+        include_str!("row_descs/time_to_dn.txt"),
+    );
+
+    add_row(
+        ui,
+        "Mean motion",
+        orbit.get_mean_motion(),
+        "rad/s",
+        include_str!("row_descs/mean_motion.txt"),
+    );
+
+    add_row(
+        ui,
+        "Periapsis speed",
+        orbit.get_speed_at_periapsis(),
+        "m/s",
+        include_str!("row_descs/periapsis_speed.txt"),
+    );
+
+    if orbit.is_closed() {
+        add_row(
+            ui,
+            "Apoapsis speed",
+            orbit.get_speed_at_apoapsis(),
+            "m/s",
+            include_str!("row_descs/apoapsis_speed.txt"),
+        );
+    } else {
+        add_row(
+            ui,
+            "Asymptote speed",
+            orbit.get_speed_at_infinity(),
+            "m/s",
+            include_str!("row_descs/asymptote_speed.txt"),
+        );
+    }
+
+    let periapsis_time = orbit.get_time_of_periapsis();
+    let periapsis_time_rel = if orbit.is_open() {
+        periapsis_time - universe.time
+    } else {
+        (periapsis_time - universe.time).rem_euclid(period)
+    };
+
+    add_row(
+        ui,
+        "Time to periapsis",
+        periapsis_time_rel,
+        "s",
+        include_str!("row_descs/time_to_periapsis.txt"),
+    );
+
+    if orbit.is_closed() {
+        let apoapsis_time = orbit.get_time_of_apoapsis();
+        let apoapsis_time_rel = apoapsis_time - universe.time;
+
+        add_row(
+            ui,
+            "Time to apoapsis",
+            apoapsis_time_rel,
+            "s",
+            include_str!("row_descs/time_to_apoapsis.txt"),
+        );
+    }
+
+    add_row(
+        ui,
+        "Focal parameter",
+        orbit.get_focal_parameter(),
+        "",
+        include_str!("row_descs/focal_parameter.txt"),
+    );
+
+    add_row(
+        ui,
+        "Spec. energy",
+        orbit.get_specific_orbital_energy(),
+        "J/kg",
+        include_str!("row_descs/specific_energy.txt"),
+    );
+
+    add_row(
+        ui,
+        "Ang. momentum",
+        orbit.get_specific_angular_momentum(),
+        "m^2/s",
+        include_str!("row_descs/specific_angular_momentum.txt"),
+    );
+
+    add_row(
+        ui,
+        "Area sweep rate",
+        orbit.get_area_sweep_rate(),
+        "m^2/s",
+        include_str!("row_descs/area_sweep_rate.txt"),
+    );
 }
