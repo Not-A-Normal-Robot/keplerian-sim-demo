@@ -1,10 +1,8 @@
-use std::sync::Arc;
-
 use super::UniverseId;
 
 use float_pretty_print::PrettyPrintFloat;
 use keplerian_sim::OrbitTrait;
-use three_d::egui::{Color32, Label, RichText, Ui, WidgetText};
+use three_d::egui::{Align, Color32, Label, Layout, RichText, Sense, Ui, WidgetText};
 
 use super::{Body, Universe};
 
@@ -18,10 +16,16 @@ pub(super) fn body_window_info(
     ui.visuals_mut().override_text_color = Some(Color32::WHITE);
     let mu = body.mass * universe.get_gravitational_constant();
 
-    fn add_value(ui: &mut Ui, text: impl Into<WidgetText>, hover: impl Into<WidgetText>) {
-        let label = Label::new(text);
-        ui.add_sized(ui.available_size(), label)
-            .on_hover_text(hover);
+    fn add_value(ui: &mut Ui, text: impl Into<WidgetText>) {
+        ui.allocate_ui_with_layout(
+            ui.available_size(),
+            Layout::right_to_left(Align::Center),
+            |ui| {
+                ui.add_space(ui.spacing().menu_spacing);
+                let label = Label::new(text);
+                ui.add(label);
+            },
+        );
     }
 
     fn format_number(number: f64, suffix: &str) -> String {
@@ -34,10 +38,19 @@ pub(super) fn body_window_info(
     }
 
     fn add_row(ui: &mut Ui, measurement: &str, value: f64, unit: &str, hover: &str) {
-        let hover = Arc::new(RichText::new(hover).color(Color32::WHITE).size(16.0));
-        ui.label(measurement).on_hover_text(Arc::clone(&hover));
+        let hover = RichText::new(hover).color(Color32::WHITE).size(16.0);
+
+        let label = ui.label(measurement);
+
+        let mut hitbox_rect = label.rect;
+        hitbox_rect.set_width(hitbox_rect.width() + ui.available_width());
+
         let value_text = format_number(value, unit);
-        add_value(ui, value_text, Arc::clone(&hover));
+        add_value(ui, value_text);
+
+        ui.allocate_rect(hitbox_rect, Sense::HOVER)
+            .on_hover_text(hover);
+
         ui.end_row();
     }
 
