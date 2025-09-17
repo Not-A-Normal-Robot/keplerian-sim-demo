@@ -1,6 +1,6 @@
 Volume (V) of the spherical planet.
 
-    V = 4/3 ⋅ pi ⋅ r^2
+    V = 4/3 × pi × r^2
 
 ...where:
 r = this body's radius

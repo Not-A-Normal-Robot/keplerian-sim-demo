@@ -262,7 +262,7 @@ fn check_discouraged_chars(line: Option<&str>, state: &RowDescState) {
         section_filter: Option<RowDescSection>,
     }
 
-    const DISCOURAGED_CHARS: [DiscouragedChar; 6] = [
+    const DISCOURAGED_CHARS: [DiscouragedChar; 7] = [
         DiscouragedChar {
             discouraged: 'µ',
             discouraged_name: "U+00B5 MICRO SIGN",
@@ -273,29 +273,36 @@ fn check_discouraged_chars(line: Option<&str>, state: &RowDescState) {
         DiscouragedChar {
             discouraged: '*',
             discouraged_name: "U+002A ASTERISK",
-            suggested: '⋅',
-            suggested_name: "U+22C5 DOT OPERATOR",
+            suggested: '×',
+            suggested_name: "U+00D7 MULTIPLICATION SIGN",
+            section_filter: None,
+        },
+        DiscouragedChar {
+            discouraged: '⋅',
+            discouraged_name: "U+22C5 DOT OPERATOR",
+            suggested: '×',
+            suggested_name: "U+00D7 MULTIPLICATION SIGN",
             section_filter: None,
         },
         DiscouragedChar {
             discouraged: '∙',
             discouraged_name: "U+2219 BULLET OPERATOR",
-            suggested: '⋅',
-            suggested_name: "U+22C5 DOT OPERATOR",
+            suggested: '×',
+            suggested_name: "U+00D7 MULTIPLICATION SIGN",
             section_filter: None,
         },
         DiscouragedChar {
             discouraged: '·',
             discouraged_name: "U+00B7 MIDDLE DOT",
-            suggested: '⋅',
-            suggested_name: "U+22C5 DOT OPERATOR",
+            suggested: '×',
+            suggested_name: "U+00D7 MULTIPLICATION SIGN",
             section_filter: None,
         },
         DiscouragedChar {
             discouraged: '•',
             discouraged_name: "U+2022 BULLET",
-            suggested: '⋅',
-            suggested_name: "U+22C5 DOT OPERATOR",
+            suggested: '×',
+            suggested_name: "U+00D7 MULTIPLICATION SIGN",
             section_filter: None,
         },
         DiscouragedChar {

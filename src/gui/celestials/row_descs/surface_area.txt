@@ -1,6 +1,6 @@
 Surface area (A) of the spherical planet.
 
-    A = 4 ⋅ pi ⋅ r
+    A = 4 × pi × r
 
 ...where:
 r = this body's radius

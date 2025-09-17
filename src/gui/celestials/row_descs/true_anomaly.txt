@@ -5,7 +5,7 @@ The true anomaly of the orbit is defined as the angle measured at the parent bod
     ν = 2 arctan((β sin E) / (1 - β cos E))
     β = e / (1 + √(1 - e^2))
   Hyperbolic case (e > 1):
-    ν = 2 arctan(tanh(H / 2) ⋅ √((e + 1) / (e - 1)))
+    ν = 2 arctan(tanh(H / 2) × √((e + 1) / (e - 1)))
 
 ...where:
 E = current eccentric anomaly
