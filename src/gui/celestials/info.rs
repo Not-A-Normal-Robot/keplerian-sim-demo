@@ -38,7 +38,7 @@ pub(super) fn body_window_info(
     }
 
     fn add_row(ui: &mut Ui, measurement: &str, value: f64, unit: &str, hover: &str) {
-        let hover = RichText::new(hover).color(Color32::WHITE).size(16.0);
+        let hover = RichText::new(hover.trim()).color(Color32::WHITE).size(16.0);
 
         let label = ui.label(measurement);
 
