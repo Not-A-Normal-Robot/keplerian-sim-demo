@@ -1,0 +1,8 @@
+The speed of the orbit at periapsis (v_p).
+
+    v_p = sqrt(μ(e + 1) / r_p)
+
+...where:
+μ = standard gravitational parameter of parent body
+e = eccentricity
+r_p = periapsis

@@ -1,0 +1,7 @@
+The area sweep rate of the orbit (dA/dt).
+
+    dA/dt = v_p r_p / 2
+
+...where:
+v_p = periapsis speed
+r_p = periapsis radius/distance
