@@ -1,0 +1,2 @@
+Time to apoapsis (Δt_Ap).
+This is the time until the next apoapsis of the orbit.

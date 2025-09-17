@@ -1,2 +1,3 @@
-The time to SOI exit (t_SOI).
+The time until sphere of influence (SOI) exit (-Δt_SOI).
 This is the time until the orbit exits the SOI of the parent body, assuming nothing will change.
+This can be negative if the orbit has left the SOI and the eccentricity exceeds 1.
