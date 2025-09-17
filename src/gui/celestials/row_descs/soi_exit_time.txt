@@ -1,0 +1,2 @@
+The time to SOI exit (t_SOI).
+This is the time until the orbit exits the SOI of the parent body, assuming nothing will change.

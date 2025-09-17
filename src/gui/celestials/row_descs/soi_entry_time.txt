@@ -1,0 +1,2 @@
+The time since SOI entry (t_-SOI).
+This is the amount of time passed since this body entered the sphere of influence of the parent body, assuming nothing has changed since then.
