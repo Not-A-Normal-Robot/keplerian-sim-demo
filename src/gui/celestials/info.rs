@@ -48,7 +48,7 @@ pub(super) fn body_window_info(
         "Circumference",
         2.0 * PI * body.radius,
         "m",
-        include_str!("row-descs/circumference.txt"),
+        include_str!("row_descs/circumference.txt"),
     );
 
     add_row(
@@ -56,7 +56,7 @@ pub(super) fn body_window_info(
         "Surface area",
         4.0 * PI * body.radius.powi(2),
         "m^2",
-        include_str!("row-descs/surface_area.txt"),
+        include_str!("row_descs/surface_area.txt"),
     );
 
     add_row(
@@ -64,7 +64,7 @@ pub(super) fn body_window_info(
         "Volume",
         4.0 / 3.0 * PI * body.radius.powi(3),
         "m^3",
-        include_str!("row-descs/volume.txt"),
+        include_str!("row_descs/volume.txt"),
     );
 
     add_row(
@@ -72,7 +72,7 @@ pub(super) fn body_window_info(
         "Density",
         body.mass / (4.0 / 3.0 * PI * body.radius.powi(3)),
         "kg/m^3",
-        include_str!("row-descs/density.txt"),
+        include_str!("row_descs/density.txt"),
     );
 
     add_row(
@@ -80,7 +80,7 @@ pub(super) fn body_window_info(
         "Ideal surface gravity",
         mu / body.radius.powi(2),
         "m/s^2",
-        include_str!("row-descs/ideal_surface_gravity.txt"),
+        include_str!("row_descs/ideal_surface_gravity.txt"),
     );
 
     add_row(
@@ -88,7 +88,7 @@ pub(super) fn body_window_info(
         "Gravitational parameter",
         mu,
         "m^3 s^-2",
-        include_str!("row-descs/gravitational_parameter.txt"),
+        include_str!("row_descs/gravitational_parameter.txt"),
     );
 
     add_row(
@@ -96,7 +96,7 @@ pub(super) fn body_window_info(
         "Escape velocity",
         (2.0 * mu / body.mass).sqrt(),
         "m/s",
-        include_str!("row-descs/escape_velocity.txt"),
+        include_str!("row_descs/escape_velocity.txt"),
     );
 
     let orbit = match &body.orbit {
@@ -109,7 +109,7 @@ pub(super) fn body_window_info(
         "Apoapsis",
         orbit.get_apoapsis(),
         "m",
-        include_str!("row-descs/apoapsis.txt"),
+        include_str!("row_descs/apoapsis.txt"),
     );
 
     add_row(
@@ -117,7 +117,7 @@ pub(super) fn body_window_info(
         "Semi-major axis",
         orbit.get_semi_major_axis(),
         "m",
-        include_str!("row-descs/semi_major_axis.txt"),
+        include_str!("row_descs/semi_major_axis.txt"),
     );
 
     add_row(
@@ -125,7 +125,7 @@ pub(super) fn body_window_info(
         "Semi-minor axis",
         orbit.get_semi_minor_axis(),
         "m",
-        include_str!("row-descs/semi_minor_axis.txt"),
+        include_str!("row_descs/semi_minor_axis.txt"),
     );
 
     add_row(
@@ -133,7 +133,7 @@ pub(super) fn body_window_info(
         "Linear eccentricity",
         orbit.get_linear_eccentricity(),
         "m",
-        include_str!("row-descs/linear_eccentricity.txt"),
+        include_str!("row_descs/linear_eccentricity.txt"),
     );
 
     add_row(
@@ -141,7 +141,7 @@ pub(super) fn body_window_info(
         "Semi-latus rectum",
         orbit.get_semi_latus_rectum(),
         "m",
-        include_str!("row-descs/semi_latus_rectum.txt"),
+        include_str!("row_descs/semi_latus_rectum.txt"),
     );
 
     if orbit.get_eccentricity() <= 1.0 {
@@ -150,7 +150,7 @@ pub(super) fn body_window_info(
             "Orbital period",
             orbit.get_orbital_period(),
             "s",
-            include_str!("row-descs/orbital_period.txt"),
+            include_str!("row_descs/orbital_period.txt"),
         );
     }
 
@@ -161,9 +161,9 @@ pub(super) fn body_window_info(
     };
 
     let hover = if orbit.get_eccentricity() < 1.0 {
-        include_str!("row-descs/mean_anomaly.elliptic.txt")
+        include_str!("row_descs/mean_anomaly.elliptic.txt")
     } else {
-        include_str!("row-descs/mean_anomaly.hyperbolic.txt")
+        include_str!("row_descs/mean_anomaly.hyperbolic.txt")
     };
 
     let mean_anomaly = orbit.get_mean_anomaly_at_time(universe.time);
@@ -183,9 +183,9 @@ pub(super) fn body_window_info(
     };
 
     let hover = if orbit.get_eccentricity() < 1.0 {
-        include_str!("row-descs/eccentric_anomaly.elliptic.txt")
+        include_str!("row_descs/eccentric_anomaly.elliptic.txt")
     } else {
-        include_str!("row-descs/eccentric_anomaly.hyperbolic.txt")
+        include_str!("row_descs/eccentric_anomaly.hyperbolic.txt")
     };
 
     let eccentric_anomaly = orbit.get_eccentric_anomaly_at_mean_anomaly(mean_anomaly);
@@ -199,7 +199,7 @@ pub(super) fn body_window_info(
         "Curr. true anomaly",
         true_anomaly,
         "rad",
-        include_str!("row-descs/true_anomaly.txt"),
+        include_str!("row_descs/true_anomaly.txt"),
     );
 
     let altitude = orbit.get_altitude_at_true_anomaly(true_anomaly);
@@ -209,7 +209,7 @@ pub(super) fn body_window_info(
         "Curr. altitude",
         altitude,
         "m",
-        include_str!("row-descs/altitude.txt"),
+        include_str!("row_descs/altitude.txt"),
     );
 
     let speed = orbit.get_speed_at_altitude(altitude);
@@ -219,7 +219,7 @@ pub(super) fn body_window_info(
         "Curr. speed",
         speed,
         "m/s",
-        include_str!("row-descs/speed.txt"),
+        include_str!("row_descs/speed.txt"),
     );
 
     let true_sincos = true_anomaly.sin_cos();
@@ -231,7 +231,7 @@ pub(super) fn body_window_info(
         "Curr. PQW pos P",
         pqw_position.x,
         "m",
-        include_str!("row-descs/pqw_pos_p.txt"),
+        include_str!("row_descs/pqw_pos_p.txt"),
     );
 
     add_row(
@@ -239,7 +239,7 @@ pub(super) fn body_window_info(
         "Curr. PQW pos Q",
         pqw_position.y,
         "m",
-        include_str!("row-descs/pqw_pos_q.txt"),
+        include_str!("row_descs/pqw_pos_q.txt"),
     );
 
     let pqw_velocity = orbit.get_pqw_velocity_at_eccentric_anomaly(eccentric_anomaly);
@@ -249,7 +249,7 @@ pub(super) fn body_window_info(
         "Curr. PQW vel P",
         pqw_velocity.x,
         "m/s",
-        include_str!("row-descs/pqw_vel_p.txt"),
+        include_str!("row_descs/pqw_vel_p.txt"),
     );
 
     add_row(
@@ -257,7 +257,7 @@ pub(super) fn body_window_info(
         "Curr. PQW vel Q",
         pqw_velocity.y,
         "m/s",
-        include_str!("row-descs/pqw_vel_q.txt"),
+        include_str!("row_descs/pqw_vel_q.txt"),
     );
 
     let position = orbit.transform_pqw_vector(pqw_position);
@@ -268,21 +268,21 @@ pub(super) fn body_window_info(
         "Curr. pos X",
         position.x,
         "m",
-        include_str!("row-descs/cur_pos_x.txt"),
+        include_str!("row_descs/cur_pos_x.txt"),
     );
     add_row(
         ui,
         "Curr. pos Y",
         position.y,
         "m",
-        include_str!("row-descs/cur_pos_y.txt"),
+        include_str!("row_descs/cur_pos_y.txt"),
     );
     add_row(
         ui,
         "Curr. pos Z",
         position.z,
         "m",
-        include_str!("row-descs/cur_pos_z.txt"),
+        include_str!("row_descs/cur_pos_z.txt"),
     );
 
     add_row(
@@ -290,21 +290,21 @@ pub(super) fn body_window_info(
         "Curr. vel X",
         velocity.x,
         "m/s",
-        include_str!("row-descs/cur_vel_x.txt"),
+        include_str!("row_descs/cur_vel_x.txt"),
     );
     add_row(
         ui,
         "Curr. vel Y",
         velocity.y,
         "m/s",
-        include_str!("row-descs/cur_vel_y.txt"),
+        include_str!("row_descs/cur_vel_y.txt"),
     );
     add_row(
         ui,
         "Curr. vel Z",
         velocity.z,
         "m/s",
-        include_str!("row-descs/cur_vel_z.txt"),
+        include_str!("row_descs/cur_vel_z.txt"),
     );
 
     if orbit.is_hyperbolic() {
@@ -313,7 +313,7 @@ pub(super) fn body_window_info(
             "True anom. asymptote",
             orbit.get_true_anomaly_at_asymptote(),
             "rad",
-            include_str!("row-descs/true_anomaly_asymptote.txt"),
+            include_str!("row_descs/true_anomaly_asymptote.txt"),
         );
     }
 
@@ -324,7 +324,7 @@ pub(super) fn body_window_info(
         "Longitude of periapsis",
         longitude_of_periapsis,
         "rad",
-        include_str!("row-descs/longitude_of_periapsis.txt"),
+        include_str!("row_descs/longitude_of_periapsis.txt"),
     );
 
     add_row(
@@ -332,7 +332,7 @@ pub(super) fn body_window_info(
         "Curr. true longitude",
         true_anomaly + longitude_of_periapsis,
         "rad",
-        include_str!("row-descs/true_longitude.txt"),
+        include_str!("row_descs/true_longitude.txt"),
     );
 
     // TODO:

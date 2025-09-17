@@ -29,7 +29,7 @@ struct RowDescState<'a> {
 }
 
 fn check_row_descs_format() {
-    const ROW_DESCS_PATH_STR: &str = "src/gui/celestials/row-descs";
+    const ROW_DESCS_PATH_STR: &str = "src/gui/celestials/row_descs";
     println!("cargo:rerun-if-changed={ROW_DESCS_PATH_STR}");
 
     let base = Path::new(ROW_DESCS_PATH_STR);
@@ -64,7 +64,32 @@ fn check_row_descs_format() {
     }
 }
 
+fn is_string_snake_case(string: &str) -> bool {
+    let mut is_prev_underscore = false;
+    for char in string.chars() {
+        if char.is_uppercase() {
+            return false;
+        }
+
+        let is_curr_underscore = char == '_';
+
+        if is_curr_underscore && is_prev_underscore {
+            return false;
+        }
+
+        is_prev_underscore = is_curr_underscore
+    }
+
+    return true;
+}
+
 fn check_row_desc_format(filename: &str, text: &str) {
+    if !filename.is_ascii() {
+        warn(&format!("{filename}: non-ascii file name"));
+    } else if !filename.contains("EXAMPLE") && !is_string_snake_case(filename) {
+        warn(&format!("{filename}: file name not using snake_case"));
+    }
+
     let lines = text.lines();
     let mut state = RowDescState {
         filename,
