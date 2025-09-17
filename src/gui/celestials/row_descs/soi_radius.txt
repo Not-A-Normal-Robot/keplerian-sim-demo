@@ -1,0 +1,8 @@
+The radius (r_SOI) of this body's sphere of influence.
+
+    r_SOI = a (m / M)^(2/5)
+
+...where:
+a = semi-major axis
+m = mass of this body
+M = mass of parent body

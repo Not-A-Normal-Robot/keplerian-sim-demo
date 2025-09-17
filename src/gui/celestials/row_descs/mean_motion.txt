@@ -1,0 +1,7 @@
+The mean motion (n) of the orbit.
+
+    n = sqrt(μ / a^3)
+
+...where:
+μ = standard gravitational parameter of parent body
+a = semi-major axis

@@ -1,0 +1,8 @@
+The specific angular momentum (h) of the orbit.
+The specific relative angular momentum of a body is the angular momentum of that body divided by its mass.
+
+    h = sqrt(μℓ)
+
+...where:
+μ = standard gravitational parameter of parent body
+ℓ = semi-latus rectum

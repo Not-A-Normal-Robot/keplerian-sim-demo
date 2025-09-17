@@ -1,0 +1,9 @@
+The specific orbital energy (ε) of the orbit.
+This is negative for closed orbits (e < 1), zero for parabolic orbits (e = 1), and positive for hyperbolic orbits (e > 1).
+
+    ε = -μ (1 - e) / r_p
+
+...where:
+μ = standard gravitational parameter of parent body
+e = eccentricity
+r_p = periapsis

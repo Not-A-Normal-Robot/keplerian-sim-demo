@@ -1,0 +1,9 @@
+The focal parameter (p) of the orbit.
+The focal parameter is the distance from a focus to the corresponding directrix.
+
+    p = r_p (1 + e) / e
+
+...where:
+r_p = periapsis
+e = eccentricity
+(Note: The letter p is also sometimes used for the semi-latus rectum. These are distinct.)
