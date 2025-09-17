@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 egui_extras = { version = "0.32", features = ["svg"] }
 float-pretty-print = "0.1.1"
 glam = "0.30.5"
-keplerian_sim = "0.4.0"
+keplerian_sim = "0.6.0"
 ordered-float = "5.0.0"
 pastey = "0.1.1"
 strum = "0.27.2"

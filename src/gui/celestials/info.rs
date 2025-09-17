@@ -308,14 +308,13 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
     // - True longitude
     // - This SOI radius
     // - Time until AN, DN (signed if open)
-    // Research:
+    // - Mean motion `n`
+    // - Velocity at periapsis `v_p`
+    // - Velocity at apoapsis `v_a` or infinity `v_inf`
     // - Time until periapsis (signed if open)
     // - Time until apoapsis (if any)
     // - Focal parameter
-    // - Velocity at periapsis `v_p`
-    // - Velocity at apoapsis `v_a` or infinity `v_inf`
     // - Specific orbital energy `ε`
     // - Specific angular momentum `h`
-    // - Mean motion `n`
     // - Area swept per unit time
 }
