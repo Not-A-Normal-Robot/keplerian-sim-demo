@@ -309,11 +309,12 @@ pub(super) fn body_window_info(
         include_str!("row_descs/cur_vel_z.txt"),
     );
 
+    let f_asympt = orbit.get_true_anomaly_at_asymptote();
     if orbit.is_hyperbolic() {
         add_row(
             ui,
             "True anom. asymptote",
-            orbit.get_true_anomaly_at_asymptote(),
+            f_asympt,
             "rad",
             include_str!("row_descs/true_anomaly_asymptote.txt"),
         );
@@ -397,32 +398,39 @@ pub(super) fn body_window_info(
         );
     }
 
-    let an_time = orbit.get_time_at_true_anomaly(orbit.get_true_anomaly_at_asc_node());
-    let dn_time = orbit.get_time_at_true_anomaly(orbit.get_true_anomaly_at_asc_node());
+    let f_an = orbit.get_true_anomaly_at_asc_node();
+    let f_dn = orbit.get_true_anomaly_at_desc_node();
+
+    let t_an = orbit.get_time_at_true_anomaly(f_an);
+    let t_dn = orbit.get_time_at_true_anomaly(f_dn);
 
     let (an_time_rel, dn_time_rel) = if orbit.is_open() {
-        (an_time - universe.time, dn_time - universe.time)
+        (t_an - universe.time, t_dn - universe.time)
     } else {
         (
-            (an_time - universe.time).rem_euclid(period),
-            (dn_time - universe.time).rem_euclid(period),
+            (t_an - universe.time).rem_euclid(period),
+            (t_dn - universe.time).rem_euclid(period),
         )
     };
 
-    add_row(
-        ui,
-        "Time to AN",
-        an_time_rel,
-        "s",
-        include_str!("row_descs/time_to_an.txt"),
-    );
-    add_row(
-        ui,
-        "Time to DN",
-        dn_time_rel,
-        "s",
-        include_str!("row_descs/time_to_dn.txt"),
-    );
+    if orbit.is_closed() || f_an.abs() < f_asympt {
+        add_row(
+            ui,
+            "Time to AN",
+            an_time_rel,
+            "s",
+            include_str!("row_descs/time_to_an.txt"),
+        );
+    }
+    if orbit.is_closed() || f_dn.abs() < f_asympt {
+        add_row(
+            ui,
+            "Time to DN",
+            dn_time_rel,
+            "s",
+            include_str!("row_descs/time_to_dn.txt"),
+        );
+    }
 
     add_row(
         ui,
