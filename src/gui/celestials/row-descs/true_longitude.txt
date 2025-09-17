@@ -1,0 +1,8 @@
+The current true longitude of the orbit (l).
+The true longitude is the ecliptic longitude at which an orbiting body could actually be found if its inclination were zero.
+
+    l = ν + ϖ
+
+...where:
+ν = current true anomaly
+ϖ = longitude of periapsis

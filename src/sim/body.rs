@@ -61,15 +61,3 @@ impl Default for Body {
         }
     }
 }
-
-impl From<keplerian_sim::Body> for Body {
-    fn from(value: keplerian_sim::Body) -> Self {
-        Self {
-            name: value.name,
-            mass: value.mass,
-            radius: value.radius,
-            orbit: value.orbit,
-            color: Srgba::new_opaque(255, 255, 255),
-        }
-    }
-}

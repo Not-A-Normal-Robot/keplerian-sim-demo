@@ -1,0 +1,7 @@
+The true anomaly of the hyperbolic trajectory at its asymptote (ν_∞).
+As the time approaches infinity, the hyperbolic trajectory approaches a certain true anomaly but never quite reaches it.
+
+    ν_∞ = cos^-1(-1 / e)
+
+...where:
+e = eccentricity

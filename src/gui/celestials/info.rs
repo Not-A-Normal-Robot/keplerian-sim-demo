@@ -1,12 +1,19 @@
 use std::sync::Arc;
 
+use super::UniverseId;
+
 use float_pretty_print::PrettyPrintFloat;
 use keplerian_sim::OrbitTrait;
 use three_d::egui::{Color32, Label, RichText, Ui, WidgetText};
 
 use super::{Body, Universe};
 
-pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
+pub(super) fn body_window_info(
+    ui: &mut Ui,
+    body: &Body,
+    _parent_id: Option<UniverseId>,
+    universe: &Universe,
+) {
     // TODO: Finish
     ui.visuals_mut().override_text_color = Some(Color32::WHITE);
     let mu = body.mass * universe.get_gravitational_constant();
@@ -221,7 +228,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
 
     add_row(
         ui,
-        "Cur. PQW pos P",
+        "Curr. PQW pos P",
         pqw_position.x,
         "m",
         include_str!("row-descs/pqw_pos_p.txt"),
@@ -229,7 +236,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
 
     add_row(
         ui,
-        "Cur. PQW pos Q",
+        "Curr. PQW pos Q",
         pqw_position.y,
         "m",
         include_str!("row-descs/pqw_pos_q.txt"),
@@ -239,7 +246,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
 
     add_row(
         ui,
-        "Cur. PQW vel P",
+        "Curr. PQW vel P",
         pqw_velocity.x,
         "m/s",
         include_str!("row-descs/pqw_vel_p.txt"),
@@ -247,7 +254,7 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
 
     add_row(
         ui,
-        "Cur. PQW vel Q",
+        "Curr. PQW vel Q",
         pqw_velocity.y,
         "m/s",
         include_str!("row-descs/pqw_vel_q.txt"),
@@ -258,21 +265,21 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
 
     add_row(
         ui,
-        "Cur. pos X",
+        "Curr. pos X",
         position.x,
         "m",
         include_str!("row-descs/cur_pos_x.txt"),
     );
     add_row(
         ui,
-        "Cur. pos Y",
+        "Curr. pos Y",
         position.y,
         "m",
         include_str!("row-descs/cur_pos_y.txt"),
     );
     add_row(
         ui,
-        "Cur. pos Z",
+        "Curr. pos Z",
         position.z,
         "m",
         include_str!("row-descs/cur_pos_z.txt"),
@@ -280,32 +287,57 @@ pub(super) fn body_window_info(ui: &mut Ui, body: &Body, universe: &Universe) {
 
     add_row(
         ui,
-        "Cur. vel X",
+        "Curr. vel X",
         velocity.x,
         "m/s",
         include_str!("row-descs/cur_vel_x.txt"),
     );
     add_row(
         ui,
-        "Cur. vel Y",
+        "Curr. vel Y",
         velocity.y,
         "m/s",
         include_str!("row-descs/cur_vel_y.txt"),
     );
     add_row(
         ui,
-        "Cur. vel Z",
+        "Curr. vel Z",
         velocity.z,
         "m/s",
         include_str!("row-descs/cur_vel_z.txt"),
     );
 
+    if orbit.is_hyperbolic() {
+        add_row(
+            ui,
+            "True anom. asymptote",
+            orbit.get_true_anomaly_at_asymptote(),
+            "rad",
+            include_str!("row-descs/true_anomaly_asymptote.txt"),
+        );
+    }
+
+    let longitude_of_periapsis = orbit.get_longitude_of_periapsis();
+
+    add_row(
+        ui,
+        "Longitude of periapsis",
+        longitude_of_periapsis,
+        "rad",
+        include_str!("row-descs/longitude_of_periapsis.txt"),
+    );
+
+    add_row(
+        ui,
+        "Curr. true longitude",
+        true_anomaly + longitude_of_periapsis,
+        "rad",
+        include_str!("row-descs/true_longitude.txt"),
+    );
+
     // TODO:
     // Display:
-    // - Time until SOI exit (if any)
-    // - True anomaly range, if hyperbolic
-    // - Longitude of periapsis
-    // - True longitude
+    // - Time to SOI exit (if any)
     // - This SOI radius
     // - Time until AN, DN (signed if open)
     // - Mean motion `n`

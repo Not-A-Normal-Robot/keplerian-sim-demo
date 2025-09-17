@@ -1,0 +1,8 @@
+The longitude of periapsis of the orbit (ϖ).
+The longitude of periapsis is the sum of the longitude of ascending node and the argument of periapsis.
+
+    ϖ = Ω + ω
+
+...where:
+Ω = longitude of ascending node
+ω = argument of periapsis

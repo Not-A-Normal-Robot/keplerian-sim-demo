@@ -148,7 +148,7 @@ fn new_body_window_content(
             // .spacing([40.0, 4.0])
             .striped(true)
             .show(ui, |ui| {
-                body_window_info(ui, &wrapper.body, universe);
+                body_window_info(ui, &wrapper.body, wrapper.parent_id, universe);
             });
     });
 
