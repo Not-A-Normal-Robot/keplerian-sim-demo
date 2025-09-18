@@ -1,7 +1,7 @@
 use super::{
     super::{
         super::{
-            sim::universe::{BodyWrapper, Id as UniverseId, Universe},
+            sim::universe::{BodyWrapper, BulkMuSetterMode, Id as UniverseId, Universe},
             units::{AutoUnit, length::LengthUnit, mass::MassUnit},
         },
         unit_dv::drag_value_with_unit,
@@ -72,6 +72,7 @@ pub(super) fn body_edit_window(ctx: &Context, sim_state: &mut SimState) {
                     &mut sim_state.universe,
                     body_id,
                     &mut sim_state.ui.edit_body_window_state,
+                    sim_state.mu_setter_mode,
                 );
             });
         });
@@ -84,6 +85,7 @@ fn body_edit_window_contents(
     universe: &mut Universe,
     body_id: UniverseId,
     window_state: &mut EditBodyWindowState,
+    mu_mode: BulkMuSetterMode,
 ) {
     ui.visuals_mut().override_text_color = Some(Color32::WHITE);
 
@@ -97,7 +99,7 @@ fn body_edit_window_contents(
         .spacing([40.0, 4.0])
         .striped(true)
         .show(ui, |ui| {
-            edit_body_window_phys(ui, universe, body_id, window_state)
+            edit_body_window_phys(ui, universe, body_id, window_state, mu_mode)
         });
 
     if let Some(w) = universe.get_body(body_id)
@@ -114,7 +116,7 @@ fn body_edit_window_contents(
             .spacing([40.0, 4.0])
             .striped(true)
             .show(ui, |ui| {
-                edit_body_window_orbit(ui, universe, body_id, window_state)
+                edit_body_window_orbit(ui, universe, body_id, window_state, mu_mode)
             });
     }
 
@@ -143,6 +145,7 @@ fn edit_body_window_phys(
     universe: &mut Universe,
     body_id: UniverseId,
     window_state: &mut EditBodyWindowState,
+    mu_mode: BulkMuSetterMode,
 ) {
     let wrapper = match universe.get_body_mut(body_id) {
         Some(w) => w,
@@ -183,10 +186,11 @@ fn edit_body_window_phys(
         .color(Color32::WHITE)
         .size(16.0),
     );
+    let mut mass = wrapper.body.mass;
     drag_value_with_unit(
         EDIT_BODY_MASS_SALT,
         ui,
-        &mut wrapper.body.mass,
+        &mut mass,
         &mut window_state.mass_unit,
     );
     ui.end_row();
@@ -203,6 +207,12 @@ fn edit_body_window_phys(
         &mut window_state.radius_unit,
     );
     ui.end_row();
+
+    if wrapper.body.mass != mass {
+        wrapper.body.mass = mass;
+
+        let _ = universe.update_children_gravitational_parameters(body_id, mu_mode);
+    }
 }
 
 fn edit_body_window_orbit(
@@ -210,6 +220,7 @@ fn edit_body_window_orbit(
     universe: &mut Universe,
     body_id: UniverseId,
     window_state: &mut EditBodyWindowState,
+    mu_mode: BulkMuSetterMode,
 ) {
     let wrapper = match universe.get_body(body_id) {
         Some(w) => w,
@@ -218,15 +229,17 @@ fn edit_body_window_orbit(
 
     let parent_id = parent_selector(ui, universe, wrapper);
 
+    if parent_id != wrapper.relations.parent {
+        let res = universe.move_body(body_id, parent_id, mu_mode);
+        if let Err(e) = res {
+            eprintln!("{e}");
+        }
+    }
+
     let wrapper = match universe.get_body_mut(body_id) {
         Some(w) => w,
         None => return,
     };
-
-    if parent_id != wrapper.relations.parent {
-        // TODO: Fix infinite recursion due to loop
-        wrapper.relations.parent = parent_id;
-    }
 
     let orbit = match wrapper.body.orbit.as_mut() {
         Some(o) => o,

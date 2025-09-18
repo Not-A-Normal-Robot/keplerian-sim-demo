@@ -77,6 +77,27 @@ impl fmt::Display for BodyAddError {
 
 impl Error for BodyAddError {}
 
+#[derive(Clone, Copy, Debug)]
+pub enum BodyMoveError {
+    BodyNotFound,
+    NewParentNotFound,
+    NewConfigCreatesLoop,
+}
+
+impl fmt::Display for BodyMoveError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BodyMoveError::BodyNotFound => write!(f, "body not found"),
+            BodyMoveError::NewParentNotFound => write!(f, "new parent not found"),
+            BodyMoveError::NewConfigCreatesLoop => {
+                write!(f, "new configuration would create a loop")
+            }
+        }
+    }
+}
+
+impl Error for BodyMoveError {}
+
 impl Universe {
     /// Creates an empty universe.
     pub fn new(g: Option<f64>) -> Universe {
@@ -392,6 +413,97 @@ impl Universe {
                 };
                 orbit.set_gravitational_parameter(mu, mode);
             });
+
+        Ok(())
+    }
+
+    pub fn move_body(
+        &mut self,
+        body_id: Id,
+        new_parent_id: Option<Id>,
+        mode: BulkMuSetterMode,
+    ) -> Result<(), BodyMoveError> {
+        let new_parent_id = match new_parent_id {
+            Some(id) => id,
+            None => {
+                let wrapper = self
+                    .bodies
+                    .get_mut(&body_id)
+                    .ok_or(BodyMoveError::BodyNotFound)?;
+                wrapper.relations.parent = None;
+                wrapper.body.orbit = None;
+                return Ok(());
+            }
+        };
+
+        if body_id == new_parent_id {
+            return Err(BodyMoveError::NewConfigCreatesLoop);
+        }
+
+        // Check for loop
+        let mut cur = Some(new_parent_id);
+        while let Some(id) = cur {
+            if id == body_id {
+                return Err(BodyMoveError::NewConfigCreatesLoop);
+            }
+            cur = self.bodies.get(&id).and_then(|w| w.relations.parent);
+        }
+
+        let mut old_parent_id = self.bodies.get(&body_id).and_then(|w| w.relations.parent);
+
+        if old_parent_id == Some(new_parent_id) {
+            return Ok(());
+        }
+
+        if old_parent_id == Some(body_id) {
+            old_parent_id = None;
+
+            // Un-screw the state if this ever happens
+            if let Some(wrapper) = self.bodies.get_mut(&body_id) {
+                wrapper.relations.parent = None;
+                if let Some(idx) = wrapper
+                    .relations
+                    .satellites
+                    .iter()
+                    .position(|&id| id == body_id)
+                {
+                    wrapper.relations.satellites.remove(idx);
+                }
+            }
+        }
+
+        let [body, old_parent, new_parent] = match old_parent_id {
+            Some(old_parent_id) => {
+                self.bodies
+                    .get_disjoint_mut([&body_id, &old_parent_id, &new_parent_id])
+            }
+            None => {
+                let [body, new_parent] = self.bodies.get_disjoint_mut([&body_id, &new_parent_id]);
+                [body, None, new_parent]
+            }
+        };
+
+        let body = body.ok_or(BodyMoveError::BodyNotFound)?;
+        let new_parent = new_parent.ok_or(BodyMoveError::NewParentNotFound)?;
+
+        if let Some(old_parent) = old_parent
+            && let Some(idx) = old_parent
+                .relations
+                .satellites
+                .iter()
+                .position(|&id| id == body_id)
+        {
+            old_parent.relations.satellites.remove(idx);
+        }
+
+        new_parent.relations.satellites.push(body_id);
+        body.relations.parent = Some(new_parent_id);
+
+        if let Some(orbit) = &mut body.body.orbit {
+            let gravitational_parameter = self.g * new_parent.body.mass;
+            orbit
+                .set_gravitational_parameter(gravitational_parameter, mode.to_mu_setter(self.time));
+        }
 
         Ok(())
     }
