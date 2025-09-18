@@ -1,8 +1,11 @@
 use super::{
-    super::super::units::{AutoUnit, length::LengthUnit, mass::MassUnit},
+    super::super::{
+        sim::universe::{BodyWrapper, Id as UniverseId, Universe},
+        units::{AutoUnit, length::LengthUnit, mass::MassUnit},
+    },
     SimState,
 };
-use three_d::egui::{Context, Window};
+use three_d::egui::{Context, Ui, Window};
 
 pub(in super::super) struct EditBodyWindowState {
     _mass_unit: AutoUnit<MassUnit>,
@@ -27,9 +30,37 @@ impl Default for EditBodyWindowState {
 }
 
 pub(super) fn body_edit_window(ctx: &Context, sim_state: &mut SimState) {
-    Window::new("Celestial Editor")
-        .open(&mut sim_state.ui.edit_body_window_state.window_open)
+    let mut open = sim_state.ui.edit_body_window_state.window_open;
+
+    let body_id = sim_state.focused_body();
+
+    Window::new("Edit Body")
+        .scroll([false, true])
+        .resizable([false, true])
+        .default_width(300.0)
+        .min_width(300.0)
+        .max_width(300.0)
+        .min_height(200.0)
+        .open(&mut open)
         .show(ctx, |ui| {
-            ui.label("This window is not implemented yet.");
+            ui.scope(|ui| {
+                body_edit_window_inner(
+                    ui,
+                    &mut sim_state.universe,
+                    body_id,
+                    &mut sim_state.ui.edit_body_window_state,
+                );
+            });
         });
+
+    sim_state.ui.edit_body_window_state.window_open = open;
+}
+
+fn body_edit_window_inner(
+    ui: &mut Ui,
+    universe: &mut Universe,
+    body_id: UniverseId,
+    window_state: &mut EditBodyWindowState,
+) {
+    ui.label("TODO");
 }
