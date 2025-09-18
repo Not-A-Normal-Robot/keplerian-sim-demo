@@ -15,6 +15,7 @@ use three_d::{
 mod bottom_bar;
 mod celestials;
 mod fps;
+mod unit_dv;
 
 macro_rules! declare_id {
     (salt_only, $name:ident, $val:expr) => {

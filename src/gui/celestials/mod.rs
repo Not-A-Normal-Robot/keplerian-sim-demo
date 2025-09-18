@@ -16,6 +16,7 @@ use super::{
         units,
     },
     SimState, declare_id,
+    unit_dv::drag_value_with_unit,
 };
 
 declare_id!(RENAME_TEXTEDIT, b"OmgRen??");
