@@ -62,5 +62,11 @@ fn body_edit_window_inner(
     body_id: UniverseId,
     window_state: &mut EditBodyWindowState,
 ) {
-    ui.label("TODO");
+    let wrapper = match universe.get_body_mut(body_id) {
+        Some(w) => w,
+        None => {
+            ui.label("No body currently selected.");
+            return;
+        }
+    };
 }
