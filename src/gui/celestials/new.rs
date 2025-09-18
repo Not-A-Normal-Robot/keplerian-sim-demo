@@ -4,7 +4,7 @@ use super::{
     selectable_body_tree,
     units::{AutoUnit, length::LengthUnit, mass::MassUnit},
 };
-use keplerian_sim::{Orbit, OrbitTrait};
+use keplerian_sim::{MuSetterMode, Orbit, OrbitTrait};
 use three_d::egui::{
     Color32, ComboBox, Context, DragValue, Grid, Label, PopupCloseBehavior, RichText, Slider,
     TextEdit, TextWrapMode, Ui, Window, color_picker::color_edit_button_srgb,
@@ -72,9 +72,15 @@ pub(super) fn new_body_window(ctx: &Context, sim_state: &mut SimState) {
                 Some(w) => w,
                 None => return,
             };
+            let time = sim_state.universe.time;
             ui.scope(|ui| {
-                sim_state.preview_body =
-                    new_body_window_content(ui, &mut sim_state.universe, wrapper, window_state);
+                sim_state.preview_body = new_body_window_content(
+                    ui,
+                    &mut sim_state.universe,
+                    wrapper,
+                    window_state,
+                    sim_state.mu_setter_mode.to_mu_setter(time),
+                );
             });
         });
 
@@ -102,6 +108,7 @@ fn new_body_window_content(
     universe: &mut Universe,
     mut wrapper: PreviewBody,
     window_state: &mut NewBodyWindowState,
+    mu_mode: MuSetterMode,
 ) -> Option<PreviewBody> {
     ui.visuals_mut().override_text_color = Some(Color32::WHITE);
 
@@ -135,6 +142,7 @@ fn new_body_window_content(
                 &mut wrapper.parent_id,
                 universe,
                 window_state,
+                mu_mode,
             )
         });
 
@@ -232,13 +240,13 @@ fn new_body_window_orbit(
     parent_id: &mut Option<UniverseId>,
     universe: &Universe,
     window_state: &mut NewBodyWindowState,
+    mu_mode: MuSetterMode,
 ) {
     ui.label("Parent body").on_hover_text(
         RichText::new("The body that this body is orbiting around.")
             .color(Color32::WHITE)
             .size(16.0),
     );
-    // TODO: Fix mu not updating
     ComboBox::from_id_salt(NEW_BODY_PARENT_COMBO_BOX_SALT)
         .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
         .wrap_mode(TextWrapMode::Extend)
@@ -253,6 +261,16 @@ fn new_body_window_orbit(
             selectable_body_tree(ui, *NEW_BODY_PARENT_TREE_ID, universe, parent_id);
         });
     ui.end_row();
+
+    if let Some(parent_id) = parent_id
+        && let Some(orbit) = orbit.as_mut()
+        && let Some(parent) = universe.get_body(*parent_id)
+    {
+        let gravitational_parameter = universe.get_gravitational_constant() * parent.body.mass;
+        if orbit.get_gravitational_parameter() != gravitational_parameter {
+            orbit.set_gravitational_parameter(gravitational_parameter, mu_mode);
+        }
+    }
 
     let parent_id = match parent_id {
         Some(id) => *id,
