@@ -238,6 +238,7 @@ fn new_body_window_orbit(
             .color(Color32::WHITE)
             .size(16.0),
     );
+    // TODO: Fix mu not updating
     ComboBox::from_id_salt(NEW_BODY_PARENT_COMBO_BOX_SALT)
         .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
         .wrap_mode(TextWrapMode::Extend)
