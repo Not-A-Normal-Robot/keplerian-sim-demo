@@ -1,31 +1,44 @@
 use super::{
-    super::super::{
-        sim::universe::{BodyWrapper, Id as UniverseId, Universe},
-        units::{AutoUnit, length::LengthUnit, mass::MassUnit},
+    super::{
+        super::{
+            sim::universe::{Id as UniverseId, Universe},
+            units::{AutoUnit, length::LengthUnit, mass::MassUnit},
+        },
+        unit_dv::drag_value_with_unit,
     },
     SimState, declare_id,
     info::body_window_info,
 };
-use three_d::egui::{Color32, Context, Grid, Label, RichText, Ui, Window};
+use three_d::egui::{
+    Color32, Context, Grid, Label, RichText, TextEdit, Ui, Window,
+    color_picker::color_edit_button_srgb,
+};
 
 declare_id!(salt_only, EDIT_BODY_PHYS, b"mutB0dyP");
 declare_id!(salt_only, EDIT_BODY_ORBIT, b"mutB0dyO");
 declare_id!(salt_only, EDIT_BODY_INFO_GRID, b"mutInF0!");
+declare_id!(salt_only, EDIT_BODY_MASS, b"mut|mass");
+declare_id!(salt_only, EDIT_BODY_RADIUS, b"m|Radius");
 
 pub(in super::super) struct EditBodyWindowState {
-    _mass_unit: AutoUnit<MassUnit>,
-    _radius_unit: AutoUnit<LengthUnit>,
+    mass_unit: AutoUnit<MassUnit>,
+    radius_unit: AutoUnit<LengthUnit>,
+    periapsis_unit: AutoUnit<LengthUnit>,
     pub(in super::super) window_open: bool,
 }
 
 impl Default for EditBodyWindowState {
     fn default() -> Self {
         Self {
-            _mass_unit: AutoUnit {
+            mass_unit: AutoUnit {
                 auto: true,
                 unit: MassUnit::Kilograms,
             },
-            _radius_unit: AutoUnit {
+            radius_unit: AutoUnit {
+                auto: true,
+                unit: LengthUnit::Meters,
+            },
+            periapsis_unit: AutoUnit {
                 auto: true,
                 unit: LengthUnit::Meters,
             },
@@ -117,12 +130,69 @@ fn body_edit_window_contents(
 
 fn edit_body_window_phys(
     ui: &mut Ui,
-    _universe: &mut Universe,
-    _body_id: UniverseId,
-    _window_state: &mut EditBodyWindowState,
+    universe: &mut Universe,
+    body_id: UniverseId,
+    window_state: &mut EditBodyWindowState,
 ) {
-    ui.label("TODO");
-    // TODO
+    let wrapper = match universe.get_body_mut(body_id) {
+        Some(w) => w,
+        None => return,
+    };
+
+    ui.label("Body name").on_hover_text(
+        RichText::new("The name that will show up in the list of bodies.")
+            .color(Color32::WHITE)
+            .size(16.0),
+    );
+    ui.add(
+        TextEdit::singleline(&mut wrapper.body.name)
+            .char_limit(255)
+            .hint_text("Enter new body name")
+            .desired_width(f32::INFINITY),
+    );
+    ui.end_row();
+
+    ui.label("Body color").on_hover_text(
+        RichText::new("The color that this body will be rendered in.")
+            .color(Color32::WHITE)
+            .size(16.0),
+    );
+    let original_srgb: [u8; 3] = wrapper.body.color.into();
+    let mut srgb = original_srgb.clone();
+    color_edit_button_srgb(ui, &mut srgb);
+    if srgb != original_srgb {
+        wrapper.body.color = srgb.into();
+    }
+    ui.end_row();
+
+    ui.label("Mass").on_hover_text(
+        RichText::new(
+            "The mass of the body.\n\
+            Determines the speed of orbiting objects.",
+        )
+        .color(Color32::WHITE)
+        .size(16.0),
+    );
+    drag_value_with_unit(
+        EDIT_BODY_MASS_SALT,
+        ui,
+        &mut wrapper.body.mass,
+        &mut window_state.mass_unit,
+    );
+    ui.end_row();
+
+    ui.label("Radius").on_hover_text(
+        RichText::new("The radius that this body will be rendered in.")
+            .color(Color32::WHITE)
+            .size(16.0),
+    );
+    drag_value_with_unit(
+        EDIT_BODY_RADIUS_SALT,
+        ui,
+        &mut wrapper.body.radius,
+        &mut window_state.radius_unit,
+    );
+    ui.end_row();
 }
 
 fn edit_body_window_orbit(
