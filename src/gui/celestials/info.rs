@@ -107,7 +107,7 @@ pub(super) fn body_window_info(
     add_row(
         ui,
         "Escape velocity",
-        (2.0 * mu / body.mass).sqrt(),
+        (2.0 * mu / body.radius).sqrt(),
         "m/s",
         include_str!("row_descs/escape_velocity.txt"),
     );
@@ -406,7 +406,7 @@ pub(super) fn body_window_info(
             ui,
             "SOI radius",
             soi_radius,
-            "s",
+            "m",
             include_str!("row_descs/soi_radius.txt"),
         );
     }
