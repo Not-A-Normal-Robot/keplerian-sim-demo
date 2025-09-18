@@ -353,9 +353,11 @@ fn drag_value_with_unit_inner<'a, U>(
 {
     let unit_scale = unit.get_value();
     let mut scaled_val = *base_val / unit_scale;
+    let speed = scaled_val * 4e-3;
     let dv = DragValue::new(&mut scaled_val)
         .custom_formatter(|num, _| format!("{:3.8}", PrettyPrintFloat(num)))
-        .range(f64::MIN_POSITIVE..=f64::MAX);
+        .range(f64::MIN_POSITIVE..=f64::MAX)
+        .speed(speed);
     let cb = ComboBox::from_id_salt((DRAG_VALUE_WITH_UNIT_PREFIX_SALT, id_salt))
         .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
         .selected_text(unit.unit.to_string());
