@@ -16,3 +16,8 @@ bun build --production --minify --outfile=assets/watchdog.js assets/watchdog.ts
 ```bash
 trunk serve
 ```
+
+Build for production:
+```bash
+trunk build --release
+```
