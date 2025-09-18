@@ -17,6 +17,7 @@ declare_id!(salt_only, NEW_BODY_ORBIT, b"3111ptic");
 declare_id!(salt_only, DRAG_VALUE_WITH_UNIT_PREFIX, b"2ParSecs");
 declare_id!(salt_only, NEW_BODY_MASS, b"nMa551ve");
 declare_id!(salt_only, NEW_BODY_RADIUS, b"extraRad");
+declare_id!(salt_only, NEW_BODY_PERIAPSIS, b"TOOcl0se");
 declare_id!(salt_only, NEW_BODY_PARENT_COMBO_BOX, b"dr0pChld");
 declare_id!(NEW_BODY_PARENT_TREE, b"treeL1K3");
 declare_id!(salt_only, NEW_BODY_INFO_GRID, b"NEEEERD!");
@@ -24,6 +25,7 @@ declare_id!(salt_only, NEW_BODY_INFO_GRID, b"NEEEERD!");
 pub(in super::super) struct NewBodyWindowState {
     mass_unit: AutoUnit<MassUnit>,
     radius_unit: AutoUnit<LengthUnit>,
+    periapsis_unit: AutoUnit<LengthUnit>,
     pub(super) request_focus: bool,
 }
 
@@ -35,6 +37,10 @@ impl Default for NewBodyWindowState {
                 unit: MassUnit::Kilograms,
             },
             radius_unit: AutoUnit {
+                auto: true,
+                unit: LengthUnit::Meters,
+            },
+            periapsis_unit: AutoUnit {
                 auto: true,
                 unit: LengthUnit::Meters,
             },
@@ -131,6 +137,7 @@ fn new_body_window_content(
                 &mut wrapper.body.orbit,
                 &mut wrapper.parent_id,
                 universe,
+                window_state,
             )
         });
 
@@ -209,6 +216,7 @@ fn new_body_window_orbit(
     orbit: &mut Option<Orbit>,
     parent_id: &mut Option<UniverseId>,
     universe: &Universe,
+    window_state: &mut NewBodyWindowState,
 ) {
     // TODO: Hover popups
     ui.label("Parent body");
@@ -257,11 +265,13 @@ fn new_body_window_orbit(
 
     ui.label("Periapsis");
     let mut periapsis = orbit.get_periapsis();
-    let dv = DragValue::new(&mut periapsis)
-        .range(0.0..=f64::MAX)
-        .suffix(" m");
-    let dv = ui.add_sized((ui.available_width(), 18.0), dv);
-    if dv.changed() {
+    drag_value_with_unit(
+        NEW_BODY_PERIAPSIS_SALT,
+        ui,
+        &mut periapsis,
+        &mut window_state.periapsis_unit,
+    );
+    if periapsis != orbit.get_periapsis() {
         orbit.set_periapsis(periapsis);
     }
     ui.end_row();
