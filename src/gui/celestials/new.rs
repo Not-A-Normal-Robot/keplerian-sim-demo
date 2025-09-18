@@ -170,8 +170,11 @@ fn new_body_window_phys(
     wrapper: &mut PreviewBody,
     window_state: &mut NewBodyWindowState,
 ) {
-    // TODO: Hover popups
-    ui.label("Body name");
+    ui.label("Body name").on_hover_text(
+        RichText::new("The name that will show up in the list of bodies.")
+            .color(Color32::WHITE)
+            .size(16.0),
+    );
     ui.add(
         TextEdit::singleline(&mut wrapper.body.name)
             .char_limit(255)
@@ -180,7 +183,11 @@ fn new_body_window_phys(
     );
     ui.end_row();
 
-    ui.label("Body color");
+    ui.label("Body color").on_hover_text(
+        RichText::new("The color that this body will be rendered in.")
+            .color(Color32::WHITE)
+            .size(16.0),
+    );
     let original_srgb: [u8; 3] = wrapper.body.color.into();
     let mut srgb = original_srgb.clone();
     color_edit_button_srgb(ui, &mut srgb);
@@ -189,7 +196,14 @@ fn new_body_window_phys(
     }
     ui.end_row();
 
-    ui.label("Mass");
+    ui.label("Mass").on_hover_text(
+        RichText::new(
+            "The mass of the body.\n\
+            Determines the speed of orbiting objects.",
+        )
+        .color(Color32::WHITE)
+        .size(16.0),
+    );
     drag_value_with_unit(
         NEW_BODY_MASS_SALT,
         ui,
@@ -198,7 +212,11 @@ fn new_body_window_phys(
     );
     ui.end_row();
 
-    ui.label("Radius");
+    ui.label("Radius").on_hover_text(
+        RichText::new("The radius that this body will be rendered in.")
+            .color(Color32::WHITE)
+            .size(16.0),
+    );
     drag_value_with_unit(
         NEW_BODY_RADIUS_SALT,
         ui,
@@ -215,8 +233,11 @@ fn new_body_window_orbit(
     universe: &Universe,
     window_state: &mut NewBodyWindowState,
 ) {
-    // TODO: Hover popups
-    ui.label("Parent body");
+    ui.label("Parent body").on_hover_text(
+        RichText::new("The body that this body is orbiting around.")
+            .color(Color32::WHITE)
+            .size(16.0),
+    );
     ComboBox::from_id_salt(NEW_BODY_PARENT_COMBO_BOX_SALT)
         .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
         .wrap_mode(TextWrapMode::Extend)
@@ -249,7 +270,16 @@ fn new_body_window_orbit(
         Orbit::new(0.0, periapsis, 0.0, 0.0, 0.0, 0.0, mu)
     });
 
-    ui.label("Eccentricity");
+    ui.label("Eccentricity").on_hover_text(
+        RichText::new(
+            "How eccentric the orbit is.\n\
+            An eccentricity of 1 (parabolic) is not supported.\n\
+            An eccentricity less than one means the orbit is closed.\n\
+            An eccentricity of more than one means the orbit never loops (is open; hyperbolic).",
+        )
+        .color(Color32::WHITE)
+        .size(16.0),
+    );
     let mut eccentricity = orbit.get_eccentricity();
     let dv = DragValue::new(&mut eccentricity)
         .range(0.0..=f64::MAX)
@@ -260,7 +290,14 @@ fn new_body_window_orbit(
     }
     ui.end_row();
 
-    ui.label("Periapsis");
+    ui.label("Periapsis").on_hover_text(
+        RichText::new(
+            "The minimum distance of the orbit \
+            to the center of the parent body.",
+        )
+        .color(Color32::WHITE)
+        .size(16.0),
+    );
     let mut periapsis = orbit.get_periapsis();
     drag_value_with_unit(
         NEW_BODY_PERIAPSIS_SALT,
@@ -273,7 +310,11 @@ fn new_body_window_orbit(
     }
     ui.end_row();
 
-    ui.label("Inclination");
+    ui.label("Inclination").on_hover_text(
+        RichText::new("How inclined from the up axis the orbit is.")
+            .color(Color32::WHITE)
+            .size(16.0),
+    );
     let mut inclination = orbit.get_inclination().to_degrees();
     let slider = Slider::new(&mut inclination, 0.0..=180.0).suffix('°');
     let slider = ui.add_sized((ui.available_width(), 18.0), slider);
@@ -282,7 +323,14 @@ fn new_body_window_orbit(
     }
     ui.end_row();
 
-    ui.label("Arg. of Pe.");
+    ui.label("Arg. of Pe.").on_hover_text(
+        RichText::new(
+            "The argument of periapsis of the orbit.\n\
+            This is the angle offset of the periapsis along the orbital plane.",
+        )
+        .color(Color32::WHITE)
+        .size(16.0),
+    );
     let mut arg_pe = orbit.get_arg_pe().to_degrees();
     let slider = Slider::new(&mut arg_pe, 0.0..=360.0).suffix('°');
     let slider = ui.add(slider);
@@ -291,7 +339,16 @@ fn new_body_window_orbit(
     }
     ui.end_row();
 
-    ui.label("RAAN");
+    ui.label("RAAN").on_hover_text(
+        RichText::new(
+            "The right ascension of the ascending node.\n\
+            a.k.a.: the longitude of ascending node.\n\
+            This is the angle offset of the ascending node along \
+            the reference plane (horizontal plane).",
+        )
+        .color(Color32::WHITE)
+        .size(16.0),
+    );
     let mut lan = orbit.get_long_asc_node().to_degrees();
     let slider = Slider::new(&mut lan, 0.0..=360.0).suffix('°');
     let slider = ui.add(slider);
@@ -302,7 +359,15 @@ fn new_body_window_orbit(
 
     let mut mean_anomaly = orbit.get_mean_anomaly_at_epoch().to_degrees();
     if orbit.get_eccentricity() < 1.0 {
-        ui.label("Mean anom.");
+        ui.label("Mean anom.").on_hover_text(
+            RichText::new(
+                "Mean anomaly at epoch.\n\
+                This is the offset to the mean anomaly.\n\
+                At time = 0, the mean anomaly of this orbit will be equal to this.",
+            )
+            .color(Color32::WHITE)
+            .size(16.0),
+        );
         let slider = Slider::new(&mut mean_anomaly, 0.0..=360.0).suffix('°');
         let slider = ui.add(slider);
         if mean_anomaly < 0.0 || mean_anomaly > 360.0 {
@@ -312,7 +377,15 @@ fn new_body_window_orbit(
             orbit.set_mean_anomaly_at_epoch(mean_anomaly.to_radians());
         }
     } else {
-        ui.label("Hyp. m. anom.");
+        ui.label("Hyp. m. anom.").on_hover_text(
+            RichText::new(
+                "Hyperbolic mean anomaly at epoch.\n\
+                This is the offset to the hyperbolic mean anomaly.\n\
+                At time = 0, the hyperbolic mean anomaly of this orbit will be equal to this.",
+            )
+            .color(Color32::WHITE)
+            .size(16.0),
+        );
         let dv = DragValue::new(&mut mean_anomaly)
             .range(f64::MIN..=f64::MAX)
             .suffix('°');
