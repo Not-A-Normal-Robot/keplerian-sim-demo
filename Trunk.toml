@@ -1,5 +1,6 @@
 [build]
 minify = "on_release"
+public_url = "."
 
 [serve]
 addresses = ["::1"]
@@ -8,10 +9,12 @@ addresses = ["::1"]
 stage = "pre_build"
 command = "bun"
 command_arguments = [
-    "build", "--production", "--minify", "--outfile=assets/watchdog.js", "assets/watchdog.ts"
+    "build",
+    "--production",
+    "--minify",
+    "--outfile=assets/watchdog.js",
+    "assets/watchdog.ts",
 ]
 
 [watch]
-ignore = [
-    "assets/watchdog.js"
-]
+ignore = ["assets/watchdog.js"]
