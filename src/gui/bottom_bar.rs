@@ -582,7 +582,19 @@ fn options_menu(ui: &mut Ui, sim_state: &mut SimState) -> bool {
 
     cb.response.on_hover_text(Arc::clone(&tooltip));
 
-    cb.inner.unwrap_or(false)
+    let force_open = cb.inner.unwrap_or(false);
+
+    let about_toggle = Button::selectable(
+        sim_state.ui.is_about_window_open,
+        RichText::new("About keplerian_sim").size(16.0),
+    );
+    let about_toggle = ui.add(about_toggle);
+
+    if about_toggle.clicked() {
+        sim_state.ui.is_about_window_open ^= true;
+    }
+
+    force_open
 }
 
 /// Returns whether or not any button was clicked

@@ -11,6 +11,7 @@ fn warn(msg: &str) {
 
 fn main() {
     check_row_descs_format();
+    export_keplerian_sim_version();
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -343,5 +344,30 @@ fn check_discouraged_chars(line: Option<&str>, state: &RowDescState) {
             used discouraged char {discouraged_name} ({discouraged}); \
             use {suggested_name} ({suggested}) instead"
         ));
+    }
+}
+
+fn export_keplerian_sim_version() {
+    // Attempt to read resolved dependency versions via cargo metadata and
+    // publish the keplerian_sim version as an environment variable so it can
+    // be accessed at runtime via env! or option_env!.
+    match cargo_metadata::MetadataCommand::new().exec() {
+        Ok(metadata) => {
+            let pkg_map = metadata
+                .packages
+                .into_iter()
+                .map(|p| (p.name.clone(), p.version.to_string()))
+                .collect::<std::collections::BTreeMap<_, _>>();
+
+            if let Some(ver) = pkg_map.get("keplerian_sim") {
+                println!("cargo:rustc-env=KEPLERIAN_SIM_VERSION={}", ver);
+            } else {
+                println!("cargo:rustc-env=KEPLERIAN_SIM_VERSION=unknown");
+            }
+        }
+        Err(e) => {
+            warn(&format!("failed to query cargo metadata: {}", e));
+            println!("cargo:rustc-env=KEPLERIAN_SIM_VERSION=unknown");
+        }
     }
 }

@@ -12,6 +12,7 @@ use three_d::{
     },
 };
 
+mod about;
 mod bottom_bar;
 mod celestials;
 mod fps;
@@ -44,6 +45,7 @@ struct UiState {
     body_list_window_state: celestials::list::BodyListWindowState,
     new_body_window_state: Option<celestials::new::NewBodyWindowState>,
     edit_body_window_state: celestials::edit::EditBodyWindowState,
+    is_about_window_open: bool,
 }
 
 impl Default for UiState {
@@ -54,6 +56,7 @@ impl Default for UiState {
             body_list_window_state: celestials::list::BodyListWindowState::default(),
             new_body_window_state: None,
             edit_body_window_state: celestials::edit::EditBodyWindowState::default(),
+            is_about_window_open: false,
         }
     }
 }
@@ -174,4 +177,5 @@ fn handle_ui(
     fps::fps_area(ctx, &sim_state.ui.frame_data);
     bottom_bar::draw(ctx, sim_state, elapsed_time);
     celestials::celestial_windows(ctx, sim_state, position_map);
+    about::draw(ctx, &mut sim_state.ui);
 }

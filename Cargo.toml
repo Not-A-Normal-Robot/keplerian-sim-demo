@@ -25,7 +25,15 @@ smol-macros = "0.1.1"
 gloo-timers = { version = "0.3.0", features = ["futures"] }
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4.50"
-web-sys = { version = "0.3", features = ["Document", "Element", "HtmlCanvasElement", "WebGl2RenderingContext", "Window", "console", "Navigator"] }
+web-sys = { version = "0.3", features = [
+    "Document",
+    "Element",
+    "HtmlCanvasElement",
+    "WebGl2RenderingContext",
+    "Window",
+    "console",
+    "Navigator",
+] }
 
 [profile.dev]
 opt-level = "z"
@@ -37,3 +45,6 @@ codegen-units = 1
 
 [patch.crates-io]
 three-d = { version = "0.18.2", git = "https://github.com/Not-A-Normal-Robot/three-d.git", branch = "updated-egui" }
+
+[build-dependencies]
+cargo_metadata = "0.15"
