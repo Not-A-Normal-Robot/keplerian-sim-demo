@@ -231,7 +231,6 @@ const fn cursor_icon_to_css_value(cursor: CursorIcon) -> &'static str {
 fn set_cursor_icon(cursor: CursorIcon) {
     #[cfg(target_family = "wasm")]
     {
-        use wasm_bindgen::JsCast;
         let Some(window) = web_sys::window() else {
             return;
         };
@@ -263,7 +262,6 @@ fn handle_command(command: &OutputCommand) {
 fn copy_text(text: &str) {
     #[cfg(target_family = "wasm")]
     {
-        panic!();
         use wasm_bindgen::JsCast;
         let document = match web_sys::window().and_then(|window| window.document()) {
             Some(d) => d,
