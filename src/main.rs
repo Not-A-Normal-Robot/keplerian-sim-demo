@@ -187,6 +187,9 @@ impl Program {
     }
 
     fn tick(&mut self, mut frame_input: FrameInput) -> FrameOutput {
+        #[cfg(all(target_family = "wasm", not(feature = "is-bin")))]
+        crate::web::heartbeat::update_frame_time();
+
         if self.sim_state.running {
             self.sim_state
                 .universe

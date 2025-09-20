@@ -7,6 +7,14 @@ license = "GPL-3.0-or-later"
 [lib]
 crate-type = ["cdylib"]
 
+[[bin]]
+name = "keplerian_sim_demo"
+path = "src/main.rs"
+required-features = ["is-bin"]
+
+[features]
+is-bin = []
+
 [dependencies]
 egui_extras = { version = "0.32", features = ["svg"] }
 float-pretty-print = "0.1.1"
@@ -33,6 +41,7 @@ web-sys = { version = "0.3", features = [
     "Window",
     "console",
     "Navigator",
+    "Performance",
 ] }
 
 [profile.dev]
