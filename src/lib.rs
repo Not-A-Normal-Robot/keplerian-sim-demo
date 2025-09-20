@@ -18,7 +18,7 @@ async fn start() {
     clear_dom(&document);
     init_canvas(&document);
 
-    main::run().await;
+    main::run();
 }
 
 fn clear_dom(document: &Document) {

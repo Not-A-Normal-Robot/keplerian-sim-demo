@@ -1,6 +1,6 @@
 use three_d::egui::{Align, Layout, RichText, Ui, Window};
 
-use super::{super::assets::BANNER_SOURCE, EguiContext, UiState};
+use super::{super::assets::BANNER, EguiContext, UiState};
 
 /// Get the keplerian_sim version from build.rs
 const KEPLERIAN_SIM_VERSION: &str = match option_env!("KEPLERIAN_SIM_VERSION") {
@@ -23,7 +23,8 @@ fn window_contents(ui: &mut Ui) {
         Layout::left_to_right(Align::Max),
         header,
     );
-    ui.image(BANNER_SOURCE);
+    let image = BANNER.clone();
+    ui.add(image);
     ui.allocate_ui_with_layout(
         ui.spacing().interact_size,
         Layout::left_to_right(Align::Center),

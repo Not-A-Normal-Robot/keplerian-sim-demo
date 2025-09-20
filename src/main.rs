@@ -24,16 +24,14 @@ mod sim;
 mod units;
 
 #[cfg(not(target_family = "wasm"))]
-::smol_macros::main! {
-    async fn main() {
-        run().await;
-    }
+fn main() {
+    run()
 }
 
 #[cfg(target_family = "wasm")]
 #[allow(dead_code)]
 fn main() {
-    unreachable!();
+    unsafe { std::hint::unreachable_unchecked() }
 }
 
 pub(crate) struct Program {
@@ -236,6 +234,6 @@ impl Program {
     }
 }
 
-pub async fn run() {
+pub fn run() {
     Program::new().run();
 }
