@@ -7,7 +7,7 @@ use ordered_float::NotNan;
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
-        self, Context as EguiContext, FontData, FontFamily, FontId, Vec2,
+        self, Context as EguiContext, FontData, FontFamily, FontId, OutputCommand, Vec2,
         epaint::text::{FontInsert, FontPriority, InsertFontFamily},
     },
 };
@@ -178,4 +178,22 @@ fn handle_ui(
     bottom_bar::draw(ctx, sim_state, elapsed_time);
     celestials::celestial_windows(ctx, sim_state, position_map);
     about::draw(ctx, &mut sim_state.ui);
+    ctx.output(|output| {
+        for command in output.commands.iter().filter_map(|c| {
+            let OutputCommand::OpenUrl(command) = c else {
+                return None;
+            };
+            Some(command)
+        }) {
+            #[cfg(target_family = "wasm")]
+            web_sys::window()
+                .map(|w| w.open_with_url_and_target(&command.url, "_blank"))
+                .expect("window should exist")
+                .expect("url should be openable");
+            #[cfg(not(target_family = "wasm"))]
+            if let Err(e) = open::that_detached(&command.url) {
+                eprintln!("Failed to open URL '{}': {e}", &command.url);
+            }
+        }
+    })
 }
