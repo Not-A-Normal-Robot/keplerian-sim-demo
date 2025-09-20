@@ -8,7 +8,7 @@ mod main;
 mod web;
 
 #[wasm_bindgen(start)]
-async fn start() {
+fn start() {
     web::panic_handler::init_panic_handler();
     web::heartbeat::start_beating();
 
