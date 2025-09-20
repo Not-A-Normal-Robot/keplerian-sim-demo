@@ -249,6 +249,7 @@ fn set_cursor_icon(cursor: CursorIcon) {
     #[cfg(not(target_family = "wasm"))]
     {
         // TODO: Setting cursor icon on native
+        let _ = cursor;
     }
 }
 
