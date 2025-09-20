@@ -7,7 +7,8 @@ use ordered_float::NotNan;
 use three_d::{
     Context as ThreeDContext, Event as ThreeDEvent, GUI, Viewport,
     egui::{
-        self, Context as EguiContext, FontData, FontFamily, FontId, OutputCommand, Vec2,
+        self, Context as EguiContext, CursorIcon, FontData, FontFamily, FontId, OpenUrl,
+        OutputCommand, Vec2,
         epaint::text::{FontInsert, FontPriority, InsertFontFamily},
     },
 };
@@ -179,21 +180,139 @@ fn handle_ui(
     celestials::celestial_windows(ctx, sim_state, position_map);
     about::draw(ctx, &mut sim_state.ui);
     ctx.output(|output| {
-        for command in output.commands.iter().filter_map(|c| {
-            let OutputCommand::OpenUrl(command) = c else {
-                return None;
-            };
-            Some(command)
-        }) {
-            #[cfg(target_family = "wasm")]
-            web_sys::window()
-                .map(|w| w.open_with_url_and_target(&command.url, "_blank"))
-                .expect("window should exist")
-                .expect("url should be openable");
-            #[cfg(not(target_family = "wasm"))]
-            if let Err(e) = open::that_detached(&command.url) {
-                eprintln!("Failed to open URL '{}': {e}", &command.url);
-            }
+        for command in &output.commands {
+            handle_command(&command);
         }
-    })
+        set_cursor_icon(output.cursor_icon);
+    });
+}
+
+#[cfg(target_family = "wasm")]
+const fn cursor_icon_to_css_value(cursor: CursorIcon) -> &'static str {
+    match cursor {
+        CursorIcon::Default => "default",
+        CursorIcon::None => "none",
+        CursorIcon::PointingHand => "pointer",
+        CursorIcon::Text => "text",
+        CursorIcon::VerticalText => "vertical-text",
+        CursorIcon::Crosshair => "crosshair",
+        CursorIcon::Move => "move",
+        CursorIcon::Grab => "grab",
+        CursorIcon::Grabbing => "grabbing",
+        CursorIcon::Help => "help",
+        CursorIcon::Progress => "progress",
+        CursorIcon::Wait => "wait",
+        CursorIcon::NotAllowed => "not-allowed",
+        CursorIcon::NoDrop => "no-drop",
+        CursorIcon::AllScroll => "all-scroll",
+        CursorIcon::ResizeHorizontal => "ew-resize",
+        CursorIcon::ResizeVertical => "ns-resize",
+        CursorIcon::ResizeNwSe => "nwse-resize",
+        CursorIcon::ResizeNeSw => "nesw-resize",
+        CursorIcon::ZoomIn => "zoom-in",
+        CursorIcon::ZoomOut => "zoom-out",
+        CursorIcon::Copy => "copy",
+        CursorIcon::Alias => "alias",
+        CursorIcon::ContextMenu => "context-menu",
+        CursorIcon::Cell => "cell",
+        CursorIcon::ResizeEast => "e-resize",
+        CursorIcon::ResizeSouthEast => "se-resize",
+        CursorIcon::ResizeSouth => "s-resize",
+        CursorIcon::ResizeSouthWest => "sw-resize",
+        CursorIcon::ResizeWest => "w-resize",
+        CursorIcon::ResizeNorthWest => "nw-resize",
+        CursorIcon::ResizeNorth => "n-resize",
+        CursorIcon::ResizeNorthEast => "ne-resize",
+        CursorIcon::ResizeColumn => "col-resize",
+        CursorIcon::ResizeRow => "row-resize",
+    }
+}
+
+fn set_cursor_icon(cursor: CursorIcon) {
+    #[cfg(target_family = "wasm")]
+    {
+        use wasm_bindgen::JsCast;
+        let Some(window) = web_sys::window() else {
+            return;
+        };
+        let Some(document) = window.document() else {
+            return;
+        };
+        let Some(body) = document.body() else {
+            return;
+        };
+
+        let _ = body
+            .style()
+            .set_property("cursor", cursor_icon_to_css_value(cursor));
+    }
+    #[cfg(not(target_family = "wasm"))]
+    {
+        // TODO: Setting cursor icon on native
+    }
+}
+
+fn handle_command(command: &OutputCommand) {
+    match command {
+        OutputCommand::CopyText(text) => copy_text(&text),
+        OutputCommand::CopyImage(_) => eprintln!("Copying images is not implemented."),
+        OutputCommand::OpenUrl(url) => open_url(url),
+    }
+}
+fn copy_text(text: &str) {
+    #[cfg(target_family = "wasm")]
+    {
+        panic!();
+        use wasm_bindgen::JsCast;
+        let document = match web_sys::window().and_then(|window| window.document()) {
+            Some(d) => d,
+            None => return,
+        };
+        let html_document = match document.clone().dyn_into::<web_sys::HtmlDocument>() {
+            Ok(d) => d,
+            Err(_) => return,
+        };
+        let body = match document.body() {
+            Some(b) => b,
+            None => return,
+        };
+        let textarea = match document
+            .create_element("textarea")
+            .and_then(|el| Ok(el.dyn_into::<web_sys::HtmlTextAreaElement>()))
+        {
+            Ok(Ok(ta)) => ta,
+            Ok(Err(_)) => return,
+            Err(_) => return,
+        };
+
+        textarea.set_value(text);
+        let _ = textarea.style().set_property("position", "fixed");
+        let _ = textarea.style().set_property("left", "-9999vw");
+        let _ = textarea.style().set_property("width", "0");
+        let _ = body.append_child(&textarea);
+        let _ = textarea.select();
+        let _ = html_document.exec_command("copy");
+        let _ = body.remove_child(&textarea);
+    }
+    #[cfg(not(target_family = "wasm"))]
+    {
+        if let Ok(mut cb) = arboard::Clipboard::new() {
+            if let Err(e) = cb.set_text(text.to_owned()) {
+                eprintln!("Failed to set clipboard text: {e}");
+            }
+        } else {
+            eprintln!("Failed to open clipboard");
+        }
+    }
+}
+fn open_url(command: &OpenUrl) {
+    #[cfg(target_family = "wasm")]
+    web_sys::window()
+        .map(|w| w.open_with_url_and_target(&command.url, "_blank"))
+        .expect("window should exist")
+        .expect("url should be openable");
+    #[cfg(not(target_family = "wasm"))]
+    if let Err(e) = open::that_detached(&command.url) {
+        eprintln!("Failed to open URL '{}': {e}", &command.url);
+    }
 }
