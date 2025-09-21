@@ -54,6 +54,7 @@ fn selectable_body_tree(
     universe: &Universe,
     selected: &mut Option<UniverseId>,
 ) -> bool {
+    // TODO: Hover tooltips for focusing, context menu, etc.
     fn selectable_body_node(
         ui: &mut Ui,
         egui_id: EguiId,
