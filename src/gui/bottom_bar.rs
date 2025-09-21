@@ -19,10 +19,10 @@ use strum::IntoEnumIterator;
 use three_d::{
     Srgba,
     egui::{
-        Align2, Area, Atom, Button, Color32, ComboBox, Context, CornerRadius, DragValue, FontId,
-        Frame, Image, ImageButton, Margin, Popup, PopupCloseBehavior, Rect, RectAlign, Response,
-        RichText, ScrollArea, Shape, Slider, Stroke, TextStyle, TopBottomPanel, Ui, Vec2,
-        style::HandleShape,
+        Align2, Area, Atom, Button, Color32, ComboBox, Context, CornerRadius, CursorIcon,
+        DragValue, FontId, Frame, Image, ImageButton, Margin, Popup, PopupCloseBehavior, Rect,
+        RectAlign, Response, RichText, ScrollArea, Shape, Slider, Stroke, TextStyle,
+        TopBottomPanel, Ui, Vec2, style::HandleShape,
     },
 };
 
@@ -151,7 +151,10 @@ fn time_manager(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64) {
 
         let button = ImageButton::new(image.clone().fit_to_exact_size(MIN_TOUCH_TARGET_VEC))
             .corner_radius(MIN_TOUCH_TARGET_LEN);
-        let button = ui.add(button).on_hover_text(hover_text);
+        let button = ui
+            .add(button)
+            .on_hover_text(hover_text)
+            .on_hover_cursor(CursorIcon::PointingHand);
 
         let popup = Popup::menu(&button).close_behavior(PopupCloseBehavior::CloseOnClickOutside);
         popup.show(|ui| {
@@ -204,7 +207,10 @@ fn pause_button(ui: &mut Ui, sim_state: &mut SimState) {
         let button = ImageButton::new(image.clone().max_size(MIN_TOUCH_TARGET_VEC))
             .corner_radius(CornerRadius::same(MIN_TOUCH_TARGET_LEN as u8));
 
-        let button_instance = ui.add(button).on_hover_text(hover_text);
+        let button_instance = ui
+            .add(button)
+            .on_hover_text(hover_text)
+            .on_hover_cursor(CursorIcon::PointingHand);
         if button_instance.clicked() {
             sim_state.running = !sim_state.running;
         }
@@ -242,7 +248,10 @@ fn time_display(ui: &mut Ui, sim_state: &mut SimState) {
         widget_styles.active.weak_bg_fill = Color32::from_white_alpha(64);
 
         let button = Button::new(text).wrap().min_size(display_size);
-        let button_instance = ui.add(button).on_hover_text(hover_text);
+        let button_instance = ui
+            .add(button)
+            .on_hover_text(hover_text)
+            .on_hover_cursor(CursorIcon::PointingHand);
 
         if button_instance.clicked() {
             sim_state.ui.bottom_bar_state.time_disp =
@@ -292,8 +301,10 @@ fn time_slider(ui: &mut Ui, sim_state: &mut SimState, elapsed_time: f64, column_
     if slider_instance.is_pointer_button_down_on() {
         let base = 10.0f64.powf(sim_state.ui.bottom_bar_state.time_slider_pos);
         sim_state.sim_speed *= base.powf(elapsed_time / 1000.0);
+        ui.ctx().set_cursor_icon(CursorIcon::Grabbing);
     } else {
         sim_state.ui.bottom_bar_state.time_slider_pos *= (-5.0 * elapsed_time / 1000.0).exp();
+        slider_instance.on_hover_cursor(CursorIcon::Grab);
     }
 }
 fn time_drag_value(ui: &mut Ui, sim_state: &mut SimState) {
@@ -362,7 +373,8 @@ fn time_unit_box(ui: &mut Ui, sim_state: &mut SimState) {
         .height(f32::INFINITY)
         .show_ui(ui, |ui| time_unit_box_inner(ui, sim_state, true))
         .response
-        .on_hover_text(hover_text);
+        .on_hover_text(hover_text)
+        .on_hover_cursor(CursorIcon::PointingHand);
 }
 fn time_unit_box_inner(ui: &mut Ui, sim_state: &mut SimState, per_second: bool) {
     let font = FontId::proportional(16.0);
@@ -429,7 +441,9 @@ fn window_toggles(ui: &mut Ui, sim_state: &mut SimState) {
 
     let list_open = &mut sim_state.ui.body_list_window_state.window_open;
     let list_button = ImageButton::new(assets::TREE_LIST_IMAGE.clone()).selected(*list_open);
-    let list_button = ui.add_sized(WINDOW_TOGGLE_BUTTON_SIZE, list_button);
+    let list_button = ui
+        .add_sized(WINDOW_TOGGLE_BUTTON_SIZE, list_button)
+        .on_hover_cursor(CursorIcon::PointingHand);
 
     if list_button.clicked() {
         *list_open ^= true;
@@ -437,7 +451,9 @@ fn window_toggles(ui: &mut Ui, sim_state: &mut SimState) {
 
     let add_open = sim_state.preview_body.is_some();
     let add_button = ImageButton::new(assets::ADD_ORBIT_IMAGE.clone()).selected(add_open);
-    let add_button = ui.add_sized(WINDOW_TOGGLE_BUTTON_SIZE, add_button);
+    let add_button = ui
+        .add_sized(WINDOW_TOGGLE_BUTTON_SIZE, add_button)
+        .on_hover_cursor(CursorIcon::PointingHand);
 
     if add_button.clicked() {
         if sim_state.preview_body.is_some() {
@@ -481,7 +497,9 @@ fn window_toggles(ui: &mut Ui, sim_state: &mut SimState) {
 
     let edit_open = &mut sim_state.ui.edit_body_window_state.window_open;
     let edit_button = ImageButton::new(assets::EDIT_ORBIT_IMAGE.clone()).selected(*edit_open);
-    let edit_button = ui.add_sized(WINDOW_TOGGLE_BUTTON_SIZE, edit_button);
+    let edit_button = ui
+        .add_sized(WINDOW_TOGGLE_BUTTON_SIZE, edit_button)
+        .on_hover_cursor(CursorIcon::PointingHand);
 
     if edit_button.clicked() {
         *edit_open ^= true;
@@ -500,11 +518,13 @@ fn end_items(ui: &mut Ui, sim_state: &mut SimState) {
 
 const OPTIONS_BUTTON_SIZE: Vec2 = MIN_TOUCH_TARGET_VEC;
 fn options_button(ui: &mut Ui, sim_state: &mut SimState) {
-    // TODO: Hover tooltip
     let button = ImageButton::new(assets::OPTIONS.clone())
         .selected(sim_state.ui.bottom_bar_state.options_open);
 
-    let button = ui.add_sized(OPTIONS_BUTTON_SIZE, button);
+    let button = ui
+        .add_sized(OPTIONS_BUTTON_SIZE, button)
+        .on_hover_text("Options and About")
+        .on_hover_cursor(CursorIcon::PointingHand);
 
     if button.clicked() {
         sim_state.ui.bottom_bar_state.options_open ^= true;
@@ -624,7 +644,6 @@ fn mu_mode_menu(ui: &mut Ui, mu_setter_mode: &mut BulkMuSetterMode) -> bool {
 
 const COLLAPSE_TOGGLE_SIZE: Vec2 = MIN_TOUCH_TARGET_VEC;
 fn collapse_toggle(ui: &mut Ui, sim_state: &mut SimState) {
-    // TODO: Hover tooltip
     ui.spacing_mut().button_padding = Vec2::ZERO;
     let widget_styles = &mut ui.visuals_mut().widgets;
     widget_styles.inactive.weak_bg_fill = Color32::TRANSPARENT;
@@ -658,4 +677,13 @@ fn collapse_toggle(ui: &mut Ui, sim_state: &mut SimState) {
     if button.response.clicked() {
         *open ^= true;
     }
+
+    button
+        .response
+        .on_hover_text(if *open {
+            "Hide bottom bar"
+        } else {
+            "Show bottom bar"
+        })
+        .on_hover_cursor(CursorIcon::PointingHand);
 }

@@ -12,7 +12,6 @@ pub(super) fn body_window_info(
     parent_id: Option<UniverseId>,
     universe: &Universe,
 ) {
-    // TODO: check for missing glyphs
     ui.visuals_mut().override_text_color = Some(Color32::WHITE);
     let mu = body.mass * universe.get_gravitational_constant();
 

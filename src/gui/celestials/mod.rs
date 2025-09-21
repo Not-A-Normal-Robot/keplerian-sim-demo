@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use glam::DVec3;
 use three_d::egui::{
-    Atom, AtomLayout, Button, Color32, Context, Id as EguiId, ImageButton, Pos2, Rect, Response,
-    RichText, Stroke, TextEdit, Ui, Vec2, collapsing_header::CollapsingState,
+    Atom, AtomLayout, Button, Color32, Context, CursorIcon, Id as EguiId, ImageButton, Pos2, Rect,
+    Response, RichText, Stroke, TextEdit, Ui, Vec2, collapsing_header::CollapsingState,
 };
 
 use super::{
@@ -237,9 +237,13 @@ fn selectable_body_button(
 
     let ellipsis_button = button_response
         .rect(*ELLIPSIS_BUTTON_ID)
-        .map(|rect| ellipsis_button(ui, rect));
+        .map(|rect| ellipsis_button(ui, rect).on_hover_cursor(CursorIcon::PointingHand));
 
-    let button_response = button_response.response;
+    let button_response = button_response.response.on_hover_cursor(if selected {
+        CursorIcon::ContextMenu
+    } else {
+        CursorIcon::PointingHand
+    });
 
     let mut rect = button_response.rect;
     let padding = height * 1.5;
