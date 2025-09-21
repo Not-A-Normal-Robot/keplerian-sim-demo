@@ -443,6 +443,11 @@ fn window_toggles(ui: &mut Ui, sim_state: &mut SimState) {
     let list_button = ImageButton::new(assets::TREE_LIST_IMAGE.clone()).selected(*list_open);
     let list_button = ui
         .add_sized(WINDOW_TOGGLE_BUTTON_SIZE, list_button)
+        .on_hover_text(
+            RichText::new("Toggle celestial body list")
+                .color(Color32::WHITE)
+                .size(16.0),
+        )
         .on_hover_cursor(CursorIcon::PointingHand);
 
     if list_button.clicked() {
@@ -453,6 +458,14 @@ fn window_toggles(ui: &mut Ui, sim_state: &mut SimState) {
     let add_button = ImageButton::new(assets::ADD_ORBIT_IMAGE.clone()).selected(add_open);
     let add_button = ui
         .add_sized(WINDOW_TOGGLE_BUTTON_SIZE, add_button)
+        .on_hover_text(
+            RichText::new(
+                "Add a new celestial body\n\
+                Toggling this off will delete your uncommitted body!",
+            )
+            .color(Color32::WHITE)
+            .size(16.0),
+        )
         .on_hover_cursor(CursorIcon::PointingHand);
 
     if add_button.clicked() {
@@ -499,6 +512,15 @@ fn window_toggles(ui: &mut Ui, sim_state: &mut SimState) {
     let edit_button = ImageButton::new(assets::EDIT_ORBIT_IMAGE.clone()).selected(*edit_open);
     let edit_button = ui
         .add_sized(WINDOW_TOGGLE_BUTTON_SIZE, edit_button)
+        .on_hover_text(
+            RichText::new(
+                "Toggle celestial body edit window\n\
+                This allows editing and viewing the \
+                currently-focused body's stats.",
+            )
+            .color(Color32::WHITE)
+            .size(16.0),
+        )
         .on_hover_cursor(CursorIcon::PointingHand);
 
     if edit_button.clicked() {
@@ -523,7 +545,11 @@ fn options_button(ui: &mut Ui, sim_state: &mut SimState) {
 
     let button = ui
         .add_sized(OPTIONS_BUTTON_SIZE, button)
-        .on_hover_text("Options and About")
+        .on_hover_text(
+            RichText::new("Options and About")
+                .color(Color32::WHITE)
+                .size(16.0),
+        )
         .on_hover_cursor(CursorIcon::PointingHand);
 
     if button.clicked() {
@@ -678,12 +704,15 @@ fn collapse_toggle(ui: &mut Ui, sim_state: &mut SimState) {
         *open ^= true;
     }
 
+    let hover_text = if *open {
+        "Hide bottom bar"
+    } else {
+        "Show bottom bar"
+    };
+    let hover_text = RichText::new(hover_text).color(Color32::WHITE).size(16.0);
+
     button
         .response
-        .on_hover_text(if *open {
-            "Hide bottom bar"
-        } else {
-            "Show bottom bar"
-        })
+        .on_hover_text(hover_text)
         .on_hover_cursor(CursorIcon::PointingHand);
 }
