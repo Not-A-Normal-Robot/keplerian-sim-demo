@@ -1,8 +1,10 @@
+use std::sync::Arc;
+
 use super::UniverseId;
 
 use float_pretty_print::PrettyPrintFloat;
 use keplerian_sim::OrbitTrait;
-use three_d::egui::{Align, Color32, Label, Layout, RichText, Sense, Ui, WidgetText};
+use three_d::egui::{Align, Color32, CursorIcon, Label, Layout, RichText, Sense, Ui, WidgetText};
 
 use super::{Body, Universe};
 
@@ -15,14 +17,16 @@ pub(super) fn body_window_info(
     ui.visuals_mut().override_text_color = Some(Color32::WHITE);
     let mu = body.mass * universe.get_gravitational_constant();
 
-    fn add_value(ui: &mut Ui, text: impl Into<WidgetText>) {
+    fn add_value(ui: &mut Ui, text: impl Into<WidgetText>, hover: Arc<RichText>) {
         ui.allocate_ui_with_layout(
             ui.available_size(),
             Layout::right_to_left(Align::Center),
             |ui| {
                 ui.add_space(ui.spacing().menu_spacing);
                 let label = Label::new(text);
-                ui.add(label);
+                ui.add(label)
+                    .on_hover_text(hover)
+                    .on_hover_cursor(CursorIcon::Help);
             },
         );
     }
@@ -38,17 +42,22 @@ pub(super) fn body_window_info(
 
     fn add_row(ui: &mut Ui, measurement: &str, value: f64, unit: &str, hover: &str) {
         let hover = RichText::new(hover.trim()).color(Color32::WHITE).size(16.0);
+        let hover = Arc::new(hover);
 
-        let label = ui.label(measurement);
+        let label = ui
+            .label(measurement)
+            .on_hover_text(Arc::clone(&hover))
+            .on_hover_cursor(CursorIcon::Help);
 
         let mut hitbox_rect = label.rect;
         hitbox_rect.set_width(hitbox_rect.width() + ui.available_width());
 
         let value_text = format_number(value, unit);
-        add_value(ui, value_text);
+        add_value(ui, value_text, Arc::clone(&hover));
 
         ui.allocate_rect(hitbox_rect, Sense::HOVER)
-            .on_hover_text(hover);
+            .on_hover_text(hover)
+            .on_hover_cursor(CursorIcon::Help);
 
         ui.end_row();
     }
