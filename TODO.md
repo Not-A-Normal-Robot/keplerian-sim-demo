@@ -1,3 +1,0 @@
-- LOD
-- Celestial colors
-- Orbit lines
