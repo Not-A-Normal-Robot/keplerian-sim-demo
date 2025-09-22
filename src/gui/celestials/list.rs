@@ -8,8 +8,8 @@ use keplerian_sim::Orbit;
 use three_d::{
     Srgba,
     egui::{
-        Button, Color32, Context, Id as EguiId, IntoAtoms, Key, Popup, Response, TextWrapMode, Ui,
-        Window,
+        Button, Color32, Context, Id as EguiId, IntoAtoms, Key, Layout, Popup, Response,
+        TextWrapMode, Ui, Window,
         collapsing_header::CollapsingState,
         text::{CCursor, CCursorRange},
         text_edit::TextEditState,
@@ -28,6 +28,7 @@ pub(in super::super) struct BodyListWindowState {
     listed_body_with_popup: Option<UniverseId>,
     listed_body_with_rename: Option<RenameState>,
     pub(in super::super) window_open: bool,
+    show_help: bool,
 }
 
 impl Default for BodyListWindowState {
@@ -36,6 +37,7 @@ impl Default for BodyListWindowState {
             listed_body_with_popup: None,
             listed_body_with_rename: None,
             window_open: true,
+            show_help: true,
         }
     }
 }
@@ -68,6 +70,10 @@ fn body_tree_window_contents(
     sim_state: &mut SimState,
     position_map: &HashMap<UniverseId, DVec3>,
 ) {
+    if sim_state.ui.body_list_window_state.show_help {
+        show_help(ui, &mut sim_state.ui.body_list_window_state);
+    }
+
     let roots: Box<[UniverseId]> = sim_state
         .universe
         .get_bodies()
@@ -81,6 +87,19 @@ fn body_tree_window_contents(
     for universe_id in roots {
         body_tree_node(ui, sim_state, universe_id, position_map);
     }
+}
+
+fn show_help(ui: &mut Ui, state: &mut BodyListWindowState) {
+    ui.heading("Help");
+    ui.label(
+        "Click on a body to focus/edit a body.\n\
+        Right-click on them or click the \"...\" button to open the context menu.\n\
+        Double-click them to rename, and click on the triangles to show/hide children from the list.",
+    );
+    if ui.button("Close").clicked() {
+        state.show_help = false;
+    }
+    ui.separator();
 }
 
 fn body_tree_node(
