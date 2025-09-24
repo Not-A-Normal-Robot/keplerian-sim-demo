@@ -106,7 +106,7 @@ fn show_help(ui: &mut Ui, state: &mut BodyListWindowState) {
     if ui.button("Close").clicked() {
         state.show_help = false;
         if state.dont_show_again {
-            CONFIG
+            let _ = CONFIG
                 .try_lock()
                 .map(|cfg| cfg.show_body_list_help.set(false));
         }

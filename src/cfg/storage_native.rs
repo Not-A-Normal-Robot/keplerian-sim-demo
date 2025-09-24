@@ -93,6 +93,13 @@ pub(super) fn load<T: for<'d> Deserialize<'d>>(key: &str) -> Result<T, LoadError
     value.try_into().map_err(|e| LoadError::DeserializeValue(e))
 }
 
+pub(super) fn reset() -> Result<(), ResetError> {
+    let Some(file) = CONFIG_PATH.as_ref() else {
+        return Ok(());
+    };
+    std::fs::remove_file(file)
+}
+
 #[derive(Debug)]
 pub(crate) enum SaveError {
     NoSaveDirectory,
@@ -142,3 +149,5 @@ impl Display for LoadError {
         }
     }
 }
+
+pub(crate) type ResetError = io::Error;
