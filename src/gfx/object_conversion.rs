@@ -189,6 +189,10 @@ fn add_body_instance(
     };
     let distance = (position - camera_pos).length();
     let size = get_radial_size(body.radius, distance);
+    if distance * camera_scale > 1000.0 {
+        // Distance in render-worldspace too large, may flicker
+        return;
+    }
     let lod_group = match get_lod_type(size) {
         Some(l) => l,
         None => return,
@@ -397,9 +401,14 @@ impl Program {
             .unwrap_or(DVec3::ZERO)
             + parent_pos;
         let position = body_pos - camera_offset;
-        let position = position * camera_scale;
         let distance = (position - camera_pos).length();
         let radial_size = get_radial_size(wrapper.body.radius, distance);
+        let scaled_pos = position * camera_scale;
+
+        if distance * camera_scale > 1000.0 {
+            // Distance in render-worldspace too large, may flicker
+            return None;
+        }
 
         let cpu_mesh = &SPHERE_MESHES[get_lod_type(radial_size)?];
         let mut mesh = Mesh::new(&self.context, cpu_mesh);
@@ -408,7 +417,12 @@ impl Program {
             x: Vec4::new(r, 0.0, 0.0, 0.0),
             y: Vec4::new(0.0, r, 0.0, 0.0),
             z: Vec4::new(0.0, 0.0, r, 0.0),
-            w: Vec4::new(position.x as f32, position.y as f32, position.z as f32, 1.0),
+            w: Vec4::new(
+                scaled_pos.x as f32,
+                scaled_pos.y as f32,
+                scaled_pos.z as f32,
+                1.0,
+            ),
         });
 
         let material = ColorMaterial {
