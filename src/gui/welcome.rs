@@ -1,4 +1,4 @@
-use three_d::egui::{Color32, Hyperlink, OpenUrl, Response, Ui, WidgetText, Window};
+use three_d::egui::{Color32, OpenUrl, Response, Ui, WidgetText, Window};
 
 use super::{super::cfg::CONFIG, EguiContext, MIN_TOUCH_TARGET_VEC};
 
@@ -96,6 +96,6 @@ fn draw_window_contents(ui: &mut Ui, state: &mut WindowState) {
     if cb.changed()
         && let Ok(cfg) = CONFIG.try_lock()
     {
-        cfg.show_welcome_window.set(!state.dont_show_again);
+        let _ = cfg.show_welcome_window.set(!state.dont_show_again);
     }
 }

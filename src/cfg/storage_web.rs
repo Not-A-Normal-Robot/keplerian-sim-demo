@@ -42,7 +42,6 @@ pub(crate) type LoadError = StorageError;
 #[derive(Debug)]
 pub(crate) enum ResetError {
     GetAll(StorageError),
-    Delete(StorageError),
     NoWindow,
     Reload(wasm_bindgen::JsValue),
 }
@@ -52,7 +51,7 @@ impl Display for ResetError {
             ResetError::GetAll(error) => write!(f, "GetAll: {error}"),
             ResetError::Delete(error) => write!(f, "Delete: {error}"),
             ResetError::NoWindow => write!(f, "No window found"),
-            ResetError::Reload(error) => write!(f, "Reload failed"),
+            ResetError::Reload(_) => write!(f, "Reload failed"),
         }
     }
 }
