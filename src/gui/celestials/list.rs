@@ -1,15 +1,16 @@
 use std::collections::HashMap;
 
 use super::{
-    Body, PreviewBody, RENAME_TEXTEDIT_ID, SimState, UniverseId, declare_id, selectable_body_button,
+    super::super::cfg::CONFIG, Body, PreviewBody, RENAME_TEXTEDIT_ID, SimState, UniverseId,
+    declare_id, selectable_body_button,
 };
 use glam::DVec3;
 use keplerian_sim::Orbit;
 use three_d::{
     Srgba,
     egui::{
-        Button, Color32, Context, Id as EguiId, IntoAtoms, Key, Layout, Popup, Response,
-        TextWrapMode, Ui, Window,
+        Button, Color32, Context, Id as EguiId, IntoAtoms, Key, Popup, Response, TextWrapMode, Ui,
+        Window,
         collapsing_header::CollapsingState,
         text::{CCursor, CCursorRange},
         text_edit::TextEditState,
@@ -29,6 +30,7 @@ pub(in super::super) struct BodyListWindowState {
     listed_body_with_rename: Option<RenameState>,
     pub(in super::super) window_open: bool,
     show_help: bool,
+    dont_show_again: bool,
 }
 
 impl Default for BodyListWindowState {
@@ -37,7 +39,11 @@ impl Default for BodyListWindowState {
             listed_body_with_popup: None,
             listed_body_with_rename: None,
             window_open: true,
-            show_help: true,
+            show_help: CONFIG
+                .try_lock()
+                .map(|cfg| cfg.show_body_list_help.get())
+                .unwrap_or(true),
+            dont_show_again: false,
         }
     }
 }
@@ -96,8 +102,14 @@ fn show_help(ui: &mut Ui, state: &mut BodyListWindowState) {
         Right-click on them or click the \"...\" button to open the context menu.\n\
         Double-click them to rename, and click on the triangles to show/hide children from the list.",
     );
+    ui.checkbox(&mut state.dont_show_again, "Don't show this again");
     if ui.button("Close").clicked() {
         state.show_help = false;
+        if state.dont_show_again {
+            CONFIG
+                .try_lock()
+                .map(|cfg| cfg.show_body_list_help.set(false));
+        }
     }
     ui.separator();
 }

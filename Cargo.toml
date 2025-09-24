@@ -22,6 +22,7 @@ glam = "0.30.5"
 keplerian_sim = "0.6.1"
 ordered-float = "5.0.0"
 pastey = "0.1.1"
+serde = "1.0.226"
 strum = "0.27.2"
 strum_macros = "0.27.2"
 three-d = { version = "0.18.2", features = ["egui-gui"] }
@@ -29,9 +30,12 @@ three-d = { version = "0.18.2", features = ["egui-gui"] }
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 open = "5.3.2"
 arboard = { version = "3.6.1", features = ["wayland-data-control"] }
+directories = "6.0.0"
+toml = "0.9.7"
 
 [target.'cfg(target_family = "wasm")'.dependencies]
 gloo-timers = { version = "0.3.0", features = ["futures"] }
+gloo-storage = { version = "0.3.0" }
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4.50"
 web-sys = { version = "0.3", features = [

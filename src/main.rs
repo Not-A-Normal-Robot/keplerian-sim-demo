@@ -12,6 +12,8 @@ use self::sim::body::Body;
 use self::sim::universe::Universe;
 #[path = "assets/mod.rs"]
 mod assets;
+#[path = "cfg/mod.rs"]
+mod cfg;
 #[path = "control.rs"]
 mod control;
 #[path = "gfx/mod.rs"]
