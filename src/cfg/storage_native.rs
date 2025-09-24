@@ -11,6 +11,8 @@ use std::{
     sync::LazyLock,
 };
 
+use super::super::HALT_FLAG;
+
 use serde::{Deserialize, Serialize};
 
 static PROJECT_DIRS: LazyLock<Option<ProjectDirs>> =
@@ -96,11 +98,15 @@ pub(super) fn load<T: for<'d> Deserialize<'d>>(key: &str) -> Result<T, LoadError
     value.try_into().map_err(|e| LoadError::DeserializeValue(e))
 }
 
-pub(super) fn reset() -> Result<(), ResetError> {
+pub(crate) fn reset() -> Result<(), ResetError> {
     let Some(file) = CONFIG_PATH.as_ref() else {
         return Ok(());
     };
-    std::fs::remove_file(file).map_err(|e| ResetError::DeleteConfig(e))?;
+    match std::fs::remove_file(file) {
+        Ok(_) => (),
+        Err(e) if e.kind() == io::ErrorKind::NotFound => (),
+        Err(e) => return Err(ResetError::DeleteConfig(e)),
+    };
 
     let exe = env::current_exe().map_err(|e| ResetError::GetCurrentExe(e))?;
 
@@ -113,6 +119,10 @@ pub(super) fn reset() -> Result<(), ResetError> {
         )
         .spawn()
         .map_err(|e| ResetError::LaunchError(e))?;
+
+    unsafe {
+        HALT_FLAG = true;
+    }
 
     Ok(())
 }

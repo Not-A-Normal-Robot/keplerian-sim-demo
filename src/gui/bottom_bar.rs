@@ -5,7 +5,7 @@ use std::{
 
 use super::{
     super::{
-        assets,
+        assets, cfg,
         sim::{body::Body, universe::BulkMuSetterMode},
         units::time::{TimeDisplayMode, TimeUnit},
     },
@@ -629,6 +629,19 @@ fn options_menu(ui: &mut Ui, sim_state: &mut SimState) -> bool {
     cb.response.on_hover_text(Arc::clone(&tooltip));
 
     let force_open = cb.inner.unwrap_or(false);
+
+    let reset_button = Button::new(
+        RichText::new("Reset data & restart")
+            .color(Color32::LIGHT_RED)
+            .size(16.0),
+    );
+    if ui.add(reset_button).clicked() {
+        let _res = cfg::reset();
+        #[cfg(not(target_family = "wasm"))]
+        if let Err(e) = _res {
+            eprintln!("Failed to reset data: {e}");
+        }
+    }
 
     let about_toggle = Button::selectable(
         sim_state.ui.is_about_window_open,

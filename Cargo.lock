@@ -914,6 +914,7 @@ dependencies = [
  "ordered-float",
  "pastey",
  "serde",
+ "serde_json",
  "strum",
  "strum_macros",
  "three-d",

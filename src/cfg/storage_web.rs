@@ -1,3 +1,4 @@
+use super::super::HALT_FLAG;
 use gloo_storage::{LocalStorage, Storage, errors::StorageError};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
@@ -18,17 +19,20 @@ pub(super) fn load<T: for<'a> Deserialize<'a>>(key: &str) -> Result<T, LoadError
     LocalStorage::get(&to_storage_key(key))
 }
 
-pub(super) fn reset() -> Result<(), ResetError> {
-    LocalStorage::get_all::<Box<[(String, ())]>>()
+pub(crate) fn reset() -> Result<(), ResetError> {
+    LocalStorage::get_all::<serde_json::Map<String, serde_json::Value>>()
         .map_err(|e| ResetError::GetAll(e))?
-        .iter()
-        .filter(|(s, _)| s.starts_with(PREFIX))
-        .for_each(|(k, _)| LocalStorage::delete(k));
+        .keys()
+        .filter(|k| k.starts_with(PREFIX))
+        .for_each(|k| LocalStorage::delete(k));
     let window = web_sys::window().ok_or(ResetError::NoWindow)?;
     window
         .location()
         .reload()
         .map_err(|e| ResetError::Reload(e))?;
+    unsafe {
+        HALT_FLAG = true;
+    }
     Ok(())
 }
 

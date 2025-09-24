@@ -25,6 +25,8 @@ mod sim;
 #[path = "units/mod.rs"]
 mod units;
 
+static mut HALT_FLAG: bool = false;
+
 #[cfg(not(target_family = "wasm"))]
 fn main() {
     run()
@@ -235,7 +237,10 @@ impl Program {
             .write(|| self.gui.render())
             .unwrap();
 
-        FrameOutput::default()
+        FrameOutput {
+            exit: unsafe { HALT_FLAG },
+            ..Default::default()
+        }
     }
 }
 

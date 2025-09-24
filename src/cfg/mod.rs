@@ -6,6 +6,8 @@ pub(crate) mod saved_cell;
 #[cfg_attr(not(target_family = "wasm"), path = "storage_native.rs")]
 mod storage;
 
+pub(crate) use storage::reset;
+
 use saved_cell::SavedCell;
 
 pub(crate) struct Config<'a> {
