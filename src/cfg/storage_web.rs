@@ -43,13 +43,13 @@ pub(crate) type LoadError = StorageError;
 pub(crate) enum ResetError {
     GetAll(StorageError),
     NoWindow,
+    #[allow(dead_code)]
     Reload(wasm_bindgen::JsValue),
 }
 impl Display for ResetError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ResetError::GetAll(error) => write!(f, "GetAll: {error}"),
-            ResetError::Delete(error) => write!(f, "Delete: {error}"),
             ResetError::NoWindow => write!(f, "No window found"),
             ResetError::Reload(_) => write!(f, "Reload failed"),
         }
