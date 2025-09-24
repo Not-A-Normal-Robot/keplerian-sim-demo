@@ -26,14 +26,15 @@ impl Trajectory {
     pub fn new(
         context: &Context,
         orbit: &impl OrbitTrait,
-        parent_pos: Vec3,
+        parent_pos_premultiplied: Vec3,
+        camera_scale: f64,
         eccentric_anomaly: f32,
         point_count: u32,
         thickness: f32,
         color: Srgba,
     ) -> Self {
         let matrix = orbit.get_transformation_matrix();
-        let rp = orbit.get_periapsis();
+        let rp = orbit.get_periapsis() * camera_scale;
         let matrix = Matrix4 {
             x: Vec4::new(
                 (matrix.e11 * rp) as f32,
@@ -48,7 +49,12 @@ impl Trajectory {
                 0.0,
             ),
             z: Vec4::new(0.0, 0.0, 0.0, 0.0),
-            w: Vec4::new(parent_pos.x, parent_pos.y, parent_pos.z, 1.0),
+            w: Vec4::new(
+                parent_pos_premultiplied.x,
+                parent_pos_premultiplied.y,
+                parent_pos_premultiplied.z,
+                1.0,
+            ),
         };
         let eccentricity = orbit.get_eccentricity();
         let a_norm = (1.0 - eccentricity).recip();

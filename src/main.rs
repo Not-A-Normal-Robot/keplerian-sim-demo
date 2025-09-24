@@ -77,12 +77,12 @@ impl Program {
             Vec3::new(0.0, 0.0, 0.0),
             Vec3::new(0.0, 0.0, 1.0),
             Degrees { 0: 45.0 },
-            1.0,
-            5e16,
+            0.001,
+            5e9,
         )
     }
     fn new_control() -> CameraControl {
-        CameraControl::new(Vec3::new(0.0, 0.0, 0.0), 100.0, 1e10, 7000.0)
+        CameraControl::new(100.0, 1e10, 7000.0)
     }
     fn new_dir_light(context: &Context) -> DirectionalLight {
         DirectionalLight::new(&context, 1.0, Srgba::WHITE, Vec3::new(0.0, -0.5, -0.5))
@@ -219,11 +219,11 @@ impl Program {
             .universe
             .get_body(self.sim_state.focused_body())
             .map(|wrapper| 1.5 * wrapper.body.radius)
-            .unwrap_or(1e-3) as f32;
+            .unwrap_or(1e-3);
         self.control.handle_events(
             &mut self.camera,
             &mut frame_input.events,
-            frame_input.elapsed_time as f32,
+            frame_input.elapsed_time,
         );
 
         frame_input
