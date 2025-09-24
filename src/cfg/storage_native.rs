@@ -1,10 +1,13 @@
 use directories::ProjectDirs;
 use std::{
+    env,
     error::Error,
+    ffi::OsString,
     fmt::Display,
     fs::OpenOptions,
     io::{self, Read, Write},
     path::PathBuf,
+    process::Command,
     sync::LazyLock,
 };
 
@@ -97,7 +100,21 @@ pub(super) fn reset() -> Result<(), ResetError> {
     let Some(file) = CONFIG_PATH.as_ref() else {
         return Ok(());
     };
-    std::fs::remove_file(file)
+    std::fs::remove_file(file).map_err(|e| ResetError::DeleteConfig(e))?;
+
+    let exe = env::current_exe().map_err(|e| ResetError::GetCurrentExe(e))?;
+
+    Command::new(exe)
+        .args(env::args_os())
+        .envs(
+            env::vars_os()
+                .skip(1)
+                .collect::<Box<[(OsString, OsString)]>>(),
+        )
+        .spawn()
+        .map_err(|e| ResetError::LaunchError(e))?;
+
+    Ok(())
 }
 
 #[derive(Debug)]
@@ -150,4 +167,22 @@ impl Display for LoadError {
     }
 }
 
-pub(crate) type ResetError = io::Error;
+impl Error for LoadError {}
+
+#[derive(Debug)]
+pub(crate) enum ResetError {
+    DeleteConfig(io::Error),
+    GetCurrentExe(io::Error),
+    LaunchError(io::Error),
+}
+
+impl Display for ResetError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ResetError::DeleteConfig(error) => write!(f, "DeleteConfig: {error}"),
+            ResetError::GetCurrentExe(error) => write!(f, "GetCurrentExe: {error}"),
+            ResetError::LaunchError(error) => write!(f, "LaunchError: {error}"),
+        }
+    }
+}
+impl Error for ResetError {}

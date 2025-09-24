@@ -1,5 +1,6 @@
 use gloo_storage::{LocalStorage, Storage, errors::StorageError};
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 const PREFIX: &str = "/keplerian-sim-demo | ";
 fn to_storage_key(key: &str) -> String {
@@ -23,12 +24,31 @@ pub(super) fn reset() -> Result<(), ResetError> {
         .iter()
         .filter(|(s, _)| s.starts_with(PREFIX))
         .for_each(|(k, _)| LocalStorage::delete(k));
+    let window = web_sys::window().ok_or(ResetError::NoWindow)?;
+    window
+        .location()
+        .reload()
+        .map_err(|e| ResetError::Reload(e))?;
     Ok(())
 }
 
 pub(crate) type SaveError = StorageError;
 pub(crate) type LoadError = StorageError;
+
+#[derive(Debug)]
 pub(crate) enum ResetError {
     GetAll(StorageError),
     Delete(StorageError),
+    NoWindow,
+    Reload(wasm_bindgen::JsValue),
+}
+impl Display for ResetError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ResetError::GetAll(error) => write!(f, "GetAll: {error}"),
+            ResetError::Delete(error) => write!(f, "Delete: {error}"),
+            ResetError::NoWindow => write!(f, "No window found"),
+            ResetError::Reload(error) => write!(f, "Reload failed"),
+        }
+    }
 }
