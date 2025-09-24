@@ -38,7 +38,6 @@ impl CameraControl {
         }
         self.reclamp();
         self.update_zoom(elapsed_time);
-        println!("{:?}", camera.position());
     }
 
     fn handle_event(&mut self, camera: &mut Camera, event: &mut Event) {
@@ -60,7 +59,7 @@ impl CameraControl {
                         speed * delta.1,
                     );
                     let pos = camera.position().normalize();
-                    let pos = if pos.is_nan() { Vec3::unit_x() } else { pos };
+                    let pos = if is_nan(pos) { Vec3::unit_x() } else { pos };
                     let up = camera.up();
                     camera.set_view(pos, Vec3::zero(), up);
                     *handled = true;
@@ -125,3 +124,7 @@ static IS_WEB_MOBILE: LazyLock<bool> = LazyLock::new(|| {
     };
     ua.contains("mobi") || ua.contains("android") || ua.contains("iphone") || ua.contains("ios")
 });
+
+fn is_nan(vec: Vec3) -> bool {
+    vec.x.is_nan() || vec.y.is_nan() || vec.z.is_nan()
+}
