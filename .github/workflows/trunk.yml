@@ -30,6 +30,9 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
+    - name: Check non-WASM compiles
+      run: cargo check
+
     - name: Add WASM target
       run: rustup target add wasm32-unknown-unknown
     
