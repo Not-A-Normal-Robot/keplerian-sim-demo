@@ -47,7 +47,7 @@ impl Default for EditBodyWindowState {
                 auto: true,
                 unit: LengthUnit::Meters,
             },
-            window_open: true,
+            window_open: false,
         }
     }
 }

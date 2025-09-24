@@ -96,14 +96,21 @@ fn body_tree_window_contents(
 }
 
 fn show_help(ui: &mut Ui, state: &mut BodyListWindowState) {
+    ui.visuals_mut().override_text_color = Some(Color32::WHITE);
     ui.heading("Help");
     ui.label(
-        "Click on a body to focus/edit a body.\n\
+        "Click on a body in the list to focus/edit a body.\n\
+        (You'll need to open the body editor window to edit the body.)\n\
         Right-click on them or click the \"...\" button to open the context menu.\n\
         Double-click them to rename, and click on the triangles to show/hide children from the list.",
     );
-    ui.checkbox(&mut state.dont_show_again, "Don't show this again");
-    if ui.button("Close").clicked() {
+    let row = ui.horizontal(|ui| {
+        let button = ui.button("Close window");
+        ui.checkbox(&mut state.dont_show_again, "Don't show this window again");
+        button
+    });
+    let button = row.inner;
+    if button.clicked() {
         state.show_help = false;
         if state.dont_show_again {
             let _ = CONFIG

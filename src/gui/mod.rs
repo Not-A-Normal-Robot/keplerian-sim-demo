@@ -18,6 +18,7 @@ mod bottom_bar;
 mod celestials;
 mod fps;
 mod unit_dv;
+mod welcome;
 
 macro_rules! declare_id {
     (salt_only, $name:ident, $val:expr) => {
@@ -46,6 +47,7 @@ struct UiState {
     body_list_window_state: celestials::list::BodyListWindowState,
     new_body_window_state: Option<celestials::new::NewBodyWindowState>,
     edit_body_window_state: celestials::edit::EditBodyWindowState,
+    welcome_window_state: welcome::WindowState,
     is_about_window_open: bool,
 }
 
@@ -57,6 +59,7 @@ impl Default for UiState {
             body_list_window_state: celestials::list::BodyListWindowState::default(),
             new_body_window_state: None,
             edit_body_window_state: celestials::edit::EditBodyWindowState::default(),
+            welcome_window_state: welcome::WindowState::default(),
             is_about_window_open: false,
         }
     }
@@ -176,6 +179,7 @@ fn handle_ui(
     position_map: &HashMap<UniverseId, DVec3>,
 ) {
     fps::fps_area(ctx, &sim_state.ui.frame_data);
+    welcome::draw(ctx, &mut sim_state.ui.welcome_window_state);
     bottom_bar::draw(ctx, sim_state, elapsed_time);
     celestials::celestial_windows(ctx, sim_state, position_map);
     about::draw(ctx, &mut sim_state.ui);
