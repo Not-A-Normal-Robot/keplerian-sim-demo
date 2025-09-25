@@ -25,9 +25,26 @@ pub const LOD_SUBDIVS: [u32; LOD_LEVEL_COUNT] = [32, 24, 16, 12, 9, 7, 5, 3];
 pub const LOD_CUTOFFS: [f64; LOD_LEVEL_COUNT] =
     [0.25, 0.125, 0.062, 0.031, 0.015, 0.007, 0.002, 0.0005];
 
+/// The maximum scaled distance to consider rendering a body.
+/// This is calculated by multiplying the body–camera distance
+/// by the camera scale.
+///
+/// THis is to mitigate bodies flickering when near the edge of the
+/// far plane.
+pub const MAX_BODY_SCALED_DISTANCE: f64 = 1e4;
+
 /// The minimum camera radial size to consider rendering an orbit.
 /// If an orbit is smaller than this, it is ignored.
+/// This uses the semi-major axis length and parent–camera distance.
 pub const MIN_ORBIT_RADIAL_SIZE: f64 = 0.002;
+
+/// The maximum scaled periapsis to consider rendering an orbit.
+/// This is calculated by multiplying the periapsis by the camera scale.
+///
+/// This is to mitigate the imprecision of looking very close near orbits.
+///
+/// This specific value is gotten through trial and error.
+pub const MAX_ORBIT_SCALED_PERIAPSIS: f64 = 1e3;
 
 const fn get_lod_type(radial_size: f64) -> Option<usize> {
     let mut i = 0;
@@ -187,9 +204,10 @@ fn add_body_instance(
         Some(p) => p - camera_offset,
         None => return,
     };
-    let distance = (position - camera_pos).length();
+    let distance = (position - camera_pos / camera_scale).length();
     let size = get_radial_size(body.radius, distance);
-    if distance * camera_scale > 1000.0 {
+
+    if distance * camera_scale > MAX_BODY_SCALED_DISTANCE {
         // Distance in render-worldspace too large, may flicker
         return;
     }
@@ -348,22 +366,33 @@ impl Program {
             .map(|id| *position_map.get(&id).unwrap_or(&DVec3::default()))
             .unwrap_or(DVec3::default());
 
-        let offset_d = (parent_pos - camera_offset) * camera_scale;
+        let parent_offset = parent_pos - camera_offset;
 
-        let offset_s = Vec3::new(offset_d.x as f32, offset_d.y as f32, offset_d.z as f32);
+        let multiplied_offset = parent_offset * camera_scale;
+        let multiplied_offset_s = {
+            let v = multiplied_offset;
+            Vec3::new(v.x as f32, v.y as f32, v.z as f32)
+        };
 
         let eccentric_anomaly = orbit.get_eccentric_anomaly_at_time(time);
 
+        let parent_distance_to_camera = (parent_offset - camera_pos / camera_scale).length();
+
+        let scaled_pe = orbit.get_periapsis() * camera_scale;
+
+        if scaled_pe > MAX_ORBIT_SCALED_PERIAPSIS {
+            return None;
+        }
+
         let point_count = if orbit.get_eccentricity() < 1.0 {
             let semi_major_axis = orbit.get_semi_major_axis();
-            let distance_to_camera = (offset_d - camera_pos).length();
-            let radial_size = get_radial_size(semi_major_axis, distance_to_camera);
-            if radial_size < MIN_ORBIT_RADIAL_SIZE {
+            let sma_size = get_radial_size(semi_major_axis, parent_distance_to_camera);
+            if sma_size < MIN_ORBIT_RADIAL_SIZE {
                 // Too small to see, skip
                 return None;
             }
 
-            (radial_size * 512.0).abs().clamp(16.0, 1024.0) as u32
+            (sma_size * 512.0).abs().clamp(16.0, 8192.0) as u32
         } else {
             512
         };
@@ -371,7 +400,7 @@ impl Program {
         Some(Trajectory::new(
             context,
             orbit,
-            offset_s,
+            multiplied_offset_s,
             camera_scale,
             eccentric_anomaly as f32,
             point_count,
@@ -401,11 +430,11 @@ impl Program {
             .unwrap_or(DVec3::ZERO)
             + parent_pos;
         let position = body_pos - camera_offset;
-        let distance = (position - camera_pos).length();
+        let distance = (position - camera_pos / camera_scale).length();
         let radial_size = get_radial_size(wrapper.body.radius, distance);
         let scaled_pos = position * camera_scale;
 
-        if distance * camera_scale > 1000.0 {
+        if distance * camera_scale > MAX_BODY_SCALED_DISTANCE {
             // Distance in render-worldspace too large, may flicker
             return None;
         }

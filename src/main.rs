@@ -95,36 +95,6 @@ impl Program {
     }
 
     fn generate_universe() -> Universe {
-        // DEBUG
-        let mut universe = Universe::default();
-
-        let root_id = universe
-            .add_body(
-                Body {
-                    name: "A".into(),
-                    mass: 1.0,
-                    radius: 1e16,
-                    color: Srgba::WHITE,
-                    orbit: None,
-                },
-                None,
-            )
-            .unwrap();
-        universe
-            .add_body(
-                Body {
-                    name: "B".into(),
-                    mass: 1.0,
-                    radius: 1e9,
-                    color: Srgba::WHITE,
-                    orbit: Some(Orbit::new_flat_circular(2e16, 0.0, 1.0)),
-                },
-                Some(root_id),
-            )
-            .unwrap();
-
-        return universe;
-
         let mut universe = Universe::default();
         let root_id = universe
             .add_body(
