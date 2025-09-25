@@ -20,6 +20,8 @@ pub struct CameraControl {
     pub current_distance: f64,
 }
 
+const ZOOM_APPROACH_SPEED: f64 = 0.03;
+
 impl CameraControl {
     /// Creates a new orbit control with the given target and minimum and maximum distance to the target.
     pub fn new(min_distance: f64, max_distance: f64, desired_distance: f64) -> Self {
@@ -104,7 +106,7 @@ impl CameraControl {
     }
     fn update_zoom(&mut self, elapsed_time: f64) {
         let old_distance = self.current_distance;
-        let factor = (-0.03 * elapsed_time).exp().min(1.0);
+        let factor = (-ZOOM_APPROACH_SPEED * elapsed_time).exp().min(1.0);
         let old_diff = self.desired_distance - old_distance;
         let new_diff = old_diff * factor.min(1.0);
         let new_distance = self.desired_distance - new_diff;

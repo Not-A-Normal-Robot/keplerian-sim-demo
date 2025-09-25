@@ -29,7 +29,7 @@ pub const LOD_CUTOFFS: [f64; LOD_LEVEL_COUNT] =
 /// This is calculated by multiplying the body–camera distance
 /// by the camera scale.
 ///
-/// THis is to mitigate bodies flickering when near the edge of the
+/// This is to mitigate bodies flickering when near the edge of the
 /// far plane.
 pub const MAX_BODY_SCALED_DISTANCE: f64 = 1e4;
 
@@ -357,6 +357,10 @@ impl Program {
         time: f64,
         thickness: f32,
     ) -> Option<Trajectory> {
+        const DEFAULT_POINT_COUNT: u32 = 512;
+        const MIN_POINT_COUNT: u32 = 16;
+        const MAX_POINT_COUNT: u32 = 8192;
+
         let orbit = match &body.orbit {
             Some(o) => o,
             None => return None,
@@ -392,9 +396,11 @@ impl Program {
                 return None;
             }
 
-            (sma_size * 512.0).abs().clamp(16.0, 8192.0) as u32
+            (sma_size * DEFAULT_POINT_COUNT as f64)
+                .abs()
+                .clamp(MIN_POINT_COUNT as f64, MAX_POINT_COUNT as f64) as u32
         } else {
-            512
+            DEFAULT_POINT_COUNT
         };
 
         Some(Trajectory::new(
