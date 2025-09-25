@@ -25,9 +25,26 @@ pub const LOD_SUBDIVS: [u32; LOD_LEVEL_COUNT] = [32, 24, 16, 12, 9, 7, 5, 3];
 pub const LOD_CUTOFFS: [f64; LOD_LEVEL_COUNT] =
     [0.25, 0.125, 0.062, 0.031, 0.015, 0.007, 0.002, 0.0005];
 
+/// The maximum scaled distance to consider rendering a body.
+/// This is calculated by multiplying the body–camera distance
+/// by the camera scale.
+///
+/// This is to mitigate bodies flickering when near the edge of the
+/// far plane.
+pub const MAX_BODY_SCALED_DISTANCE: f64 = 1e4;
+
 /// The minimum camera radial size to consider rendering an orbit.
 /// If an orbit is smaller than this, it is ignored.
+/// This uses the semi-major axis length and parent–camera distance.
 pub const MIN_ORBIT_RADIAL_SIZE: f64 = 0.002;
+
+/// The maximum scaled periapsis to consider rendering an orbit.
+/// This is calculated by multiplying the periapsis by the camera scale.
+///
+/// This is to mitigate the imprecision of looking very close near orbits.
+///
+/// This specific value is gotten through trial and error.
+pub const MAX_ORBIT_SCALED_PERIAPSIS: f64 = 1e3;
 
 const fn get_lod_type(radial_size: f64) -> Option<usize> {
     let mut i = 0;
@@ -178,6 +195,7 @@ fn add_body_instance(
     body_wrapper: &BodyWrapper,
     camera_offset: DVec3,
     camera_pos: DVec3,
+    camera_scale: f64,
     position_map: &HashMap<Id, DVec3>,
     instances_arr: &mut [Instances; LOD_LEVEL_COUNT],
 ) {
@@ -186,13 +204,18 @@ fn add_body_instance(
         Some(p) => p - camera_offset,
         None => return,
     };
-    let distance = (position - camera_pos).length();
+    let distance = (position - camera_pos / camera_scale).length();
     let size = get_radial_size(body.radius, distance);
+
+    if distance * camera_scale > MAX_BODY_SCALED_DISTANCE {
+        // Distance in render-worldspace too large, may flicker
+        return;
+    }
     let lod_group = match get_lod_type(size) {
         Some(l) => l,
         None => return,
     };
-    let matrix = get_matrix(position, body.radius);
+    let matrix = get_matrix(position * camera_scale, body.radius * camera_scale);
     let instances = &mut instances_arr[lod_group];
     instances.transformations.push(matrix);
 
@@ -205,6 +228,7 @@ fn add_body_instances(
     body_map: &HashMap<Id, BodyWrapper>,
     camera_offset: DVec3,
     camera_pos: DVec3,
+    camera_scale: f64,
     position_map: &HashMap<Id, DVec3>,
     instances_arr: &mut [Instances; LOD_LEVEL_COUNT],
 ) {
@@ -214,6 +238,7 @@ fn add_body_instances(
             body_wrapper,
             camera_offset,
             camera_pos,
+            camera_scale,
             position_map,
             instances_arr,
         );
@@ -234,10 +259,17 @@ impl Program {
             camera_pos.z as f64,
         );
 
+        let camera_scale = 1.0 / self.control.current_distance;
+
         Scene {
-            bodies: self.generate_body_gms(camera_offset, camera_pos, position_map),
-            lines: self.generate_orbit_lines(camera_offset, camera_pos, position_map),
-            preview: self.generate_preview_scene(camera_offset, camera_pos, position_map),
+            bodies: self.generate_body_gms(camera_offset, camera_pos, camera_scale, position_map),
+            lines: self.generate_orbit_lines(camera_offset, camera_pos, camera_scale, position_map),
+            preview: self.generate_preview_scene(
+                camera_offset,
+                camera_pos,
+                camera_scale,
+                position_map,
+            ),
         }
     }
 
@@ -245,6 +277,7 @@ impl Program {
         &self,
         camera_offset: DVec3,
         camera_pos: DVec3,
+        camera_scale: f64,
         position_map: &HashMap<Id, DVec3>,
     ) -> [Gm<InstancedMesh, PhysicalMaterial>; LOD_LEVEL_COUNT] {
         let mut instances_arr: [Instances; LOD_LEVEL_COUNT] = core::array::from_fn(|_| Instances {
@@ -259,6 +292,7 @@ impl Program {
             body_map,
             camera_offset,
             camera_pos,
+            camera_scale,
             position_map,
             &mut instances_arr,
         );
@@ -285,6 +319,7 @@ impl Program {
         &self,
         camera_offset: DVec3,
         camera_pos: DVec3,
+        camera_scale: f64,
         position_map: &HashMap<Id, DVec3>,
     ) -> Box<[Trajectory]> {
         self.sim_state
@@ -298,6 +333,7 @@ impl Program {
                     body_wrapper.relations.parent,
                     camera_offset,
                     camera_pos,
+                    camera_scale,
                     position_map,
                     self.sim_state.universe.time,
                     if id == self.sim_state.focused_body() {
@@ -316,10 +352,15 @@ impl Program {
         parent_id: Option<Id>,
         camera_offset: DVec3,
         camera_pos: DVec3,
+        camera_scale: f64,
         position_map: &HashMap<Id, DVec3>,
         time: f64,
         thickness: f32,
     ) -> Option<Trajectory> {
+        const DEFAULT_POINT_COUNT: u32 = 512;
+        const MIN_POINT_COUNT: u32 = 16;
+        const MAX_POINT_COUNT: u32 = 8192;
+
         let orbit = match &body.orbit {
             Some(o) => o,
             None => return None,
@@ -329,30 +370,44 @@ impl Program {
             .map(|id| *position_map.get(&id).unwrap_or(&DVec3::default()))
             .unwrap_or(DVec3::default());
 
-        let offset_d = parent_pos - camera_offset;
+        let parent_offset = parent_pos - camera_offset;
 
-        let offset_s = Vec3::new(offset_d.x as f32, offset_d.y as f32, offset_d.z as f32);
+        let multiplied_offset = parent_offset * camera_scale;
+        let multiplied_offset_s = {
+            let v = multiplied_offset;
+            Vec3::new(v.x as f32, v.y as f32, v.z as f32)
+        };
 
         let eccentric_anomaly = orbit.get_eccentric_anomaly_at_time(time);
 
+        let parent_distance_to_camera = (parent_offset - camera_pos / camera_scale).length();
+
+        let scaled_pe = orbit.get_periapsis() * camera_scale;
+
+        if scaled_pe > MAX_ORBIT_SCALED_PERIAPSIS {
+            return None;
+        }
+
         let point_count = if orbit.get_eccentricity() < 1.0 {
             let semi_major_axis = orbit.get_semi_major_axis();
-            let distance_to_camera = (offset_d - camera_pos).length();
-            let radial_size = get_radial_size(semi_major_axis, distance_to_camera);
-            if radial_size < MIN_ORBIT_RADIAL_SIZE {
+            let sma_size = get_radial_size(semi_major_axis, parent_distance_to_camera);
+            if sma_size < MIN_ORBIT_RADIAL_SIZE {
                 // Too small to see, skip
                 return None;
             }
 
-            (radial_size * 512.0).abs().clamp(16.0, 1024.0) as u32
+            (sma_size * DEFAULT_POINT_COUNT as f64)
+                .abs()
+                .clamp(MIN_POINT_COUNT as f64, MAX_POINT_COUNT as f64) as u32
         } else {
-            512
+            DEFAULT_POINT_COUNT
         };
 
         Some(Trajectory::new(
             context,
             orbit,
-            offset_s,
+            multiplied_offset_s,
+            camera_scale,
             eccentric_anomaly as f32,
             point_count,
             thickness,
@@ -364,6 +419,7 @@ impl Program {
         &self,
         camera_offset: DVec3,
         camera_pos: DVec3,
+        camera_scale: f64,
         position_map: &HashMap<Id, DVec3>,
         wrapper: &PreviewBody,
     ) -> Option<Gm<Mesh, ColorMaterial>> {
@@ -380,17 +436,28 @@ impl Program {
             .unwrap_or(DVec3::ZERO)
             + parent_pos;
         let position = body_pos - camera_offset;
-        let distance = (position - camera_pos).length();
+        let distance = (position - camera_pos / camera_scale).length();
         let radial_size = get_radial_size(wrapper.body.radius, distance);
+        let scaled_pos = position * camera_scale;
+
+        if distance * camera_scale > MAX_BODY_SCALED_DISTANCE {
+            // Distance in render-worldspace too large, may flicker
+            return None;
+        }
 
         let cpu_mesh = &SPHERE_MESHES[get_lod_type(radial_size)?];
         let mut mesh = Mesh::new(&self.context, cpu_mesh);
-        let r = wrapper.body.radius as f32;
+        let r = (wrapper.body.radius * camera_scale) as f32;
         mesh.set_transformation(Mat4 {
             x: Vec4::new(r, 0.0, 0.0, 0.0),
             y: Vec4::new(0.0, r, 0.0, 0.0),
             z: Vec4::new(0.0, 0.0, r, 0.0),
-            w: Vec4::new(position.x as f32, position.y as f32, position.z as f32, 1.0),
+            w: Vec4::new(
+                scaled_pos.x as f32,
+                scaled_pos.y as f32,
+                scaled_pos.z as f32,
+                1.0,
+            ),
         });
 
         let material = ColorMaterial {
@@ -416,18 +483,25 @@ impl Program {
         &self,
         camera_offset: DVec3,
         camera_pos: DVec3,
+        camera_scale: f64,
         position_map: &HashMap<Id, DVec3>,
     ) -> Option<PreviewScene> {
         let body_wrapper = self.sim_state.preview_body.as_ref()?;
 
-        let body_gm =
-            self.generate_preview_body(camera_offset, camera_pos, position_map, body_wrapper);
+        let body_gm = self.generate_preview_body(
+            camera_offset,
+            camera_pos,
+            camera_scale,
+            position_map,
+            body_wrapper,
+        );
         let path = Self::generate_orbit_line(
             &self.context,
             &body_wrapper.body,
             body_wrapper.parent_id,
             camera_offset,
             camera_pos,
+            camera_scale,
             position_map,
             self.sim_state.universe.time,
             Self::PREVIEW_POINT_SCALE,

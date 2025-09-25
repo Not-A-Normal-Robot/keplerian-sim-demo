@@ -472,7 +472,6 @@ fn window_toggles(ui: &mut Ui, sim_state: &mut SimState) {
         if sim_state.preview_body.is_some() {
             sim_state.preview_body = None;
         } else {
-            // let root = sim_state.universe.get_bodies().iter().next();
             let root = sim_state
                 .universe
                 .get_bodies()

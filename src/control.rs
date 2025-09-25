@@ -10,34 +10,36 @@ use three_d::renderer::*;
 ///
 #[derive(Clone, Copy, Debug)]
 pub struct CameraControl {
-    /// The target point to orbit around.
-    pub target: Vec3,
     /// The minimum distance to the target point.
-    pub min_distance: f32,
+    pub min_distance: f64,
     /// The maximum distance to the target point.
-    pub max_distance: f32,
+    pub max_distance: f64,
     /// The desired distance to the target point.
-    pub desired_distance: f32,
+    pub desired_distance: f64,
+    /// The current distance to the target point.
+    pub current_distance: f64,
 }
+
+const ZOOM_APPROACH_SPEED: f64 = 0.03;
 
 impl CameraControl {
     /// Creates a new orbit control with the given target and minimum and maximum distance to the target.
-    pub fn new(target: Vec3, min_distance: f32, max_distance: f32, desired_distance: f32) -> Self {
+    pub fn new(min_distance: f64, max_distance: f64, desired_distance: f64) -> Self {
         Self {
-            target,
             min_distance,
             max_distance,
             desired_distance,
+            current_distance: desired_distance,
         }
     }
 
     /// Handles the events. Must be called each frame.
-    pub fn handle_events(&mut self, camera: &mut Camera, events: &mut [Event], elapsed_time: f32) {
+    pub fn handle_events(&mut self, camera: &mut Camera, events: &mut [Event], elapsed_time: f64) {
         for event in events.iter_mut() {
             self.handle_event(camera, event);
         }
         self.reclamp();
-        self.update_zoom(camera, elapsed_time);
+        self.update_zoom(elapsed_time);
     }
 
     fn handle_event(&mut self, camera: &mut Camera, event: &mut Event) {
@@ -54,13 +56,14 @@ impl CameraControl {
                 if Some(MouseButton::Left) == *button {
                     let speed = 0.01;
                     camera.rotate_around_with_fixed_up(
-                        self.target,
+                        Vec3::zero(),
                         speed * delta.0,
                         speed * delta.1,
                     );
-                    let pos = camera.position();
+                    let pos = camera.position().normalize();
+                    let pos = if is_nan(pos) { Vec3::unit_x() } else { pos };
                     let up = camera.up();
-                    camera.set_view(pos, self.target, up);
+                    camera.set_view(pos, Vec3::zero(), up);
                     *handled = true;
                 }
             }
@@ -69,12 +72,7 @@ impl CameraControl {
                     return;
                 }
 
-                // let delta = if cfg!(target_family = "wasm") {
-                //     delta.1 * -0.002
-                // } else {
-                //     delta.1 * -0.02
-                // };
-                let delta = delta.1 * -0.02;
+                let delta = delta.1 as f64 * -0.02;
 
                 #[cfg(target_family = "wasm")]
                 let delta = if *IS_WEB_MOBILE {
@@ -83,7 +81,7 @@ impl CameraControl {
                     delta * 0.1
                 };
 
-                self.zoom(camera, delta);
+                self.zoom(delta);
                 *handled = true;
             }
             Event::PinchGesture { delta, handled, .. } => {
@@ -91,39 +89,28 @@ impl CameraControl {
                 if *handled {
                     return;
                 }
-                self.zoom(camera, *delta);
+                self.zoom(*delta as f64);
                 *handled = true;
             }
             _ => {}
         }
     }
-    fn zoom(&mut self, camera: &Camera, delta: f32) {
-        let distance = self.target.distance(camera.position());
+    fn zoom(&mut self, delta: f64) {
         self.desired_distance =
-            (distance * delta.exp()).clamp(self.min_distance, self.max_distance);
+            (self.current_distance * delta.exp()).clamp(self.min_distance, self.max_distance);
     }
     fn reclamp(&mut self) {
-        // let view = camera.view_direction();
-        // let distance = self.target.distance(camera.position());
-        // let up = camera.up();
-        // if distance < self.min_distance {
-        //     camera.set_view(view * -self.min_distance, self.target, up);
-        // } else if distance > self.max_distance {
-        //     camera.set_view(view * -self.max_distance, self.target, up);
-        // }
         self.desired_distance = self
             .desired_distance
             .clamp(self.min_distance, self.max_distance);
     }
-    fn update_zoom(&self, camera: &mut Camera, elapsed_time: f32) {
-        let view = camera.view_direction();
-        let up = camera.up();
-        let old_distance = self.target.distance(camera.position());
-        let factor = (-0.03 * elapsed_time).exp().min(1.0);
+    fn update_zoom(&mut self, elapsed_time: f64) {
+        let old_distance = self.current_distance;
+        let factor = (-ZOOM_APPROACH_SPEED * elapsed_time).exp().min(1.0);
         let old_diff = self.desired_distance - old_distance;
         let new_diff = old_diff * factor.min(1.0);
         let new_distance = self.desired_distance - new_diff;
-        camera.set_view(view * -new_distance, self.target, up);
+        self.current_distance = new_distance;
     }
 }
 
@@ -139,3 +126,7 @@ static IS_WEB_MOBILE: LazyLock<bool> = LazyLock::new(|| {
     };
     ua.contains("mobi") || ua.contains("android") || ua.contains("iphone") || ua.contains("ios")
 });
+
+fn is_nan(vec: Vec3) -> bool {
+    vec.x.is_nan() || vec.y.is_nan() || vec.z.is_nan()
+}
