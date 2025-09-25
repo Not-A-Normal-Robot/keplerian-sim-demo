@@ -150,13 +150,13 @@ description = "the moon of the dwarf planet Quaoar"
 # (approximately)
 mass = 7.12e18
 radius = 1e5
-eccentricity = 0.056
+eccentricity = 0.018
 periapsis = 1.3289e7
 # I only found inclination to the ecliptic.
 # I couldn't find one in relation to Quaoar's equator.
 inclination = 0.0
-arg_pe = 335.0
-long_asc_node = 1.0
+arg_pe = 292.0
+long_asc_node = 356.9
 # I couldn't find the mean anomaly
 mean_anomaly = 0.0
 
