@@ -70,7 +70,7 @@ impl Program {
     fn new_camera(viewport: Viewport) -> Camera {
         Camera::new_perspective(
             viewport,
-            Vec3::new(3.0, 2.5, 6.0).normalize(),
+            Vec3::new(6.2, 2.6, 4.2).normalize(),
             Vec3::new(0.0, 0.0, 0.0),
             Vec3::new(0.0, 0.0, 1.0),
             Degrees { 0: 45.0 },
@@ -79,7 +79,7 @@ impl Program {
         )
     }
     fn new_control() -> CameraControl {
-        CameraControl::new(100.0, 1e10, 7000.0)
+        CameraControl::new(100.0, 1e10, 5e11)
     }
     fn new_dir_light(context: &Context) -> DirectionalLight {
         DirectionalLight::new(&context, 1.0, Srgba::WHITE, Vec3::new(0.0, -0.5, -0.5))
