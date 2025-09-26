@@ -87,7 +87,7 @@ pub(crate) fn create_universe() -> universe::Universe {
                 phobos, deimos,
             },
             ceres,
-            // vesta,
+            vesta,
             jupiter {
                 // io, europa, ganymede, callisto
             },
@@ -112,7 +112,7 @@ pub(crate) fn create_universe() -> universe::Universe {
             haumea,
             makemake,
             sedna,
-            // leleakuhonua,
+            leleakuhonua,
         }
     }
 }

@@ -204,6 +204,31 @@ pub(crate) fn jupiter(parent_mu: Option<f64>) -> Body {
         color: Srgba::new(225, 214, 191, 255),
     }
 }
+/// Returns 541132 Leleākūhonua, a sednoid and extreme trans-Neptunian object.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn leleakuhonua(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            9.40384129970857518543e-1,
+            9.71638170196500000000e12,
+            2.03697377000258195157e-1,
+            2.06360749438801560629e0,
+            5.25324906228521193441e0,
+            6.27472046030741381628e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Leleākūhonua"),
+        mass: 1.00000000000000000000e19,
+        radius: 1.10000000000000000000e5,
+        orbit,
+        color: Srgba::new(128, 128, 128, 128),
+    }
+}
 /// Returns the Moon, the only natural satellite of Earth.
 ///
 /// `parent_mu`: The gravitational parameter of the parent body, if any.
@@ -527,6 +552,31 @@ pub(crate) fn venus(parent_mu: Option<f64>) -> Body {
         radius: 6.05180000000000000000e6,
         orbit,
         color: Srgba::new(244, 230, 201, 255),
+    }
+}
+/// Returns 4 Vesta, a dwarf planet in the asteroid belt.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn vesta(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            8.78186968838526871295e-2,
+            3.22000000000000000000e11,
+            1.24654905835939008862e-1,
+            2.64696634357460025555e0,
+            1.81008096724331912775e0,
+            2.96252187233517494391e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Vesta"),
+        mass: 2.59027100000000016384e20,
+        radius: 2.62700000000000000000e5,
+        orbit,
+        color: Srgba::new(133, 131, 119, 128),
     }
 }
 /// Returns (50000) Quaoar I, a.k.a. Weywot, the moon of the dwarf planet Quaoar.

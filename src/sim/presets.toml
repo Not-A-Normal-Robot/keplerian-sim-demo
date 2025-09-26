@@ -246,6 +246,20 @@ long_asc_node = 80.3
 mean_anomaly = 291.4
 color = 0x68585980
 
+[vesta]
+name = "Vesta"
+docname = "4 Vesta"
+description = "a dwarf planet in the asteroid belt"
+mass = 2.590271e20
+radius = 262700.0
+apoapsis = 3.84e11
+periapsis = 3.22e11
+inclination = 7.1422
+arg_pe = 151.66
+long_asc_node = 103.71
+mean_anomaly = 169.74
+color = 0x85837780
+
 [quaoar]
 name = "Quaoar"
 docname = "50000 Quaoar"
@@ -275,6 +289,22 @@ arg_pe = 311.352
 long_asc_node = 144.248
 mean_anomaly = 358.117
 color = [159, 62, 45, 128]
+
+[leleakuhonua]
+name = "Leleākūhonua"
+docname = "541132 Leleākūhonua"
+description = "a sednoid and extreme trans-Neptunian object"
+# Mass not yet directly measured
+# Estimate used
+mass = 1e19
+radius = 1.1e5
+apoapsis = 3.162498986598e14
+periapsis = 9.716381701965e12
+inclination = 11.671
+arg_pe = 118.236
+long_asc_node = 300.989
+mean_anomaly = 359.515
+color = [128, 128, 128, 128]
 
 [pluto]
 name = "Pluto"
