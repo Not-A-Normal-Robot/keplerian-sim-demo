@@ -88,7 +88,7 @@ inclination = 1.303
 arg_pe = 273.867
 long_asc_node = 100.464
 mean_anomaly = 20.02
-color = [180, 180, 180]
+color = 0xE1D6BFFF
 
 [saturn]
 name = "Saturn"
@@ -101,7 +101,7 @@ inclination = 2.485
 arg_pe = 339.392
 long_asc_node = 113.665
 mean_anomaly = 317.020
-color = [180, 180, 180]
+color = 0xDEBB79FF
 
 [uranus]
 name = "Uranus"
@@ -114,7 +114,7 @@ inclination = 0.773
 arg_pe = 96.998857
 long_asc_node = 74.006
 mean_anomaly = 142.2386
-color = [180, 180, 180]
+color = 0xD2EBF3FF
 
 [neptune]
 name = "Neptune"
@@ -127,7 +127,7 @@ inclination = 1.77
 arg_pe = 273.187
 long_asc_node = 131.783
 mean_anomaly = 259.883
-color = [180, 180, 180]
+color = 0x8FACB6FF
 
 [luna]
 name = "Luna"

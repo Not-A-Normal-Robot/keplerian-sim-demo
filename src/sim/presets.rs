@@ -176,7 +176,7 @@ pub(crate) fn jupiter(parent_mu: Option<f64>) -> Body {
         mass: 1.89820000000000013061e27,
         radius: 6.99110000000000000000e7,
         orbit,
-        color: Srgba::new(180, 180, 180, 255),
+        color: Srgba::new(225, 214, 191, 255),
     }
 }
 /// Returns the Moon, the only natural satellite of Earth.
@@ -301,7 +301,7 @@ pub(crate) fn neptune(parent_mu: Option<f64>) -> Body {
         mass: 1.02409000000000005039e26,
         radius: 2.43410000000000000000e7,
         orbit,
-        color: Srgba::new(180, 180, 180, 255),
+        color: Srgba::new(143, 172, 182, 255),
     }
 }
 /// Returns 134340 Pluto, a famous dwarf planet in the Kuiper belt.
@@ -376,7 +376,7 @@ pub(crate) fn saturn(parent_mu: Option<f64>) -> Body {
         mass: 5.68340000000000030526e26,
         radius: 5.82320000000000000000e7,
         orbit,
-        color: Srgba::new(180, 180, 180, 255),
+        color: Srgba::new(222, 187, 121, 255),
     }
 }
 /// Returns 90377 Sedna, a dwarf planet, sednoid, and extreme trans-Neptunian object.
@@ -451,7 +451,7 @@ pub(crate) fn uranus(parent_mu: Option<f64>) -> Body {
         mass: 8.68100000000000065054e25,
         radius: 2.53620000000000000000e7,
         orbit,
-        color: Srgba::new(180, 180, 180, 255),
+        color: Srgba::new(210, 235, 243, 255),
     }
 }
 /// Returns Venus, the second planet from the Sun.
