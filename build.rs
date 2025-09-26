@@ -384,7 +384,7 @@ mod presets {
 
     use toml::{
         Spanned,
-        de::{DeTable, DeValue},
+        de::{DeArray, DeInteger, DeTable, DeValue},
     };
 
     const PRESETS_TOML_PATH: &str = "src/sim/presets.toml";
@@ -667,9 +667,52 @@ pub(crate) fn {fn_name}(parent_mu: Option<f64>) -> Body {{
         fn_name: (impl AsRef<str> + Display),
         key_name: &str,
     ) -> [u8; 3] {
-        let Some(val) = val.get_ref().as_array() else {
-            panic!("preset builder: {fn_name}: expected field {key_name} to be [u8; 3]");
+        match val.get_ref() {
+            DeValue::Integer(de_integer) => srgb_from_int(de_integer, fn_name, key_name),
+            DeValue::Array(de_array) => srgb_from_array(de_array, fn_name, key_name),
+            _ => {
+                panic!(
+                    "preset builder: {fn_name}: expected field {key_name} \
+                    to be either a 3-element integer array or an integer"
+                );
+            }
+        }
+    }
+
+    fn srgb_from_int(
+        val: &DeInteger<'_>,
+        fn_name: (impl AsRef<str> + Display),
+        key_name: &str,
+    ) -> [u8; 3] {
+        const SRGB_BITS: u32 = u8::BITS * 3;
+        const SRGB_MAX_VALUE: u32 = (1 << SRGB_BITS) - 1;
+
+        let val = match u32::from_str_radix(val.as_str(), val.radix()) {
+            Ok(v) => v,
+            Err(e) => {
+                panic!(
+                    "preset builder: {fn_name}: expected integer {key_name} to fit in 24 bits, got error {e}"
+                );
+            }
         };
+
+        if val > SRGB_MAX_VALUE {
+            panic!(
+                "preset builder: {fn_name}: expected integer {key_name} to fit in 24 bits\n\
+                ...max 24-bit number: {SRGB_MAX_VALUE} = 0x{SRGB_MAX_VALUE:X}\n\
+                ...got value: {val} = 0x{val:X}"
+            );
+        }
+
+        let [_, rgb @ ..] = val.to_be_bytes();
+        rgb
+    }
+
+    fn srgb_from_array(
+        val: &DeArray<'_>,
+        fn_name: (impl AsRef<str> + Display),
+        key_name: &str,
+    ) -> [u8; 3] {
         if val.len() != 3 {
             panic!(
                 "preset builder: {fn_name}: expected array {key_name} to have 3 elements, got {}",

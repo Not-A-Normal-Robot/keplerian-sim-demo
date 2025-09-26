@@ -9,7 +9,7 @@
 # arg_pe (degrees)
 # long_asc_node (degrees)
 # mean_anomaly (degrees)
-# color (sRGB, [u8; 3])
+# color (sRGB, [u8; 3] | u24)
 
 [the_sun]
 name = "The Sun"
@@ -23,7 +23,7 @@ inclination = 0.0
 arg_pe = 0.0
 long_asc_node = 0.0
 mean_anomaly = 0.0
-color = [255, 255, 255]
+color = 0xFFF3EA
 
 [mercury]
 name = "Mercury"
