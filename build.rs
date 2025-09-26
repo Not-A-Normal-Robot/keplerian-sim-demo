@@ -402,6 +402,7 @@ mod presets {
     const KEY_ARG_PE: &str = "arg_pe";
     const KEY_LONG_ASC_NODE: &str = "long_asc_node";
     const KEY_MEAN_ANOMALY: &str = "mean_anomaly";
+    const KEY_COLOR: &str = "color";
 
     struct BodyCreator<'a> {
         fn_name: &'a str,
@@ -416,6 +417,7 @@ mod presets {
         arg_pe: f64,
         long_asc_node: f64,
         mean_anomaly: f64,
+        color: [u8; 3],
     }
 
     pub(super) fn build() {
@@ -499,6 +501,8 @@ mod presets {
         let long_asc_node = get_float_required(map, fn_name, KEY_LONG_ASC_NODE).to_radians();
         let mean_anomaly = get_float_required(map, fn_name, KEY_MEAN_ANOMALY).to_radians();
 
+        let color = get_srgb_required(map, fn_name, KEY_COLOR);
+
         let creator = BodyCreator {
             fn_name,
             name,
@@ -512,6 +516,7 @@ mod presets {
             arg_pe,
             long_asc_node,
             mean_anomaly,
+            color,
         };
 
         let code = meta_create_body(&creator);
@@ -534,7 +539,9 @@ mod presets {
             arg_pe,
             long_asc_node,
             mean_anomaly,
+            color,
         } = creator;
+        let [color_r, color_g, color_b] = color;
         let desc = match desc {
             Some(d) => format!(", {d}"),
             None => String::new(),
@@ -564,7 +571,7 @@ pub(crate) fn {fn_name}(parent_mu: Option<f64>) -> Body {{
         mass: {mass:.20e},
         radius: {radius:.20e},
         orbit,
-        color: Srgba::WHITE,
+        color: Srgba::new_opaque({color_r}, {color_g}, {color_b}),
     }}
 }}"
         )
@@ -618,11 +625,7 @@ pub(crate) fn {fn_name}(parent_mu: Option<f64>) -> Body {{
         fn_name: (impl AsRef<str> + Display),
         key_name: &str,
     ) -> f64 {
-        expect_float(
-            expect_exists(map, fn_name.as_ref(), key_name),
-            fn_name,
-            key_name,
-        )
+        expect_float(expect_exists(map, &fn_name, key_name), fn_name, key_name)
     }
 
     fn get_float_optional(
@@ -649,5 +652,43 @@ pub(crate) fn {fn_name}(parent_mu: Option<f64>) -> Body {{
             }
         };
         res
+    }
+
+    fn get_srgb_required(
+        map: &DeTable,
+        fn_name: (impl AsRef<str> + Display),
+        key_name: &str,
+    ) -> [u8; 3] {
+        expect_srgb(expect_exists(map, &fn_name, key_name), fn_name, key_name)
+    }
+
+    fn expect_srgb(
+        val: &Spanned<DeValue<'_>>,
+        fn_name: (impl AsRef<str> + Display),
+        key_name: &str,
+    ) -> [u8; 3] {
+        let Some(val) = val.get_ref().as_array() else {
+            panic!("preset builder: {fn_name}: expected field {key_name} to be [u8; 3]");
+        };
+        if val.len() != 3 {
+            panic!(
+                "preset builder: {fn_name}: expected array {key_name} to have 3 elements, got {}",
+                val.len()
+            );
+        }
+
+        core::array::from_fn(|i| {
+            let Some(val) = val[i].get_ref().as_integer() else {
+                panic!("preset builder: {fn_name}: expected {key_name}[{i}] to be u8");
+            };
+
+            let val = match u8::from_str_radix(val.as_str(), val.radix()) {
+                Ok(v) => v,
+                Err(e) => panic!(
+                    "preset builder: {fn_name}: expected {key_name}[{i}] to fit in u8, got error {e}"
+                ),
+            };
+            val
+        })
     }
 }
