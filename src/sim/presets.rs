@@ -879,7 +879,7 @@ pub(crate) fn venus(parent_mu: Option<f64>) -> Body {
         color: Srgba::new(244, 230, 201, 255),
     }
 }
-/// Returns 4 Vesta, a dwarf planet in the asteroid belt.
+/// Returns 4 Vesta, a large asteroid in the asteroid belt.
 ///
 /// `parent_mu`: The gravitational parameter of the parent body, if any.
 /// If None, the celestial body will not be placed in an orbit.

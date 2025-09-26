@@ -9,7 +9,7 @@
 # arg_pe (degrees)
 # long_asc_node (degrees)
 # mean_anomaly (degrees)
-# color (sRGB, [u8; 3] | u24)
+# color (sRGB, [u8; 3|4] | u32)
 
 [the_sun]
 name = "The Sun"
@@ -434,7 +434,7 @@ color = 0x68585980
 [vesta]
 name = "Vesta"
 docname = "4 Vesta"
-description = "a dwarf planet in the asteroid belt"
+description = "a large asteroid in the asteroid belt"
 mass = 2.590271e20
 radius = 262700.0
 apoapsis = 3.84e11
