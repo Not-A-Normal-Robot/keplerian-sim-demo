@@ -95,10 +95,10 @@ pub(crate) fn create_universe() -> universe::Universe {
                 titan, enceladus, mimas, iapetus
             },
             uranus {
-                // titania, oberon
+                titania, oberon
             },
             neptune {
-                // triton, proteus, nereid
+                triton, proteus, nereid
             },
             pluto {
                 charon,

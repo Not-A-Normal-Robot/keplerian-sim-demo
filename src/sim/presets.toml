@@ -285,6 +285,77 @@ long_asc_node = 0.0
 mean_anomaly = 0.0
 color = 0x999594FF
 
+[titania]
+name = "Titania"
+description = "the largest moon of Uranus"
+mass = 3.4550e21
+radius = 788400.0
+eccentricity = 0.0011
+periapsis = 435430499.0
+inclination = 0.34
+# Could not find arg_pe, long_asc_node, nor M_0
+arg_pe = 0.0
+long_asc_node = 0.0
+mean_anomaly = 0.0
+color = 0xD6C9B6FF
+
+[oberon]
+name = "Oberon"
+description = "the second-largest moon of Uranus"
+mass = 3.1104e21
+radius = 761400.0
+eccentricity = 0.0014
+periapsis = 582703072.0
+inclination = 0.058
+# Could not find arg_pe, long_asc_node, nor M_0
+arg_pe = 0.0
+long_asc_node = 0.0
+mean_anomaly = 0.0
+color = 0xA59E96FF
+
+[triton]
+name = "Triton"
+description = "the largest moon of Neptune"
+mass = 2.1389e22
+radius = 1353400.0
+eccentricity = 0.000016
+periapsis = 3.54754e8
+inclination = 156.885
+# Could not find arg_pe, long_asc_node, nor M_0
+arg_pe = 0.0
+long_asc_node = 0.0
+mean_anomaly = 0.0
+color = 0xA7A7A7FF
+
+[proteus]
+name = "Proteus"
+docname = "Proteus (Neptune VIII)"
+description = "The second-largest moon of Neptune"
+mass = 2e19
+radius = 210000.0
+apoapsis = 1.17709e8
+periapsis = 1.17584e8
+inclination = 0.524
+# Could not find arg_pe, long_asc_node, nor M_0
+arg_pe = 0.0
+long_asc_node = 0.0
+mean_anomaly = 0.0
+color = 0x2E2E2EFF
+
+[nereid]
+name = "Nereid"
+docname = "Nereid (Neptune II)"
+description = "the third-largest moon of Neptune"
+mass = 3.57e19
+radius = 178500.0
+eccentricity = 0.749
+periapsis = 1.381504e9
+inclination = 7.09
+arg_pe = 290.3
+long_asc_node = 326.0
+mean_anomaly = 318.0
+color = 0x434343FF
+
 [weywot]
 name = "Weywot"
 docname = "(50000) Quaoar I, a.k.a. Weywot"

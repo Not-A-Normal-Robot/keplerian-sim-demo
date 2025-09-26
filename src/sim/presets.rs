@@ -529,6 +529,56 @@ pub(crate) fn neptune(parent_mu: Option<f64>) -> Body {
         color: Srgba::new(143, 172, 182, 255),
     }
 }
+/// Returns Nereid (Neptune II), the third-largest moon of Neptune.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn nereid(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            7.48999999999999999112e-1,
+            1.38150400000000000000e9,
+            1.23743843966397967793e-1,
+            5.06669081853953873207e0,
+            5.68977336150151469241e0,
+            5.55014702134196813432e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Nereid"),
+        mass: 3.57000000000000000000e19,
+        radius: 1.78500000000000000000e5,
+        orbit,
+        color: Srgba::new(67, 67, 67, 255),
+    }
+}
+/// Returns Oberon, the second-largest moon of Uranus.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn oberon(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            1.39999999999999998578e-3,
+            5.82703072000000000000e8,
+            1.01229096615671116700e-3,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Oberon"),
+        mass: 3.11040000000000000000e21,
+        radius: 7.61400000000000000000e5,
+        orbit,
+        color: Srgba::new(165, 158, 150, 255),
+    }
+}
 /// Returns Phobos, the first moon of Mars.
 ///
 /// `parent_mu`: The gravitational parameter of the parent body, if any.
@@ -577,6 +627,31 @@ pub(crate) fn pluto(parent_mu: Option<f64>) -> Body {
         radius: 1.18830000000000000000e6,
         orbit,
         color: Srgba::new(160, 148, 134, 128),
+    }
+}
+/// Returns Proteus (Neptune VIII), The second-largest moon of Neptune.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn proteus(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            5.31252523449486408098e-4,
+            1.17584000000000000000e8,
+            9.14552528045028782777e-3,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Proteus"),
+        mass: 2.00000000000000000000e19,
+        radius: 2.10000000000000000000e5,
+        orbit,
+        color: Srgba::new(46, 46, 46, 255),
     }
 }
 /// Returns 50000 Quaoar, a dwarf planet in the Kuiper belt.
@@ -702,6 +777,56 @@ pub(crate) fn titan(parent_mu: Option<f64>) -> Body {
         radius: 2.57473000000000000000e6,
         orbit,
         color: Srgba::new(240, 223, 135, 255),
+    }
+}
+/// Returns Titania, the largest moon of Uranus.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn titania(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            1.10000000000000006627e-3,
+            4.35430499000000000000e8,
+            5.93411945678072073884e-3,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Titania"),
+        mass: 3.45500000000000026214e21,
+        radius: 7.88400000000000000000e5,
+        orbit,
+        color: Srgba::new(214, 201, 182, 255),
+    }
+}
+/// Returns Triton, the largest moon of Neptune.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn triton(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            1.59999999999999992760e-5,
+            3.54754000000000000000e8,
+            2.73815979699130362945e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Triton"),
+        mass: 2.13889999999999986893e22,
+        radius: 1.35340000000000000000e6,
+        orbit,
+        color: Srgba::new(167, 167, 167, 255),
     }
 }
 /// Returns Uranus, the seventh planet from the Sun.
