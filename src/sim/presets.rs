@@ -26,7 +26,7 @@ pub(crate) fn ceres(parent_mu: Option<f64>) -> Body {
         mass: 9.38390000000000065536e20,
         radius: 4.69700000000000000000e5,
         orbit,
-        color: Srgba::new(180, 180, 180, 128),
+        color: Srgba::new(104, 88, 89, 128),
     }
 }
 /// Returns (134340) Pluto I, a.k.a. Charon, the largest moon orbiting Pluto.
@@ -51,7 +51,7 @@ pub(crate) fn charon(parent_mu: Option<f64>) -> Body {
         mass: 1.58969999999999986893e21,
         radius: 6.06000000000000000000e5,
         orbit,
-        color: Srgba::new(180, 180, 180, 255),
+        color: Srgba::new(94, 86, 75, 255),
     }
 }
 /// Returns (136199) Eris I Dysnomia, the moon of the dwarf planet Eris.
@@ -76,7 +76,7 @@ pub(crate) fn dysnomia(parent_mu: Option<f64>) -> Body {
         mass: 8.20000000000000000000e19,
         radius: 3.07500000000000000000e5,
         orbit,
-        color: Srgba::new(180, 180, 180, 255),
+        color: Srgba::new(78, 75, 73, 255),
     }
 }
 /// Returns Earth, the third planet from the Sun.
@@ -126,7 +126,7 @@ pub(crate) fn eris(parent_mu: Option<f64>) -> Body {
         mass: 1.64659999999999994757e22,
         radius: 1.16300000000000000000e6,
         orbit,
-        color: Srgba::new(180, 180, 180, 80),
+        color: Srgba::new(239, 238, 242, 80),
     }
 }
 /// Returns 136108 Haumea, a dwarf planet in the Kuiper belt.
@@ -151,7 +151,7 @@ pub(crate) fn haumea(parent_mu: Option<f64>) -> Body {
         mass: 4.00000000000000000000e21,
         radius: 7.80000000000000000000e5,
         orbit,
-        color: Srgba::new(180, 180, 180, 80),
+        color: Srgba::new(190, 189, 192, 80),
     }
 }
 /// Returns Jupiter, the fifth planet from the Sun.
@@ -226,7 +226,7 @@ pub(crate) fn makemake(parent_mu: Option<f64>) -> Body {
         mass: 3.10000000000000000000e21,
         radius: 7.15000000000000000000e5,
         orbit,
-        color: Srgba::new(180, 180, 180, 80),
+        color: Srgba::new(209, 190, 185, 80),
     }
 }
 /// Returns Mars, the fourth planet from the Sun.
@@ -351,7 +351,7 @@ pub(crate) fn quaoar(parent_mu: Option<f64>) -> Body {
         mass: 1.20000000000000000000e21,
         radius: 5.45000000000000000000e5,
         orbit,
-        color: Srgba::new(180, 180, 180, 80),
+        color: Srgba::new(99, 87, 82, 80),
     }
 }
 /// Returns Saturn, the sixth planet from the Sun.
@@ -501,6 +501,6 @@ pub(crate) fn weywot(parent_mu: Option<f64>) -> Body {
         mass: 7.12000000000000000000e18,
         radius: 1.00000000000000000000e5,
         orbit,
-        color: Srgba::new(180, 180, 180, 255),
+        color: Srgba::new(70, 70, 70, 255),
     }
 }
