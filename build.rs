@@ -417,7 +417,7 @@ mod presets {
         arg_pe: f64,
         long_asc_node: f64,
         mean_anomaly: f64,
-        color: [u8; 3],
+        color: [u8; 4],
     }
 
     pub(super) fn build() {
@@ -541,7 +541,7 @@ mod presets {
             mean_anomaly,
             color,
         } = creator;
-        let [color_r, color_g, color_b] = color;
+        let [color_r, color_g, color_b, color_a] = color;
         let desc = match desc {
             Some(d) => format!(", {d}"),
             None => String::new(),
@@ -571,7 +571,7 @@ pub(crate) fn {fn_name}(parent_mu: Option<f64>) -> Body {{
         mass: {mass:.20e},
         radius: {radius:.20e},
         orbit,
-        color: Srgba::new_opaque({color_r}, {color_g}, {color_b}),
+        color: Srgba::new({color_r}, {color_g}, {color_b}, {color_a}),
     }}
 }}"
         )
@@ -658,7 +658,7 @@ pub(crate) fn {fn_name}(parent_mu: Option<f64>) -> Body {{
         map: &DeTable,
         fn_name: (impl AsRef<str> + Display),
         key_name: &str,
-    ) -> [u8; 3] {
+    ) -> [u8; 4] {
         expect_srgb(expect_exists(map, &fn_name, key_name), fn_name, key_name)
     }
 
@@ -666,7 +666,7 @@ pub(crate) fn {fn_name}(parent_mu: Option<f64>) -> Body {{
         val: &Spanned<DeValue<'_>>,
         fn_name: (impl AsRef<str> + Display),
         key_name: &str,
-    ) -> [u8; 3] {
+    ) -> [u8; 4] {
         match val.get_ref() {
             DeValue::Integer(de_integer) => srgb_from_int(de_integer, fn_name, key_name),
             DeValue::Array(de_array) => srgb_from_array(de_array, fn_name, key_name),
@@ -683,46 +683,36 @@ pub(crate) fn {fn_name}(parent_mu: Option<f64>) -> Body {{
         val: &DeInteger<'_>,
         fn_name: (impl AsRef<str> + Display),
         key_name: &str,
-    ) -> [u8; 3] {
-        const SRGB_BITS: u32 = u8::BITS * 3;
-        const SRGB_MAX_VALUE: u32 = (1 << SRGB_BITS) - 1;
-
+    ) -> [u8; 4] {
         let val = match u32::from_str_radix(val.as_str(), val.radix()) {
             Ok(v) => v,
             Err(e) => {
                 panic!(
-                    "preset builder: {fn_name}: expected integer {key_name} to fit in 24 bits, got error {e}"
+                    "preset builder: {fn_name}: expected integer {key_name} to fit in 32 bits, got error {e}"
                 );
             }
         };
 
-        if val > SRGB_MAX_VALUE {
-            panic!(
-                "preset builder: {fn_name}: expected integer {key_name} to fit in 24 bits\n\
-                ...max 24-bit number: {SRGB_MAX_VALUE} = 0x{SRGB_MAX_VALUE:X}\n\
-                ...got value: {val} = 0x{val:X}"
-            );
-        }
-
-        let [_, rgb @ ..] = val.to_be_bytes();
-        rgb
+        val.to_be_bytes()
     }
 
     fn srgb_from_array(
         val: &DeArray<'_>,
         fn_name: (impl AsRef<str> + Display),
         key_name: &str,
-    ) -> [u8; 3] {
-        if val.len() != 3 {
+    ) -> [u8; 4] {
+        if val.len() != 3 && val.len() != 4 {
             panic!(
-                "preset builder: {fn_name}: expected array {key_name} to have 3 elements, got {}",
+                "preset builder: {fn_name}: expected array {key_name} to have 3–4 elements, got {}",
                 val.len()
             );
         }
 
         core::array::from_fn(|i| {
-            let Some(val) = val[i].get_ref().as_integer() else {
-                panic!("preset builder: {fn_name}: expected {key_name}[{i}] to be u8");
+            let val = match val.get(i).and_then(|s| s.get_ref().as_integer()) {
+                Some(v) => v,
+                None if i == 3 => return 255,
+                None => panic!("preset builder: {fn_name}: expected {key_name}[{i}] to be u8"),
             };
 
             let val = match u8::from_str_radix(val.as_str(), val.radix()) {

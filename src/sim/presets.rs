@@ -26,7 +26,7 @@ pub(crate) fn ceres(parent_mu: Option<f64>) -> Body {
         mass: 9.38390000000000065536e20,
         radius: 4.69700000000000000000e5,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns (134340) Pluto I, a.k.a. Charon, the largest moon orbiting Pluto.
@@ -51,7 +51,7 @@ pub(crate) fn charon(parent_mu: Option<f64>) -> Body {
         mass: 1.58969999999999986893e21,
         radius: 6.06000000000000000000e5,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns (136199) Eris I Dysnomia, the moon of the dwarf planet Eris.
@@ -76,7 +76,7 @@ pub(crate) fn dysnomia(parent_mu: Option<f64>) -> Body {
         mass: 8.20000000000000000000e19,
         radius: 3.07500000000000000000e5,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns Earth, the third planet from the Sun.
@@ -101,7 +101,7 @@ pub(crate) fn earth(parent_mu: Option<f64>) -> Body {
         mass: 5.97200000000000032716e24,
         radius: 6.37100000000000000000e6,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns 136199 Eris, a dwarf planet, and a trans-Neptunian and scattered disc object.
@@ -126,7 +126,7 @@ pub(crate) fn eris(parent_mu: Option<f64>) -> Body {
         mass: 1.64659999999999994757e22,
         radius: 1.16300000000000000000e6,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns 136108 Haumea, a dwarf planet in the Kuiper belt.
@@ -151,7 +151,7 @@ pub(crate) fn haumea(parent_mu: Option<f64>) -> Body {
         mass: 4.00000000000000000000e21,
         radius: 7.80000000000000000000e5,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns Jupiter, the fifth planet from the Sun.
@@ -176,7 +176,7 @@ pub(crate) fn jupiter(parent_mu: Option<f64>) -> Body {
         mass: 1.89820000000000013061e27,
         radius: 6.99110000000000000000e7,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns the Moon, the only natural satellite of Earth.
@@ -201,7 +201,7 @@ pub(crate) fn luna(parent_mu: Option<f64>) -> Body {
         mass: 7.34199999999999968543e22,
         radius: 1.73710000000000000000e6,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns 136472 Makemake, a dwarf planet in the Kuiper belt.
@@ -226,7 +226,7 @@ pub(crate) fn makemake(parent_mu: Option<f64>) -> Body {
         mass: 3.10000000000000000000e21,
         radius: 7.15000000000000000000e5,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns Mars, the fourth planet from the Sun.
@@ -251,7 +251,7 @@ pub(crate) fn mars(parent_mu: Option<f64>) -> Body {
         mass: 6.41710000000000034079e23,
         radius: 3.38950000000000000000e6,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns Mercury, the closest planet to the Sun.
@@ -276,7 +276,7 @@ pub(crate) fn mercury(parent_mu: Option<f64>) -> Body {
         mass: 3.30110000000000013107e23,
         radius: 2.43970000000000000000e6,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns Neptune, the eighth planet from the Sun.
@@ -301,7 +301,7 @@ pub(crate) fn neptune(parent_mu: Option<f64>) -> Body {
         mass: 1.02409000000000005039e26,
         radius: 2.43410000000000000000e7,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns 134340 Pluto, a famous dwarf planet in the Kuiper belt.
@@ -326,7 +326,7 @@ pub(crate) fn pluto(parent_mu: Option<f64>) -> Body {
         mass: 1.30249999999999997379e22,
         radius: 1.18830000000000000000e6,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns 50000 Quaoar, a dwarf planet in the Kuiper belt.
@@ -351,7 +351,7 @@ pub(crate) fn quaoar(parent_mu: Option<f64>) -> Body {
         mass: 1.20000000000000000000e21,
         radius: 5.45000000000000000000e5,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns Saturn, the sixth planet from the Sun.
@@ -376,7 +376,7 @@ pub(crate) fn saturn(parent_mu: Option<f64>) -> Body {
         mass: 5.68340000000000030526e26,
         radius: 5.82320000000000000000e7,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns 90377 Sedna, a dwarf planet, sednoid, and extreme trans-Neptunian object.
@@ -401,7 +401,7 @@ pub(crate) fn sedna(parent_mu: Option<f64>) -> Body {
         mass: 2.00000000000000000000e21,
         radius: 5.00000000000000000000e5,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns the Sun.
@@ -426,7 +426,7 @@ pub(crate) fn the_sun(parent_mu: Option<f64>) -> Body {
         mass: 1.98899999999999990191e30,
         radius: 6.96340000000000000000e8,
         orbit,
-        color: Srgba::new_opaque(255, 243, 234),
+        color: Srgba::new(255, 243, 234, 255),
     }
 }
 /// Returns Uranus, the seventh planet from the Sun.
@@ -451,7 +451,7 @@ pub(crate) fn uranus(parent_mu: Option<f64>) -> Body {
         mass: 8.68100000000000065054e25,
         radius: 2.53620000000000000000e7,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns Venus, the second planet from the Sun.
@@ -476,7 +476,7 @@ pub(crate) fn venus(parent_mu: Option<f64>) -> Body {
         mass: 4.86750000000000034918e24,
         radius: 6.05180000000000000000e6,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
 /// Returns (50000) Quaoar I, a.k.a. Weywot, the moon of the dwarf planet Quaoar.
@@ -501,6 +501,6 @@ pub(crate) fn weywot(parent_mu: Option<f64>) -> Body {
         mass: 7.12000000000000000000e18,
         radius: 1.00000000000000000000e5,
         orbit,
-        color: Srgba::new_opaque(255, 255, 255),
+        color: Srgba::new(255, 255, 255, 255),
     }
 }
