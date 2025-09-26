@@ -4,7 +4,7 @@ use super::body::Body;
 use keplerian_sim::Orbit;
 use three_d::Srgba;
 
-/// Returns Callisto, .
+/// Returns Callisto, the outermost Galilean moon of Jupiter.
 ///
 /// `parent_mu`: The gravitational parameter of the parent body, if any.
 /// If None, the celestial body will not be placed in an orbit.
@@ -154,6 +154,31 @@ pub(crate) fn earth(parent_mu: Option<f64>) -> Body {
         color: Srgba::new(154, 218, 235, 255),
     }
 }
+/// Returns Enceladus, one of the most reflective bodies in the Solar system and a moon of Saturn.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn enceladus(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            4.70000000000000018457e-3,
+            2.36918226099999994040e8,
+            1.57079632679489654499e-4,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Enceladus"),
+        mass: 1.08031800000000000000e20,
+        radius: 2.52100000000000000000e5,
+        orbit,
+        color: Srgba::new(255, 255, 255, 255),
+    }
+}
 /// Returns 136199 Eris, a dwarf planet, and a trans-Neptunian and scattered disc object.
 ///
 /// `parent_mu`: The gravitational parameter of the parent body, if any.
@@ -252,6 +277,31 @@ pub(crate) fn haumea(parent_mu: Option<f64>) -> Body {
         radius: 7.80000000000000000000e5,
         orbit,
         color: Srgba::new(190, 189, 192, 80),
+    }
+}
+/// Returns Iapetus, the outermost of Saturn's large moons.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn iapetus(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            2.76811999999999995559e-2,
+            3.46225222941599988937e9,
+            2.70002435283522801424e-1,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Iapetus"),
+        mass: 1.80564999999999993446e21,
+        radius: 7.34400000000000000000e5,
+        orbit,
+        color: Srgba::new(153, 149, 148, 255),
     }
 }
 /// Returns Io, the innermost Galilean moon of Jupiter.
@@ -429,6 +479,31 @@ pub(crate) fn mercury(parent_mu: Option<f64>) -> Body {
         color: Srgba::new(232, 231, 229, 255),
     }
 }
+/// Returns Mimas, the moon of Saturn that looks similar to a Death Star.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn mimas(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            1.96023477543804808265e-2,
+            1.81902000000000000000e8,
+            2.74714824263907475554e-2,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Mimas"),
+        mass: 3.75094000000000000000e19,
+        radius: 1.98200000000000000000e5,
+        orbit,
+        color: Srgba::new(230, 230, 230, 255),
+    }
+}
 /// Returns Neptune, the eighth planet from the Sun.
 ///
 /// `parent_mu`: The gravitational parameter of the parent body, if any.
@@ -602,6 +677,31 @@ pub(crate) fn the_sun(parent_mu: Option<f64>) -> Body {
         radius: 6.96340000000000000000e8,
         orbit,
         color: Srgba::new(255, 243, 234, 255),
+    }
+}
+/// Returns Titan, the largest moon of Saturn.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn titan(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            2.88001178521446639380e-2,
+            1.18668000000000000000e9,
+            6.08317057490103622192e-3,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Titan"),
+        mass: 1.34517999999999998427e23,
+        radius: 2.57473000000000000000e6,
+        orbit,
+        color: Srgba::new(240, 223, 135, 255),
     }
 }
 /// Returns Uranus, the seventh planet from the Sun.

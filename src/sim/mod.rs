@@ -92,7 +92,7 @@ pub(crate) fn create_universe() -> universe::Universe {
                 io, europa, ganymede, callisto
             },
             saturn {
-                // titan, enceladus, mimas, iapetus
+                titan, enceladus, mimas, iapetus
             },
             uranus {
                 // titania, oberon

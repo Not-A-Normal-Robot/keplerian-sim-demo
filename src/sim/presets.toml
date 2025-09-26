@@ -215,7 +215,7 @@ color = 0xC8BCADFF
 
 [callisto]
 name = "Callisto"
-description = ""
+description = "the outermost Galilean moon of Jupiter"
 mass = 1.075938e23
 radius = 2.4103e6
 apoapsis = 1.897e9
@@ -226,6 +226,64 @@ arg_pe = 0.0
 long_asc_node = 0.0
 mean_anomaly = 0.0
 color = 0x2A2720FF
+
+[titan]
+name = "Titan"
+description = "the largest moon of Saturn"
+mass = 1.34518e23
+radius = 2.57473e6
+apoapsis = 1.25706e9
+periapsis = 1.18668e9
+inclination = 0.34854
+# Could not find arg_pe, long_asc_node, nor M_0
+arg_pe = 0.0
+long_asc_node = 0.0
+mean_anomaly = 0.0
+color = 0xF0DF87FF
+
+[enceladus]
+name = "Enceladus"
+description = """\
+one of the most reflective bodies \
+in the Solar system and a moon of Saturn"""
+mass = 1.080318e20
+radius = 252100.0
+eccentricity = 0.0047
+periapsis = 236918226.1
+inclination = 0.009
+# Could not find arg_pe, long_asc_node, nor M_0
+arg_pe = 0.0
+long_asc_node = 0.0
+mean_anomaly = 0.0
+color = 0xFFFFFFFF
+
+[mimas]
+name = "Mimas"
+description = "the moon of Saturn that looks similar to a Death Star"
+mass = 3.75094e19
+radius = 198200.0
+apoapsis = 1.89176e8
+periapsis = 1.81902e8
+inclination = 1.574
+# Could not find arg_pe, long_asc_node, nor M_0
+arg_pe = 0.0
+long_asc_node = 0.0
+mean_anomaly = 0.0
+color = 0xe6e6e6FF
+
+[iapetus]
+name = "Iapetus"
+description = "the outermost of Saturn's large moons"
+mass = 1.80565e21
+radius = 734400.0
+eccentricity = 0.0276812
+periapsis = 3462252229.416
+inclination = 15.47
+# Could not find arg_pe, long_asc_node, nor M_0
+arg_pe = 0.0
+long_asc_node = 0.0
+mean_anomaly = 0.0
+color = 0x999594FF
 
 [weywot]
 name = "Weywot"
