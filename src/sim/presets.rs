@@ -404,3 +404,103 @@ pub(crate) fn sedna(parent_mu: Option<f64>) -> Body {
         color: Srgba::new_opaque(255, 255, 255),
     }
 }
+/// Returns the Sun.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn the_sun(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            0.00000000000000000000e0,
+            2.36518000000000000000e20,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("The Sun"),
+        mass: 1.98899999999999990191e30,
+        radius: 6.96340000000000000000e8,
+        orbit,
+        color: Srgba::new_opaque(255, 243, 234),
+    }
+}
+/// Returns Uranus, the seventh planet from the Sun.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn uranus(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            4.71669032297390225517e-2,
+            2.73556000000000000000e12,
+            1.34913951179161679256e-2,
+            1.69294942532114944811e0,
+            1.29164836623092349477e0,
+            2.48253189342720625987e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Uranus"),
+        mass: 8.68100000000000065054e25,
+        radius: 2.53620000000000000000e7,
+        orbit,
+        color: Srgba::new_opaque(255, 255, 255),
+    }
+}
+/// Returns Venus, the second planet from the Sun.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn venus(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            6.74614176138989014159e-3,
+            1.07480000000000000000e11,
+            5.92465977223491091497e-2,
+            9.57906506664567780618e-1,
+            1.33831847042925211611e0,
+            8.74671754636958342921e-1,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Venus"),
+        mass: 4.86750000000000034918e24,
+        radius: 6.05180000000000000000e6,
+        orbit,
+        color: Srgba::new_opaque(255, 255, 255),
+    }
+}
+/// Returns (50000) Quaoar I, a.k.a. Weywot, the moon of the dwarf planet Quaoar.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn weywot(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            1.79999999999999986400e-2,
+            1.32890000000000000000e7,
+            0.00000000000000000000e0,
+            5.09636141582344226464e0,
+            6.22908010036776182972e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Weywot"),
+        mass: 7.12000000000000000000e18,
+        radius: 1.00000000000000000000e5,
+        orbit,
+        color: Srgba::new_opaque(255, 255, 255),
+    }
+}
