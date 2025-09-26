@@ -84,7 +84,7 @@ pub(crate) fn create_universe() -> universe::Universe {
                 luna,
             },
             mars {
-                // phobos, deimos,
+                phobos, deimos,
             },
             ceres,
             // vesta,

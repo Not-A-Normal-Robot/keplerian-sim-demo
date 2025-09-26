@@ -54,6 +54,31 @@ pub(crate) fn charon(parent_mu: Option<f64>) -> Body {
         color: Srgba::new(94, 86, 75, 255),
     }
 }
+/// Returns Deimos, the second moon of Mars.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn deimos(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            3.28173480173207419378e-4,
+            2.34555000000000000000e7,
+            1.62315620435472644789e-2,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Deimos"),
+        mass: 1.51000000000000000000e15,
+        radius: 6.27000000000000000000e3,
+        orbit,
+        color: Srgba::new(209, 199, 187, 255),
+    }
+}
 /// Returns (136199) Eris I Dysnomia, the moon of the dwarf planet Eris.
 ///
 /// `parent_mu`: The gravitational parameter of the parent body, if any.
@@ -302,6 +327,31 @@ pub(crate) fn neptune(parent_mu: Option<f64>) -> Body {
         radius: 2.43410000000000000000e7,
         orbit,
         color: Srgba::new(143, 172, 182, 255),
+    }
+}
+/// Returns Phobos, the first moon of Mars.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn phobos(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            1.51002559726962463926e-2,
+            9.23442000000000000000e6,
+            1.90764487242980201875e-2,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Phobos"),
+        mass: 1.06000000000000000000e16,
+        radius: 1.10800000000000000000e4,
+        orbit,
+        color: Srgba::new(203, 175, 161, 255),
     }
 }
 /// Returns 134340 Pluto, a famous dwarf planet in the Kuiper belt.
