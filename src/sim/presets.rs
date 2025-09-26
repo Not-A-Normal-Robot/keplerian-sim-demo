@@ -126,7 +126,7 @@ pub(crate) fn eris(parent_mu: Option<f64>) -> Body {
         mass: 1.64659999999999994757e22,
         radius: 1.16300000000000000000e6,
         orbit,
-        color: Srgba::new(180, 180, 180, 255),
+        color: Srgba::new(180, 180, 180, 80),
     }
 }
 /// Returns 136108 Haumea, a dwarf planet in the Kuiper belt.
@@ -151,7 +151,7 @@ pub(crate) fn haumea(parent_mu: Option<f64>) -> Body {
         mass: 4.00000000000000000000e21,
         radius: 7.80000000000000000000e5,
         orbit,
-        color: Srgba::new(180, 180, 180, 255),
+        color: Srgba::new(180, 180, 180, 80),
     }
 }
 /// Returns Jupiter, the fifth planet from the Sun.
@@ -226,7 +226,7 @@ pub(crate) fn makemake(parent_mu: Option<f64>) -> Body {
         mass: 3.10000000000000000000e21,
         radius: 7.15000000000000000000e5,
         orbit,
-        color: Srgba::new(180, 180, 180, 255),
+        color: Srgba::new(180, 180, 180, 80),
     }
 }
 /// Returns Mars, the fourth planet from the Sun.
@@ -326,7 +326,7 @@ pub(crate) fn pluto(parent_mu: Option<f64>) -> Body {
         mass: 1.30249999999999997379e22,
         radius: 1.18830000000000000000e6,
         orbit,
-        color: Srgba::new(180, 180, 180, 255),
+        color: Srgba::new(160, 148, 134, 128),
     }
 }
 /// Returns 50000 Quaoar, a dwarf planet in the Kuiper belt.
@@ -351,7 +351,7 @@ pub(crate) fn quaoar(parent_mu: Option<f64>) -> Body {
         mass: 1.20000000000000000000e21,
         radius: 5.45000000000000000000e5,
         orbit,
-        color: Srgba::new(180, 180, 180, 255),
+        color: Srgba::new(180, 180, 180, 80),
     }
 }
 /// Returns Saturn, the sixth planet from the Sun.
@@ -401,7 +401,7 @@ pub(crate) fn sedna(parent_mu: Option<f64>) -> Body {
         mass: 2.00000000000000000000e21,
         radius: 5.00000000000000000000e5,
         orbit,
-        color: Srgba::new(180, 180, 180, 255),
+        color: Srgba::new(159, 62, 45, 128),
     }
 }
 /// Returns the Sun.
