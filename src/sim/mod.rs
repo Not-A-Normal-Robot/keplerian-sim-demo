@@ -83,14 +83,23 @@ pub(crate) fn create_universe() -> universe::Universe {
             earth {
                 luna,
             },
-            mars,
-            // phobos, deimos,
+            mars {
+                // phobos, deimos,
+            },
             ceres,
             // vesta,
-            jupiter,
-            saturn,
-            uranus,
-            neptune,
+            jupiter {
+                // io, europa, ganymede, callisto
+            },
+            saturn {
+                // titan, enceladus, mimas, iapetus
+            },
+            uranus {
+                // tiania, oberon
+            },
+            neptune {
+                // triton, proteus, nereid
+            },
             pluto {
                 charon,
             },
@@ -103,6 +112,7 @@ pub(crate) fn create_universe() -> universe::Universe {
             haumea,
             makemake,
             sedna,
+            // leleakuhonua,
         }
     }
 }
