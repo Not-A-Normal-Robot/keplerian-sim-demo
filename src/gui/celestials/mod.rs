@@ -196,7 +196,7 @@ fn selectable_body_button(
     let center = Pos2::from([radius, radius]);
     let fill_color = {
         let c = body.color;
-        Color32::from_rgba_unmultiplied(c.r, c.g, c.b, c.a)
+        Color32::from_rgb(c.r, c.g, c.b)
     };
 
     let circle_atom = Atom::custom(*CIRCLE_ICON_ID, Vec2::splat(height));
