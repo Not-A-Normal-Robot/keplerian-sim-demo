@@ -1,4 +1,3 @@
-use keplerian_sim::Orbit;
 use three_d::{
     AmbientLight, Camera, ClearState, Context, Degrees, DirectionalLight, FrameInput, FrameOutput,
     GUI, InnerSpace, Srgba, Vec3, Viewport,
@@ -8,8 +7,6 @@ use three_d::{
 use gui::SimState;
 
 use self::control::CameraControl;
-use self::sim::body::Body;
-use self::sim::universe::Universe;
 #[path = "assets/mod.rs"]
 mod assets;
 #[path = "cfg/mod.rs"]
@@ -91,73 +88,7 @@ impl Program {
         AmbientLight::new(&context, 0.02, Srgba::WHITE)
     }
     fn generate_sim_state() -> SimState {
-        SimState::new(Self::generate_universe())
-    }
-
-    fn generate_universe() -> Universe {
-        let mut universe = Universe::default();
-        let root_id = universe
-            .add_body(
-                Body {
-                    name: "Root".into(),
-                    mass: 1e15,
-                    radius: 100.0,
-                    color: Srgba::new_opaque(255, 255, 255),
-                    orbit: None,
-                },
-                None,
-            )
-            .unwrap();
-        universe
-            .add_body(
-                Body {
-                    name: "Alpha".into(),
-                    mass: 1e12,
-                    radius: 30.0,
-                    color: Srgba::new_opaque(255, 196, 196),
-                    orbit: Some(Orbit::new(0.0, 400.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
-                },
-                Some(root_id),
-            )
-            .unwrap();
-        let beta_id = universe
-            .add_body(
-                Body {
-                    name: "Beta".into(),
-                    mass: 1e12,
-                    radius: 30.0,
-                    color: Srgba::new_opaque(196, 196, 255),
-                    orbit: Some(Orbit::new(0.7, 600.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
-                },
-                Some(root_id),
-            )
-            .unwrap();
-        universe
-            .add_body(
-                Body {
-                    name: "Beta A".into(),
-                    mass: 1e5,
-                    radius: 3.0,
-                    color: Srgba::new_opaque(196, 255, 196),
-                    orbit: Some(Orbit::new(0.1, 40.0, 1.0, 1.0, 1.0, 1.0, 1.0)),
-                },
-                Some(beta_id),
-            )
-            .unwrap();
-        universe
-            .add_body(
-                Body {
-                    name: "Rogue".into(),
-                    mass: 1e8,
-                    radius: 8.0,
-                    color: Srgba::new_opaque(255, 196, 255),
-                    orbit: Some(Orbit::new(1.1, 120.0, 2.0, 2.0, 2.0, -4.0, 1.0)),
-                },
-                Some(root_id),
-            )
-            .unwrap();
-
-        universe
+        SimState::new(sim::create_universe())
     }
 
     pub(crate) fn new() -> Self {
