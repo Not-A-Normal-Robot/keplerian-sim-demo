@@ -7,7 +7,8 @@ use super::{
 use keplerian_sim::{MuSetterMode, Orbit, OrbitTrait};
 use three_d::egui::{
     Color32, ComboBox, Context, CursorIcon, DragValue, Grid, Label, PopupCloseBehavior, RichText,
-    Slider, TextEdit, TextWrapMode, Ui, Window, color_picker::color_edit_button_srgb,
+    Slider, TextEdit, TextWrapMode, Ui, Window,
+    color_picker::{Alpha, color_edit_button_srgba},
 };
 
 declare_id!(salt_only, NEW_BODY_PHYS, b"Creation");
@@ -204,11 +205,14 @@ fn new_body_window_phys(
                 .size(16.0),
         )
         .on_hover_cursor(CursorIcon::Help);
-    let original_srgb: [u8; 3] = wrapper.body.color.into();
-    let mut srgb = original_srgb.clone();
-    color_edit_button_srgb(ui, &mut srgb);
-    if srgb != original_srgb {
-        wrapper.body.color = srgb.into();
+    let original_srgba: Color32 = {
+        let [r, g, b, a] = wrapper.body.color.into();
+        Color32::from_rgba_unmultiplied(r, g, b, a)
+    };
+    let mut srgba = original_srgba.clone();
+    let editor = color_edit_button_srgba(ui, &mut srgba, Alpha::OnlyBlend);
+    if editor.changed() {
+        wrapper.body.color = srgba.to_srgba_unmultiplied().into();
     }
     ui.end_row();
 
