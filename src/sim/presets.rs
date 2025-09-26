@@ -4,6 +4,31 @@ use super::body::Body;
 use keplerian_sim::Orbit;
 use three_d::Srgba;
 
+/// Returns Callisto, .
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn callisto(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            7.43494423791821526515e-3,
+            1.86900000000000000000e9,
+            3.35103216382911291843e-3,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Callisto"),
+        mass: 1.07593800000000002884e23,
+        radius: 2.41030000000000000000e6,
+        orbit,
+        color: Srgba::new(42, 39, 32, 255),
+    }
+}
 /// Returns 1 Ceres, a dwarf planet in the asteroid belt.
 ///
 /// `parent_mu`: The gravitational parameter of the parent body, if any.
@@ -154,6 +179,56 @@ pub(crate) fn eris(parent_mu: Option<f64>) -> Body {
         color: Srgba::new(239, 238, 242, 80),
     }
 }
+/// Returns Europa, the second innermost Galilean moon of Jupiter.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn europa(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            8.99985094648978953269e-3,
+            6.64862000000000000000e8,
+            8.20304748437334849132e-3,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Europa"),
+        mass: 4.79984000000000020972e22,
+        radius: 1.56080000000000000000e6,
+        orbit,
+        color: Srgba::new(217, 210, 191, 255),
+    }
+}
+/// Returns Ganymede, the most massive and second outermost Galilean moon of Jupiter.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn ganymede(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            1.12107623318385648571e-3,
+            1.06920000000000000000e9,
+            3.49065850398865918161e-3,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Ganymede"),
+        mass: 1.48190000000000004719e23,
+        radius: 2.63410000000000000000e6,
+        orbit,
+        color: Srgba::new(200, 188, 173, 255),
+    }
+}
 /// Returns 136108 Haumea, a dwarf planet in the Kuiper belt.
 ///
 /// `parent_mu`: The gravitational parameter of the parent body, if any.
@@ -177,6 +252,31 @@ pub(crate) fn haumea(parent_mu: Option<f64>) -> Body {
         radius: 7.80000000000000000000e5,
         orbit,
         color: Srgba::new(190, 189, 192, 80),
+    }
+}
+/// Returns Io, the innermost Galilean moon of Jupiter.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn io(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            4.03130190000000002831e-3,
+            4.20000000000000000000e8,
+            8.72664625997164795403e-4,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Io"),
+        mass: 8.93193800000000019661e22,
+        radius: 1.82160000000000000000e6,
+        orbit,
+        color: Srgba::new(252, 247, 133, 255),
     }
 }
 /// Returns Jupiter, the fifth planet from the Sun.

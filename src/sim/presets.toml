@@ -171,6 +171,62 @@ long_asc_node = 0.0
 mean_anomaly = 0.0
 color = 0xD1C7BBFF
 
+[io]
+name = "Io"
+description = "the innermost Galilean moon of Jupiter"
+mass = 8.931938e22
+radius = 1.8216e6
+eccentricity = 0.0040313019
+periapsis = 4.2e8
+inclination = 0.05
+# Could not find arg_pe, long_asc_node, nor M_0
+arg_pe = 0.0
+long_asc_node = 0.0
+mean_anomaly = 0.0
+color = 0xFCF785FF
+
+[europa]
+name = "Europa"
+description = "the second innermost Galilean moon of Jupiter"
+mass = 4.79984e22
+radius = 1.5608e6
+apoapsis = 6.76938e8
+periapsis = 6.64862e8
+inclination = 0.470
+# Could not find arg_pe, long_asc_node, nor M_0
+arg_pe = 0.0
+long_asc_node = 0.0
+mean_anomaly = 0.0
+color = 0xD9D2BFFF
+
+[ganymede]
+name = "Ganymede"
+description = "the most massive and second outermost Galilean moon of Jupiter"
+mass = 1.4819e23
+radius = 2.6341e6
+apoapsis = 1.0716e9
+periapsis = 1.0692e9
+inclination = 0.2
+# Could not find arg_pe, long_asc_node, nor M_0
+arg_pe = 0.0
+long_asc_node = 0.0
+mean_anomaly = 0.0
+color = 0xC8BCADFF
+
+[callisto]
+name = "Callisto"
+description = ""
+mass = 1.075938e23
+radius = 2.4103e6
+apoapsis = 1.897e9
+periapsis = 1.869e9
+inclination = 0.192
+# Could not find arg_pe, long_asc_node, nor M_0
+arg_pe = 0.0
+long_asc_node = 0.0
+mean_anomaly = 0.0
+color = 0x2A2720FF
+
 [weywot]
 name = "Weywot"
 docname = "(50000) Quaoar I, a.k.a. Weywot"
