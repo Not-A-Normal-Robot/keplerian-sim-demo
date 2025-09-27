@@ -459,7 +459,12 @@ fn ellipsis_popup(
             {
                 sim_state.preview_body = None;
             }
-            sim_state.switch_focus(parent_id.unwrap_or(0), position_map);
+            if bodies_removed
+                .iter()
+                .any(|(id, _)| *id == sim_state.focused_body())
+            {
+                sim_state.switch_focus(parent_id.unwrap_or(0), position_map);
+            }
             sim_state.ui.body_list_window_state.listed_body_with_popup = None;
         }
         if rename_button.clicked() {
