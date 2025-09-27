@@ -646,3 +646,17 @@ arg_pe = 12.62549515042181
 long_asc_node = 160.2361285469366
 mean_anomaly = 710.2769308456657
 color = 0xFFFFFF44
+
+[geostationary_sat]
+name = "Geostationary Satellite"
+docname = "a geostationary satellite"
+description = "located 42,164 km from the center of the parent body"
+mass = 1000.0
+radius = 10.0
+eccentricity = 0.0
+periapsis = 42164000.0
+inclination = 0.0
+arg_pe = 0.0
+long_asc_node = 0.0
+mean_anomaly = 0.0
+color = 0xFFFFFF44

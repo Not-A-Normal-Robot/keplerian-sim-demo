@@ -81,6 +81,7 @@ pub(crate) fn create_universe() -> universe::Universe {
             mercury,
             venus,
             earth {
+                geostationary_sat,
                 luna,
             },
             mars {

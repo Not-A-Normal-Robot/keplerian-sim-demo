@@ -254,6 +254,31 @@ pub(crate) fn ganymede(parent_mu: Option<f64>) -> Body {
         color: Srgba::new(200, 188, 173, 255),
     }
 }
+/// Returns a geostationary satellite, located 42,164 km from the center of the parent body.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn geostationary_sat(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            0.00000000000000000000e0,
+            4.21640000000000000000e7,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Geostationary Satellite"),
+        mass: 1.00000000000000000000e3,
+        radius: 1.00000000000000000000e1,
+        orbit,
+        color: Srgba::new(255, 255, 255, 68),
+    }
+}
 /// Returns 136108 Haumea, a dwarf planet in the Kuiper belt.
 ///
 /// `parent_mu`: The gravitational parameter of the parent body, if any.
