@@ -52,10 +52,10 @@ fn draw_window_contents(ui: &mut Ui, state: &mut WindowState) {
             on it; it might show a description or hint on what it does.\n\n\
             Do note that eccentricities very close to 1 is not supported yet and may \
             result in numerical instabilities.\n\
-            Also, far away objects get hidden the more you zoom in. This isn't \
-            a problem for realistic-ish systems but it can be a problem if you have a \
-            very small object orbiting a huge object very closely (think a satellite \
-            in Low Earth Orbit).",
+            Also, far away objects get hidden the more you zoom in. This is a problem \
+            due to the way the depth buffer works in the framework used here.\n\
+            Collisions and light is not simulated realistically. This is an orbit\n\
+            simulator, not a direct clone of Universe Sandbox.",
     );
     ui.separator();
     ui.columns_const(|[l, r]| {
