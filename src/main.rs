@@ -17,6 +17,8 @@ mod control;
 mod gfx;
 #[path = "gui/mod.rs"]
 mod gui;
+#[path = "keybinds.rs"]
+mod keybinds;
 #[path = "sim/mod.rs"]
 mod sim;
 #[path = "units/mod.rs"]
@@ -157,6 +159,8 @@ impl Program {
             &mut frame_input.events,
             frame_input.elapsed_time,
         );
+
+        keybinds::handle_keybinds(&mut self.sim_state, &mut frame_input.events);
 
         frame_input
             .screen()
