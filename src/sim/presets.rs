@@ -554,6 +554,31 @@ pub(crate) fn nereid(parent_mu: Option<f64>) -> Body {
         color: Srgba::new(67, 67, 67, 255),
     }
 }
+/// Returns New Horizons, an artificial satellite in escape trajectory from the Sun.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn new_horizons(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            1.40881505215712299339e0,
+            3.45060492712132629395e11,
+            3.95257081908107835155e-2,
+            5.08540266922221295687e0,
+            3.95540979857510688333e0,
+            9.21047022547655913627e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("New Horizons"),
+        mass: 4.01000000000000000000e2,
+        radius: 1.39999999999999991118e0,
+        orbit,
+        color: Srgba::new(255, 255, 68, 68),
+    }
+}
 /// Returns Oberon, the second-largest moon of Uranus.
 ///
 /// `parent_mu`: The gravitational parameter of the parent body, if any.
@@ -602,6 +627,56 @@ pub(crate) fn phobos(parent_mu: Option<f64>) -> Body {
         radius: 1.10800000000000000000e4,
         orbit,
         color: Srgba::new(203, 175, 161, 255),
+    }
+}
+/// Returns Pioneer 10, an inactive artificial satellite in escape trajectory from the Sun.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn pioneer_10(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            1.74993450376594394946e0,
+            7.77258886462304809570e11,
+            5.46493305484346686418e-2,
+            6.04940308543776250616e0,
+            5.80613088085351591872e0,
+            1.78677740419062089927e1,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Pioneer 10"),
+        mass: 2.58000000000000000000e2,
+        radius: 5.00000000000000000000e0,
+        orbit,
+        color: Srgba::new(255, 255, 255, 68),
+    }
+}
+/// Returns Pioneer 11, an inactive artificial satellite in escape trajectory from the Sun.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn pioneer_11(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            2.13372588035494503700e0,
+            1.38082047847507299805e12,
+            2.90552742676011666045e-1,
+            2.20356460069437321003e-1,
+            2.79664802379292121159e0,
+            1.23966710442169372186e1,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Pioneer 11"),
+        mass: 2.58500000000000000000e2,
+        radius: 5.00000000000000000000e0,
+        orbit,
+        color: Srgba::new(255, 255, 255, 68),
     }
 }
 /// Returns 134340 Pluto, a famous dwarf planet in the Kuiper belt.
@@ -929,7 +1004,7 @@ pub(crate) fn vesta(parent_mu: Option<f64>) -> Body {
         color: Srgba::new(133, 131, 119, 128),
     }
 }
-/// Returns Voyager 1, an artificial satellite in the interstellar medium..
+/// Returns Voyager 1, an artificial satellite in the interstellar medium.
 ///
 /// `parent_mu`: The gravitational parameter of the parent body, if any.
 /// If None, the celestial body will not be placed in an orbit.
@@ -954,7 +1029,7 @@ pub(crate) fn voyager_1(parent_mu: Option<f64>) -> Body {
         color: Srgba::new(255, 255, 68, 68),
     }
 }
-/// Returns Voyager 2, an artificial satellite in the interstellar medium..
+/// Returns Voyager 2, an artificial satellite in the interstellar medium.
 ///
 /// `parent_mu`: The gravitational parameter of the parent body, if any.
 /// If None, the celestial body will not be placed in an orbit.

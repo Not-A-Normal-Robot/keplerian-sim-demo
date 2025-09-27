@@ -572,7 +572,7 @@ color = [209, 190, 185, 80]
 ################ ARTIFICIAL SATELLITES ################
 [voyager_1]
 name = "Voyager 1"
-description = "an artificial satellite in the interstellar medium."
+description = "an artificial satellite in the interstellar medium"
 mass = 721.9
 radius = 4.0
 # from https://ssd.jpl.nasa.gov/horizons/app.html
@@ -587,7 +587,7 @@ color = 0xFFFF4444
 
 [voyager_2]
 name = "Voyager 2"
-description = "an artificial satellite in the interstellar medium."
+description = "an artificial satellite in the interstellar medium"
 mass = 721.9
 radius = 4.0
 # from https://ssd.jpl.nasa.gov/horizons/app.html
@@ -599,3 +599,50 @@ arg_pe = 130.0457656032997
 long_asc_node = 101.8245521579770
 mean_anomaly = 1893.051519975169
 color = 0xFFFF4444
+
+[new_horizons]
+name = "New Horizons"
+description = "an artificial satellite in escape trajectory from the Sun"
+mass = 401.0
+radius = 1.4
+# from https://ssd.jpl.nasa.gov/horizons/app.html
+# time: 2460946.166666700 = A.D. 2025-Sep-27 16:00:00.0029 TDB 
+eccentricity = 1.408815052157123
+periapsis = 3.450604927121326e11
+inclination = 2.264656261599127
+arg_pe = 291.3721100709962
+long_asc_node = 226.6282877030447
+mean_anomaly = 527.7210712507145
+color = 0xFFFF4444
+
+[pioneer_10]
+name = "Pioneer 10"
+description = "an inactive artificial satellite in escape trajectory from the Sun"
+mass = 258.0
+# unsure of real dimensions, used ballpark estimate
+radius = 5.0
+# from https://ssd.jpl.nasa.gov/horizons/app.html
+# time: 2460946.166666700 = A.D. 2025-Sep-27 16:00:00.0029 TDB 
+eccentricity = 1.749934503765944
+periapsis = 7.772588864623048e11
+inclination = 3.131175993640667
+arg_pe = 346.6052653690019
+long_asc_node = 332.6667947734815
+mean_anomaly = 1023.748041894634
+color = 0xFFFFFF44
+
+[pioneer_11]
+name = "Pioneer 11"
+description = "an inactive artificial satellite in escape trajectory from the Sun"
+mass = 258.5
+# unsure of real dimensions, used ballpark estimate
+radius = 5.0
+# from https://ssd.jpl.nasa.gov/horizons/app.html
+# time: 2460946.166666700 = A.D. 2025-Sep-27 16:00:00.0029 TDB 
+eccentricity = 2.133725880354945
+periapsis = 1.380820478475073e12
+inclination = 16.64744588128611
+arg_pe = 12.62549515042181
+long_asc_node = 160.2361285469366
+mean_anomaly = 710.2769308456657
+color = 0xFFFFFF44
