@@ -11,6 +11,8 @@
 # mean_anomaly (degrees)
 # color (sRGB, [u8; 3|4] | u32)
 
+################ STARS ################
+
 [the_sun]
 name = "The Sun"
 docname = "the Sun"
@@ -24,6 +26,8 @@ arg_pe = 0.0
 long_asc_node = 0.0
 mean_anomaly = 0.0
 color = 0xFFF3EAFF
+
+################ MAIN PLANETS ################
 
 [mercury]
 name = "Mercury"
@@ -128,6 +132,8 @@ arg_pe = 273.187
 long_asc_node = 131.783
 mean_anomaly = 259.883
 color = 0x8FACB6FF
+
+################ MOONS ################
 
 [luna]
 name = "Luna"
@@ -431,6 +437,8 @@ long_asc_node = 126.17
 mean_anomaly = 0.0
 color = [78, 75, 73]
 
+################ MINOR PLANETS ################
+
 [ceres]
 name = "Ceres"
 docname = "1 Ceres"
@@ -560,3 +568,34 @@ arg_pe = 294.834
 long_asc_node = 79.62
 mean_anomaly = 165.514
 color = [209, 190, 185, 80]
+
+################ ARTIFICIAL SATELLITES ################
+[voyager_1]
+name = "Voyager 1"
+description = "an artificial satellite in the interstellar medium."
+mass = 721.9
+radius = 4.0
+# from https://ssd.jpl.nasa.gov/horizons/app.html
+# time: 2460946.166666700 = A.D. 2025-Sep-27 16:00:00.0029 TDB 
+eccentricity = 3.69327025404461
+periapsis = 1.296200807746376e12
+inclination = 35.79487225780857
+arg_pe = 337.9764867885052
+long_asc_node = 179.1497243717326
+mean_anomaly = 2855.166829484127
+color = 0xFFFF4444
+
+[voyager_2]
+name = "Voyager 2"
+description = "an artificial satellite in the interstellar medium."
+mass = 721.9
+radius = 4.0
+# from https://ssd.jpl.nasa.gov/horizons/app.html
+# time: 2460946.166666700 = A.D. 2025-Sep-27 16:00:00.0029 TDB 
+eccentricity = 6.285358348080489
+periapsis = 3.180538467429934e12
+inclination = 79.00252628927736
+arg_pe = 130.0457656032997
+long_asc_node = 101.8245521579770
+mean_anomaly = 1893.051519975169
+color = 0xFFFF4444

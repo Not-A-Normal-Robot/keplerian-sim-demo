@@ -79,7 +79,7 @@ impl Program {
         )
     }
     fn new_control() -> CameraControl {
-        CameraControl::new(100.0, 1e10, 5e11)
+        CameraControl::new(100.0, 1e16, 5e11)
     }
     fn new_dir_light(context: &Context) -> DirectionalLight {
         DirectionalLight::new(&context, 1.0, Srgba::WHITE, Vec3::new(0.0, -0.5, -0.5))
@@ -151,7 +151,7 @@ impl Program {
             .get_body(self.sim_state.focused_body())
             .map(|wrapper| 1.5 * wrapper.body.radius)
             .unwrap_or(1e-3);
-        self.control.max_distance = self.control.min_distance * 1e10;
+        self.control.max_distance = self.control.min_distance * 1e16;
         self.control.handle_events(
             &mut self.camera,
             &mut frame_input.events,

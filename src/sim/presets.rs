@@ -929,6 +929,56 @@ pub(crate) fn vesta(parent_mu: Option<f64>) -> Body {
         color: Srgba::new(133, 131, 119, 128),
     }
 }
+/// Returns Voyager 1, an artificial satellite in the interstellar medium..
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn voyager_1(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            3.69327025404460984603e0,
+            1.29620080774637597656e12,
+            6.24738376229536096496e-1,
+            5.89880248878253166112e0,
+            3.12675254432706362095e0,
+            4.98320618682255300769e1,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Voyager 1"),
+        mass: 7.21899999999999977263e2,
+        radius: 4.00000000000000000000e0,
+        orbit,
+        color: Srgba::new(255, 255, 68, 68),
+    }
+}
+/// Returns Voyager 2, an artificial satellite in the interstellar medium..
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn voyager_2(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            6.28535834808048932132e0,
+            3.18053846742993408203e12,
+            1.37885420114126810986e0,
+            2.26972678805437011462e0,
+            1.77717369452539575292e0,
+            3.30399819334499014190e1,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Voyager 2"),
+        mass: 7.21899999999999977263e2,
+        radius: 4.00000000000000000000e0,
+        orbit,
+        color: Srgba::new(255, 255, 68, 68),
+    }
+}
 /// Returns (50000) Quaoar I, a.k.a. Weywot, the moon of the dwarf planet Quaoar.
 ///
 /// `parent_mu`: The gravitational parameter of the parent body, if any.

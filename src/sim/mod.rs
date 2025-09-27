@@ -124,6 +124,9 @@ pub(crate) fn create_universe() -> universe::Universe {
             },
             sedna,
             leleakuhonua,
+
+            voyager_1,
+            voyager_2,
         }
     }
 }
