@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use keplerian_sim::Orbit;
-use three_d::{Event, Key, Modifiers, Srgba, GUI};
+use three_d::{Event, GUI, Key, Modifiers, Srgba};
 
 use super::{
     SimState,
@@ -25,7 +25,7 @@ pub(super) fn handle_keybinds(sim_state: &mut SimState, events: &mut [Event], gu
                     continue;
                 }
                 handle_text_input(sim_state, &text)
-            },
+            }
             _ => (),
         }
     }
@@ -34,7 +34,7 @@ pub(super) fn handle_keybinds(sim_state: &mut SimState, events: &mut [Event], gu
 fn handle_keypress(
     sim_state: &mut SimState,
     key: &mut Key,
-    modifiers: &mut Modifiers,
+    _modifiers: &mut Modifiers,
     handled: &mut bool,
 ) {
     if *handled {
@@ -174,6 +174,53 @@ fn get_next_body_id(universe: &Universe, current_id: Id) -> Id {
         id
     }
 
+    fn next_parent(map: &HashMap<u64, BodyWrapper>, mut current_id: Id) -> Option<Id> {
+        loop {
+            let Some(wrapper) = map.get(&current_id) else {
+                return None;
+            };
+
+            let Some(parent_id) = wrapper.relations.parent else {
+                return None;
+            };
+
+            let Some(parent) = map.get(&parent_id) else {
+                if cfg!(debug_assertions) {
+                    panic!(
+                        "invalid state: parent with id {parent_id} listed but not found in map\n{map:?}"
+                    );
+                } else {
+                    return None;
+                }
+            };
+
+            let Some(sibling_pos) = parent
+                .relations
+                .satellites
+                .iter()
+                .position(|&id| id == current_id)
+            else {
+                if cfg!(debug_assertions) {
+                    panic!(
+                        "invalid state: parent with id {parent_id} doesn't have self with id {current_id} in satellites\n{map:?}"
+                    );
+                } else {
+                    return None;
+                }
+            };
+
+            match parent
+                .relations
+                .satellites
+                .get(sibling_pos.saturating_add(1))
+                .copied()
+            {
+                Some(id) => return Some(id),
+                None => current_id = parent_id,
+            }
+        }
+    }
+
     let map = universe.get_bodies();
 
     let Some(current) = map.get(&current_id) else {
@@ -190,7 +237,9 @@ fn get_next_body_id(universe: &Universe, current_id: Id) -> Id {
 
     let Some(parent) = map.get(&parent_id) else {
         if cfg!(debug_assertions) {
-            panic!("invalid state: parent listed but not found in map\n{universe:?}");
+            panic!(
+                "invalid state: parent with id {parent_id} listed but not found in map\n{universe:?}"
+            );
         } else {
             return current_id;
         }
@@ -203,20 +252,27 @@ fn get_next_body_id(universe: &Universe, current_id: Id) -> Id {
         .position(|&id| id == current_id)
     else {
         if cfg!(debug_assertions) {
-            panic!("invalid state: parent doesn't have self in satellites\n{universe:?}");
+            panic!(
+                "invalid state: parent with id {parent_id} doesn't have self with id {current_id} in satellites\n{universe:?}"
+            );
         } else {
             return current_id;
         }
     };
 
-    let Some(next_sibling_pos) = sibling_pos.checked_add(1) else {
-        return root(map, parent_id);
-    };
-
-    parent
+    let next_sibling_id = parent
         .relations
         .satellites
-        .get(next_sibling_pos)
-        .copied()
-        .unwrap_or_else(|| root(map, parent_id))
+        .get(sibling_pos.saturating_add(1))
+        .copied();
+
+    if let Some(next_sibling_id) = next_sibling_id {
+        return next_sibling_id;
+    }
+
+    if let Some(next_parent_id) = next_parent(map, current_id) {
+        return next_parent_id;
+    }
+
+    root(map, current_id)
 }
