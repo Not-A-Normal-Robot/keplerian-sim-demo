@@ -160,7 +160,7 @@ impl Program {
             frame_input.elapsed_time,
         );
 
-        keybinds::handle_keybinds(&mut self.sim_state, &mut frame_input.events);
+        keybinds::handle_keybinds(&mut self.sim_state, &mut frame_input.events, &self.gui);
 
         frame_input
             .screen()

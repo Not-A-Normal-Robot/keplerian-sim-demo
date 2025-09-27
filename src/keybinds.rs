@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use keplerian_sim::Orbit;
-use three_d::{Event, Key, Modifiers, Srgba};
+use three_d::{Event, Key, Modifiers, Srgba, GUI};
 
 use super::{
     SimState,
@@ -12,22 +12,22 @@ use super::{
     },
 };
 
-pub(super) fn handle_keybinds(sim_state: &mut SimState, events: &mut [Event]) {
+pub(super) fn handle_keybinds(sim_state: &mut SimState, events: &mut [Event], gui: &GUI) {
     for event in events {
-        let (key, modifiers, handled) = match event {
+        match event {
             Event::KeyPress {
-                kind,
+                kind: key,
                 modifiers,
                 handled,
-            } => (kind, modifiers, handled),
-            _ => continue,
-        };
-
-        if *handled {
-            continue;
+            } => handle_keypress(sim_state, key, modifiers, handled),
+            Event::Text(text) => {
+                if gui.context().wants_keyboard_input() {
+                    continue;
+                }
+                handle_text_input(sim_state, &text)
+            },
+            _ => (),
         }
-
-        handle_keypress(sim_state, key, modifiers, handled);
     }
 }
 
@@ -37,12 +37,30 @@ fn handle_keypress(
     modifiers: &mut Modifiers,
     handled: &mut bool,
 ) {
+    if *handled {
+        return;
+    }
+
     match key {
         Key::Space => {
             sim_state.running ^= true;
+            *handled = true;
         }
-        Key::N => add_new_body(sim_state),
         // TODO: Time control, focus switching keybinds, delete, edit
+        _ => (),
+    }
+}
+
+fn handle_text_input(sim_state: &mut SimState, text: &str) {
+    text.chars()
+        .for_each(|char| handle_char_input(sim_state, char));
+}
+
+fn handle_char_input(sim_state: &mut SimState, char: char) {
+    match char {
+        '[' => switch_to_prev_body(sim_state),
+        ']' => switch_to_next_body(sim_state),
+        'n' | 'N' => add_new_body(sim_state),
         _ => (),
     }
 }
@@ -84,6 +102,11 @@ fn add_new_body(sim_state: &mut SimState) {
             parent_id: None,
         })
     }
+}
+
+fn switch_to_prev_body(sim_state: &mut SimState) {
+    let id = get_prev_body_id(&sim_state.universe, sim_state.focused_body());
+    sim_state.switch_focus(id, &sim_state.universe.get_all_body_positions());
 }
 
 fn get_prev_body_id(universe: &Universe, current_id: Id) -> Id {
@@ -134,6 +157,11 @@ fn get_prev_body_id(universe: &Universe, current_id: Id) -> Id {
     let prev_sibling_id = parent.relations.satellites[prev_sibling_pos];
 
     last_descendant(map, prev_sibling_id)
+}
+
+fn switch_to_next_body(sim_state: &mut SimState) {
+    let id = get_next_body_id(&sim_state.universe, sim_state.focused_body());
+    sim_state.switch_focus(id, &sim_state.universe.get_all_body_positions());
 }
 
 fn get_next_body_id(universe: &Universe, current_id: Id) -> Id {
