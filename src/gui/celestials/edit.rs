@@ -26,11 +26,11 @@ declare_id!(salt_only, EDIT_BODY_PARENT_COMBO_BOX, b"mNoder3l");
 declare_id!(EDIT_BODY_PARENT_TREE, b"m|->N0d3");
 declare_id!(salt_only, EDIT_BODY_PERIAPSIS, b"m|PeDist");
 
-pub(in super::super) struct EditBodyWindowState {
+pub(in super::super::super) struct EditBodyWindowState {
     mass_unit: AutoUnit<MassUnit>,
     radius_unit: AutoUnit<LengthUnit>,
     periapsis_unit: AutoUnit<LengthUnit>,
-    pub(in super::super) window_open: bool,
+    pub(in super::super::super) window_open: bool,
 }
 
 impl Default for EditBodyWindowState {

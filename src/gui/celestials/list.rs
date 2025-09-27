@@ -26,7 +26,7 @@ pub(super) struct RenameState {
 }
 
 pub(crate) struct BodyListWindowState {
-    listed_body_with_popup: Option<UniverseId>,
+    pub(in super::super) listed_body_with_popup: Option<UniverseId>,
     listed_body_with_rename: Option<RenameState>,
     pub(in super::super) window_open: bool,
     pub(crate) scroll_to_focused: bool,

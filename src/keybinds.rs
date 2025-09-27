@@ -46,7 +46,19 @@ fn handle_keypress(
             sim_state.running ^= true;
             *handled = true;
         }
-        // TODO: delete, edit
+        Key::Delete => {
+            if sim_state
+                .universe
+                .get_body(sim_state.focused_body())
+                .and_then(|w| w.relations.parent)
+                .is_some()
+            {
+                sim_state.remove_body(
+                    sim_state.focused_body(),
+                    &sim_state.universe.get_all_body_positions(),
+                );
+            }
+        }
         _ => (),
     }
 }
@@ -65,6 +77,9 @@ fn handle_char_input(sim_state: &mut SimState, char: char) {
         '.' => sim_state.sim_speed *= 2.0,
         '<' => sim_state.sim_speed /= 10.0,
         '>' => sim_state.sim_speed *= 10.0,
+        'e' | 'E' => {
+            sim_state.ui.edit_body_window_state.window_open ^= true;
+        }
         _ => (),
     }
 }

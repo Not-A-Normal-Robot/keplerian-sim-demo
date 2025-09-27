@@ -46,7 +46,7 @@ pub(crate) struct UiState {
     frame_data: fps::FrameData,
     pub(crate) body_list_window_state: celestials::list::BodyListWindowState,
     new_body_window_state: Option<celestials::new::NewBodyWindowState>,
-    edit_body_window_state: celestials::edit::EditBodyWindowState,
+    pub(crate) edit_body_window_state: celestials::edit::EditBodyWindowState,
     welcome_window_state: welcome::WindowState,
     is_about_window_open: bool,
 }
@@ -106,6 +106,30 @@ impl SimState {
     #[inline]
     pub(crate) fn focused_body(&self) -> UniverseId {
         self.focused_body
+    }
+    pub(crate) fn remove_body(
+        &mut self,
+        universe_id: UniverseId,
+        position_map: &HashMap<UniverseId, DVec3>,
+    ) {
+        let parent_id = self
+            .universe
+            .get_body(universe_id)
+            .and_then(|w| w.relations.parent);
+        let bodies_removed = self.universe.remove_body(universe_id);
+        if let Some(preview) = &self.preview_body
+            && let Some(parent_id) = preview.parent_id
+            && bodies_removed.iter().any(|(id, _)| *id == parent_id)
+        {
+            self.preview_body = None;
+        }
+        if bodies_removed
+            .iter()
+            .any(|(id, _)| *id == self.focused_body())
+        {
+            self.switch_focus(parent_id.unwrap_or(0), position_map);
+        }
+        self.ui.body_list_window_state.listed_body_with_popup = None;
     }
 }
 
