@@ -84,21 +84,32 @@ pub(crate) fn create_universe() -> universe::Universe {
                 luna,
             },
             mars {
-                phobos, deimos,
+                phobos,
+                deimos,
             },
             ceres,
             vesta,
             jupiter {
-                io, europa, ganymede, callisto
+                io,
+                europa,
+                ganymede,
+                callisto,
             },
             saturn {
-                titan, enceladus, mimas, iapetus
+                titan,
+                enceladus,
+                mimas,
+                iapetus,
+                tethys,
             },
             uranus {
-                titania, oberon
+                titania,
+                oberon,
             },
             neptune {
-                triton, proteus, nereid
+                triton,
+                proteus,
+                nereid,
             },
             pluto {
                 charon,

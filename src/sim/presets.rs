@@ -729,6 +729,31 @@ pub(crate) fn sedna(parent_mu: Option<f64>) -> Body {
         color: Srgba::new(159, 62, 45, 128),
     }
 }
+/// Returns Tethys, the fifth-largest moon of Saturn.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn tethys(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            1.00000000000000004792e-4,
+            2.94589538100000023842e8,
+            1.95476876223364924579e-2,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            0.00000000000000000000e0,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Tethys"),
+        mass: 6.17489999999999934464e20,
+        radius: 5.31100000000000000000e5,
+        orbit,
+        color: Srgba::new(255, 255, 255, 255),
+    }
+}
 /// Returns the Sun.
 ///
 /// `parent_mu`: The gravitational parameter of the parent body, if any.
