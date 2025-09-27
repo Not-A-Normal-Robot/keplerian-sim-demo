@@ -46,7 +46,7 @@ fn handle_keypress(
             sim_state.running ^= true;
             *handled = true;
         }
-        // TODO: Time control, focus switching keybinds, delete, edit
+        // TODO: delete, edit
         _ => (),
     }
 }
@@ -61,6 +61,10 @@ fn handle_char_input(sim_state: &mut SimState, char: char) {
         '[' => switch_to_prev_body(sim_state),
         ']' => switch_to_next_body(sim_state),
         'n' | 'N' => add_new_body(sim_state),
+        ',' => sim_state.sim_speed /= 2.0,
+        '.' => sim_state.sim_speed *= 2.0,
+        '<' => sim_state.sim_speed /= 10.0,
+        '>' => sim_state.sim_speed *= 10.0,
         _ => (),
     }
 }
