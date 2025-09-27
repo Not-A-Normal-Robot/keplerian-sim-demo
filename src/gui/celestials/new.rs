@@ -276,7 +276,7 @@ fn new_body_window_orbit(
                 .unwrap_or("—"),
         )
         .show_ui(ui, |ui| {
-            selectable_body_tree(ui, *NEW_BODY_PARENT_TREE_ID, universe, parent_id);
+            selectable_body_tree(ui, *NEW_BODY_PARENT_TREE_ID, universe, parent_id, None);
         });
     ui.end_row();
 

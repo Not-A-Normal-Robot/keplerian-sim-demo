@@ -6,7 +6,7 @@ use super::{
         },
         unit_dv::drag_value_with_unit,
     },
-    SimState, declare_id,
+    DisallowedData, SimState, declare_id,
     info::body_window_info,
     selectable_body_tree,
 };
@@ -184,9 +184,7 @@ fn edit_body_window_phys(
         Color32::from_rgba_unmultiplied(r, g, b, a)
     };
     let mut srgba = original_srgba.clone();
-    println!("{original_srgba:?} -> {srgba:?}"); // DEBUG
     let editor = color_edit_button_srgba(ui, &mut srgba, Alpha::OnlyBlend);
-    println!("-> {srgba:?}"); // DEBUG
     if editor.changed() {
         wrapper.body.color = srgba.to_srgba_unmultiplied().into();
     }
@@ -245,7 +243,7 @@ fn edit_body_window_orbit(
         None => return,
     };
 
-    let parent_id = parent_selector(ui, universe, wrapper);
+    let parent_id = parent_selector(ui, universe, wrapper, body_id);
 
     if parent_id != wrapper.relations.parent {
         let res = universe.move_body(body_id, parent_id, mu_mode);
@@ -406,7 +404,12 @@ fn edit_body_window_orbit(
 }
 
 /// Returns the new parent ID
-fn parent_selector(ui: &mut Ui, universe: &Universe, wrapper: &BodyWrapper) -> Option<UniverseId> {
+fn parent_selector(
+    ui: &mut Ui,
+    universe: &Universe,
+    wrapper: &BodyWrapper,
+    body_id: UniverseId,
+) -> Option<UniverseId> {
     ui.label("Parent body")
         .on_hover_text(
             RichText::new("The body that this body is orbiting around.")
@@ -427,7 +430,21 @@ fn parent_selector(ui: &mut Ui, universe: &Universe, wrapper: &BodyWrapper) -> O
                 .unwrap_or("—"),
         )
         .show_ui(ui, |ui| {
-            selectable_body_tree(ui, *EDIT_BODY_PARENT_TREE_ID, universe, &mut parent_id);
+            selectable_body_tree(
+                ui,
+                *EDIT_BODY_PARENT_TREE_ID,
+                universe,
+                &mut parent_id,
+                Some(DisallowedData {
+                    disallowed_set: &{
+                        let mut set = universe.get_descendants(body_id).unwrap_or_default();
+                        set.insert(body_id);
+                        set
+                    },
+                    reason: &RichText::new("cannot set new parent to self or own descendant")
+                        .color(Color32::LIGHT_RED),
+                }),
+            );
         });
     ui.end_row();
 

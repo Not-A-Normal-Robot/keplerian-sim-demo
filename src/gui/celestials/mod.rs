@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use glam::DVec3;
 use three_d::egui::{
@@ -47,12 +47,19 @@ struct BodySelectableButtonResponse {
     ellipsis_button: Option<Response>,
 }
 
+#[derive(Clone, Copy)]
+struct DisallowedData<'a> {
+    disallowed_set: &'a HashSet<UniverseId>,
+    reason: &'a RichText,
+}
+
 /// Returns whether the already-selected body was clicked again
 fn selectable_body_tree(
     ui: &mut Ui,
     egui_id: EguiId,
     universe: &Universe,
     selected: &mut Option<UniverseId>,
+    disallowed_data: Option<DisallowedData<'_>>,
 ) -> bool {
     fn selectable_body_node(
         ui: &mut Ui,
@@ -61,6 +68,7 @@ fn selectable_body_tree(
         universe_id: UniverseId,
         selected: &mut Option<UniverseId>,
         clicked_selected: &mut bool,
+        disallowed_data: Option<DisallowedData<'_>>,
     ) {
         let wrapper = match universe.get_body(universe_id) {
             Some(w) => w,
@@ -69,7 +77,14 @@ fn selectable_body_tree(
 
         if wrapper.relations.satellites.is_empty() {
             ui.indent((egui_id, [universe_id]), |ui| {
-                selectable_body_leaf(ui, &wrapper.body, universe_id, selected, clicked_selected);
+                selectable_body_leaf(
+                    ui,
+                    &wrapper.body,
+                    universe_id,
+                    selected,
+                    clicked_selected,
+                    disallowed_data,
+                );
             });
         } else {
             selectable_body_parent(
@@ -79,6 +94,7 @@ fn selectable_body_tree(
                 universe_id,
                 selected,
                 clicked_selected,
+                disallowed_data,
             );
         }
     }
@@ -89,17 +105,32 @@ fn selectable_body_tree(
         universe_id: UniverseId,
         selected: &mut Option<UniverseId>,
         clicked_selected: &mut bool,
+        disallowed_data: Option<DisallowedData<'_>>,
     ) {
+        let enabled = disallowed_data
+            .map(|d| !d.disallowed_set.contains(&universe_id))
+            .unwrap_or(true);
+
+        if !enabled {
+            ui.disable();
+        }
+
         let response =
             selectable_body_button(ui, body, 16.0, *selected == Some(universe_id), false, None);
 
-        if response.button_response.clicked() {
+        if response.button_response.clicked() && enabled {
             if *selected == Some(universe_id) {
                 *clicked_selected = true;
             } else {
                 *selected = Some(universe_id);
             }
         }
+
+        disallowed_data.map(|d| {
+            response
+                .button_response
+                .on_disabled_hover_text(d.reason.clone())
+        });
     }
 
     fn selectable_body_parent(
@@ -109,6 +140,7 @@ fn selectable_body_tree(
         universe_id: UniverseId,
         selected: &mut Option<UniverseId>,
         clicked_selected: &mut bool,
+        disallowed_data: Option<DisallowedData<'_>>,
     ) {
         let wrapper = match universe.get_body(universe_id) {
             Some(wrapper) => wrapper,
@@ -120,6 +152,14 @@ fn selectable_body_tree(
 
         CollapsingState::load_with_default_open(ui.ctx(), this_egui_id, true)
             .show_header(ui, |ui| {
+                let enabled = disallowed_data
+                    .map(|d| !d.disallowed_set.contains(&universe_id))
+                    .unwrap_or(true);
+
+                if !enabled {
+                    ui.disable();
+                }
+
                 let response = selectable_body_button(
                     ui,
                     &wrapper.body,
@@ -129,13 +169,19 @@ fn selectable_body_tree(
                     None,
                 );
 
-                if response.button_response.clicked() {
+                if response.button_response.clicked() && enabled {
                     if *selected == Some(universe_id) {
                         *clicked_selected = true;
                     } else {
                         *selected = Some(universe_id);
                     }
                 }
+
+                disallowed_data.map(|d| {
+                    response
+                        .button_response
+                        .on_disabled_hover_text(d.reason.clone())
+                });
             })
             .body(|ui| {
                 for universe_id in satellites {
@@ -146,6 +192,7 @@ fn selectable_body_tree(
                         universe_id,
                         selected,
                         clicked_selected,
+                        disallowed_data,
                     );
                 }
             });
@@ -167,6 +214,7 @@ fn selectable_body_tree(
                 universe_id,
                 selected,
                 &mut clicked_selected,
+                disallowed_data,
             )
         });
 
@@ -216,6 +264,11 @@ fn selectable_body_button(
 
     let text = RichText::new(&body.name).color(Color32::WHITE);
     let text = if selected { text.underline() } else { text };
+    let text = if ui.is_enabled() {
+        text
+    } else {
+        text.strikethrough()
+    };
     layout.push_right(text);
 
     layout.push_right(Atom::grow());

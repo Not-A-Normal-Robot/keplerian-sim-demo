@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use std::collections::HashSet;
 use std::f64::INFINITY;
 use std::fmt::{self, Debug, Display};
 use std::{collections::HashMap, error::Error};
@@ -161,6 +162,30 @@ impl Universe {
         }
 
         Ok(id)
+    }
+
+    pub fn get_descendants(&self, id: Id) -> Option<HashSet<Id>> {
+        let wrapper = match self.bodies.get(&id) {
+            Some(w) => w,
+            None => return None,
+        };
+
+        let mut stack = wrapper.relations.satellites.clone();
+        let mut descendants: HashSet<Id> = HashSet::with_capacity(stack.len());
+
+        while let Some(cur_id) = stack.pop() {
+            if cur_id == id || !descendants.insert(cur_id) {
+                continue;
+            }
+
+            let Some(wrapper) = self.bodies.get(&cur_id) else {
+                continue;
+            };
+
+            stack.extend_from_slice(&wrapper.relations.satellites);
+        }
+
+        Some(descendants)
     }
 
     /// Removes a body from the universe.
