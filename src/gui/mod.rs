@@ -41,10 +41,10 @@ use declare_id;
 const MIN_TOUCH_TARGET_LEN: f32 = 48.0;
 const MIN_TOUCH_TARGET_VEC: Vec2 = Vec2::splat(MIN_TOUCH_TARGET_LEN);
 
-struct UiState {
+pub(crate) struct UiState {
     bottom_bar_state: bottom_bar::BottomBarState,
     frame_data: fps::FrameData,
-    body_list_window_state: celestials::list::BodyListWindowState,
+    pub(crate) body_list_window_state: celestials::list::BodyListWindowState,
     new_body_window_state: Option<celestials::new::NewBodyWindowState>,
     edit_body_window_state: celestials::edit::EditBodyWindowState,
     welcome_window_state: welcome::WindowState,
@@ -73,7 +73,7 @@ pub(crate) struct SimState {
     focused_body: UniverseId,
     pub focus_offset: DVec3,
     pub preview_body: Option<celestials::PreviewBody>,
-    ui: UiState,
+    pub ui: UiState,
 }
 
 impl SimState {

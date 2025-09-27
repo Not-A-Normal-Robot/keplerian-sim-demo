@@ -111,6 +111,7 @@ fn add_new_body(sim_state: &mut SimState) {
 fn switch_to_prev_body(sim_state: &mut SimState) {
     let id = get_prev_body_id(&sim_state.universe, sim_state.focused_body());
     sim_state.switch_focus(id, &sim_state.universe.get_all_body_positions());
+    sim_state.ui.body_list_window_state.scroll_to_focused = true;
 }
 
 fn get_prev_body_id(universe: &Universe, current_id: Id) -> Id {
@@ -166,6 +167,7 @@ fn get_prev_body_id(universe: &Universe, current_id: Id) -> Id {
 fn switch_to_next_body(sim_state: &mut SimState) {
     let id = get_next_body_id(&sim_state.universe, sim_state.focused_body());
     sim_state.switch_focus(id, &sim_state.universe.get_all_body_positions());
+    sim_state.ui.body_list_window_state.scroll_to_focused = true;
 }
 
 fn get_next_body_id(universe: &Universe, current_id: Id) -> Id {

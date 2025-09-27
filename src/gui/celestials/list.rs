@@ -25,10 +25,11 @@ pub(super) struct RenameState {
     pub requesting_focus: bool,
 }
 
-pub(in super::super) struct BodyListWindowState {
+pub(crate) struct BodyListWindowState {
     listed_body_with_popup: Option<UniverseId>,
     listed_body_with_rename: Option<RenameState>,
     pub(in super::super) window_open: bool,
+    pub(crate) scroll_to_focused: bool,
     show_help: bool,
     dont_show_again: bool,
 }
@@ -39,6 +40,7 @@ impl Default for BodyListWindowState {
             listed_body_with_popup: None,
             listed_body_with_rename: None,
             window_open: true,
+            scroll_to_focused: false,
             show_help: CONFIG
                 .try_lock()
                 .map(|cfg| cfg.show_body_list_help.get())
@@ -191,6 +193,13 @@ fn body_tree_base_node(
             .as_mut()
             .filter(|state| state.universe_id == universe_id),
     );
+
+    if sim_state.focused_body() == universe_id
+        && sim_state.ui.body_list_window_state.scroll_to_focused
+    {
+        sim_state.ui.body_list_window_state.scroll_to_focused = false;
+        response.button_response.scroll_to_me(None);
+    }
 
     if response.button_response.double_clicked() {
         set_rename_state(ui.ctx(), sim_state, universe_id);
