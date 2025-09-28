@@ -570,6 +570,21 @@ mean_anomaly = 165.514
 color = [209, 190, 185, 80]
 
 ################ ARTIFICIAL SATELLITES ################
+[parker_solar_probe]
+name = "Parker Solar Probe"
+description = "an artificial satellite very close to the Sun"
+mass = 555.0
+radius = 1.5
+# from https://ssd.jpl.nasa.gov/horizons/app.html
+# time: 2460946.166666700 = A.D. 2025-Sep-27 16:00:00.0029 TDB 
+eccentricity = 0.8819369635896435
+periapsis = 6.861531628837569e9
+inclination = 3.395252013201449
+arg_pe = 68.46120900218231
+long_asc_node = 76.64426278679525
+mean_anomaly = 48.19222272135330
+color = 0xFFFF4444
+
 [voyager_1]
 name = "Voyager 1"
 description = "an artificial satellite in the interstellar medium"

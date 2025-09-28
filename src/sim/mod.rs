@@ -126,6 +126,7 @@ pub(crate) fn create_universe() -> universe::Universe {
             sedna,
             leleakuhonua,
 
+            parker_solar_probe,
             new_horizons,
             pioneer_11,
             pioneer_10,

@@ -629,6 +629,31 @@ pub(crate) fn oberon(parent_mu: Option<f64>) -> Body {
         color: Srgba::new(165, 158, 150, 255),
     }
 }
+/// Returns Parker Solar Probe, an artificial satellite very close to the Sun.
+///
+/// `parent_mu`: The gravitational parameter of the parent body, if any.
+/// If None, the celestial body will not be placed in an orbit.
+pub(crate) fn parker_solar_probe(parent_mu: Option<f64>) -> Body {
+    let orbit = parent_mu.map(|mu| {
+        Orbit::new(
+            8.81936963589643463379e-1,
+            6.86153162883756923676e9,
+            5.92583265653312679655e-2,
+            1.19487350698406324945e0,
+            1.33769473839334196441e0,
+            8.41112960342036974914e-1,
+            mu,
+        )
+    });
+
+    Body {
+        name: String::from("Parker Solar Probe"),
+        mass: 5.55000000000000000000e2,
+        radius: 1.50000000000000000000e0,
+        orbit,
+        color: Srgba::new(255, 255, 68, 68),
+    }
+}
 /// Returns Phobos, the first moon of Mars.
 ///
 /// `parent_mu`: The gravitational parameter of the parent body, if any.
