@@ -5,7 +5,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from urllib.parse import urlencode
-
+import tempfile
+import shutil
 
 @dataclass
 class Elements:
@@ -74,7 +75,7 @@ BODY_MAP: dict[str, tuple[str, str] | None] = {
     "proteus": ("808", "899"),
     "nereid": ("802", "899"),
     "weywot": ("120050000", "920050000"),  # Quaoar I, parent Quaoar
-    "charon": ("901", "920134340"), # parent Pluto
+    "charon": ("901", "999"), # parent Pluto
     "dysnomia": ("120136199", "920136199"), # parent Eris
 
     # MINOR PLANETS (dwarf planets, asteroids, TNOs)
@@ -163,10 +164,10 @@ def parse_ephemeris(ephemeris_text: str) -> Elements | None:
         ma = elements_arr[7],
     )
 
-def get_elements(name: str) -> Elements:
+def get_elements(name: str) -> Elements | None:
     params = get_api_params(name)
     if params is None:
-        raise IndexError(f"{name} is not in the known body list")
+        return None
     
     url = get_api_url(params)
     try:
@@ -191,11 +192,12 @@ def todo():
     raise Exception("not implemented yet")
 
 if __name__ == "__main__":
-    modified_lines: list[tuple[int, str]] = []
+    modified_lines: dict[int, str] = dict()
+    toml_path = get_toml_file_path()
 
     current_body: str | None = None
     current_elements: Elements | None = None
-    with open(get_toml_file_path(), "r") as f:
+    with open(toml_path, "r") as f:
         for line_num, line in enumerate(f):
             line = line.strip()
             if line.startswith("[") and line.endswith("]"):
@@ -211,24 +213,29 @@ if __name__ == "__main__":
                     )
             if current_elements is None:
                 continue
+            new_line: str | None = None
             if line.startswith("apoapsis") or line.startswith("eccentricity"):
                 new_line = f"eccentricity = {current_elements.ec}"
-                modified_lines.append((line_num, new_line))
             if line.startswith("periapsis"):
-                new_line = f"periapsis = {current_elements.qr}"
-                modified_lines.append((line_num, new_line))
+                new_line = f"periapsis = {current_elements.qr * 1e3}"
             if line.startswith("inclination"):
                 new_line = f"inclination = {current_elements.in_}"
-                modified_lines.append((line_num, new_line))
             if line.startswith("arg_pe"):
                 new_line = f"arg_pe = {current_elements.w}"
-                modified_lines.append((line_num, new_line))
             if line.startswith("long_asc_node"):
                 new_line = f"long_asc_node = {current_elements.om}"
-                modified_lines.append((line_num, new_line))
             if line.startswith("mean_anomaly"):
                 new_line = f"mean_anomaly = {current_elements.ma}"
-                modified_lines.append((line_num, new_line))
 
-    # Need to write  
-    todo()
+            if new_line is not None:
+                modified_lines[line_num] = new_line
+
+    with open(toml_path, "r") as src, tempfile.NamedTemporaryFile("w", delete=False) as tmp:
+        for i, line in enumerate(src):
+            if i in modified_lines:
+                tmp.write(modified_lines[i] + "\n")
+            else:
+                tmp.write(line)
+    
+    shutil.move(tmp.name, toml_path)
+        
