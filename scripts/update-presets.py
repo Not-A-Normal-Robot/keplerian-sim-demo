@@ -1,0 +1,234 @@
+#!/usr/bin/env python3
+import requests
+from urllib.parse import urlencode
+
+class Elements:
+    """
+    Describes the elements returned by the API call
+    in its original form.
+    """
+
+    ec: float
+    """
+    Eccentricity, dimensionless.
+    """
+    
+    qr: float
+    """
+    Periapsis radius, in km.
+    """
+
+    in_: float
+    """
+    Inclination w.r.t. ecliptic, in degrees.
+    """
+
+    om: float
+    """
+    Longitude of ascending node w.r.t. ecliptic, in degrees.
+    """
+
+    w: float
+    """
+    Argument of periapsis w.r.t. ecliptic, in degrees.
+    """
+
+    ma: float
+    """
+    Mean anomaly, in degrees.
+    """
+
+    def __init__(self, ec: float, qr: float, in_: float, om: float, w: float, ma: float):
+        self.ec = ec
+        self.qr = qr
+        self.in_ = in_
+        self.om = om
+        self.w = w
+        self.ma = ma
+
+TOML_FILE_PATH = "../src/sim/presets.toml" # Relative to script dir root
+TDB_TIMESTAMP = 2460946.166666700 # A.D. 2025-Sep-27 16:00:00.0029 TDB 
+API_BASE = "https://ssd.jpl.nasa.gov/api/horizons.api"
+API_BASE_PARAMS = {
+    "format": "text",
+    "OBJ_DATA": "NO",
+    "EPHEM_TYPE": "ELEMENTS",
+    "MAKE_EPHEM": "YES",
+    "REF_PLANE": "ECLIPTIC",
+    "TIME_TYPE": "TDB",
+    "TLIST": f"'{TDB_TIMESTAMP:.9f}'",
+    "TLIST_TYPE": "JD",
+    "ELM_LABELS": "NO",
+}
+BODY_MAP: dict[str, tuple[str, str] | None] = {
+    # Maps between the TOML name, and the
+    # tuple containing the Horizons ID and its parent ID.
+
+    # STARS
+    "the_sun": None,
+
+    # MAIN PLANETS
+    "mercury": ("199", "10"),
+    "venus": ("299", "10"),
+    "earth": ("399", "10"),
+    "mars": ("499", "10"),
+    "jupiter": ("599", "10"),
+    "saturn": ("699", "10"),
+    "uranus": ("799", "10"),
+    "neptune": ("899", "10"),
+
+    # MOONS
+    "luna": ("301", "399"),
+    "phobos": ("401", "499"),
+    "deimos": ("402", "499"),
+    "io": ("501", "599"),
+    "europa": ("502", "599"),
+    "ganymede": ("503", "599"),
+    "callisto": ("504", "599"),
+    "titan": ("606", "699"),
+    "enceladus": ("602", "699"),
+    "mimas": ("601", "699"),
+    "tethys": ("603", "699"),
+    "iapetus": ("608", "699"),
+    "titania": ("703", "799"),
+    "oberon": ("704", "799"),
+    "triton": ("801", "899"),
+    "proteus": ("808", "899"),
+    "nereid": ("802", "899"),
+    "weywot": ("120050000", "920050000"),  # Quaoar I, parent Quaoar
+    "charon": ("901", "920134340"), # parent Pluto
+    "dysnomia": ("120136199", "920136199"), # parent Eris
+
+    # MINOR PLANETS (dwarf planets, asteroids, TNOs)
+    "ceres": ("1;", "10"),
+    "vesta": ("4;", "10"),
+    "quaoar": ("50000;", "10"),
+    "sedna": ("90377;", "10"),
+    "leleakuhonua": ("541132;", "10"),
+    "pluto": ("134340;", "10"),
+    "haumea": ("136108;", "10"),
+    "eris": ("136199;", "10"),
+    "makemake": ("136472;", "10"),
+
+    # ARTIFICIAL SATELLITES
+    "parker_solar_probe": ("-96", "10"),
+    "voyager_1": ("-31", "10"),
+    "voyager_2": ("-32", "10"),
+    "new_horizons": ("-98", "10"),
+    "pioneer_10": ("-23", "10"),
+    "pioneer_11": ("-24", "10"),
+    "geostationary_sat": None,
+}
+
+remaining_bodies = set(BODY_MAP.keys())
+
+def get_api_params(name: str) -> dict[str, str] | None:
+    value = BODY_MAP.get(name)
+    if value is None:
+        return None
+    this, parent = value
+    
+    command = f"'{this}'"
+    center = f"@{parent}"
+
+    params = API_BASE_PARAMS.copy()
+    params.update({
+        "COMMAND": command,
+        "CENTER": center,
+    })
+    return params
+
+def get_api_url(params: dict[str, str]) -> str:
+    return f"{API_BASE}?{urlencode(params)}"
+
+def parse_ephemeris(ephemeris_text: str) -> Elements | None:
+    ELEMENTS_START_TEXT = "$$SOE"
+    ELEMENTS_END_TEXT = "$$EOE"
+    start_idx = ephemeris_text.find(ELEMENTS_START_TEXT)
+    end_idx = ephemeris_text.find(ELEMENTS_END_TEXT)
+
+    if start_idx == -1 or end_idx == -1:
+        return None
+    
+    data_text = ephemeris_text[
+        start_idx + len(ELEMENTS_START_TEXT):end_idx
+    ].strip()
+    
+    # Skip the timestamp after $$SOE
+    data_lines = data_text.splitlines()
+    if len(data_lines) < 1:
+        return None
+    elements_wsv = " ".join(data_lines[1:]).strip()
+    elements_arr = [float(el) for el in elements_wsv.split()]
+    return Elements(
+        ec = elements_arr[0],
+        qr = elements_arr[1],
+        in_ = elements_arr[2],
+        om = elements_arr[3],
+        w = elements_arr[4],
+        ma = elements_arr[7],
+    )
+
+def get_elements(name: str) -> Elements:
+    params = get_api_params(name)
+    if params is None:
+        raise IndexError(f"{name} is not in the known body list")
+    
+    url = get_api_url(params)
+    response = requests.get(url)
+    response.raise_for_status()
+    elements = parse_ephemeris(response.text)
+    if elements is None:
+        raise Exception(
+            "Could not parse ephemeris. Could this be an API error?\n" +
+            "Server response:\n" +
+            response.text
+        )
+    
+    return elements
+    
+def todo():
+    raise Exception("not implemented yet")
+
+if __name__ == "__main__":
+    modified_lines: list[tuple[int, str]] = []
+
+    current_body: str | None = None
+    current_elements: Elements | None = None
+    with open(TOML_FILE_PATH, "r") as f:
+        for line_num, line in enumerate(f):
+            line = line.strip()
+            if line.startswith("[") and line.endswith("]"):
+                current_body = line[1:-1]
+                current_elements = None
+                try:
+                    print(f"Fetching API for {current_body}...")
+                    current_elements = get_elements(current_body)
+                except Exception as exception:
+                    print(
+                        f"Error occurred fetching API for data about {current_body}",
+                        exception
+                    )
+            if current_elements is None:
+                continue
+            if line.startswith("apoapsis") or line.startswith("eccentricity"):
+                new_line = f"eccentricity = {current_elements.ec}"
+                modified_lines.append((line_num, new_line))
+            if line.startswith("periapsis"):
+                new_line = f"periapsis = {current_elements.qr}"
+                modified_lines.append((line_num, new_line))
+            if line.startswith("inclination"):
+                new_line = f"inclination = {current_elements.in_}"
+                modified_lines.append((line_num, new_line))
+            if line.startswith("arg_pe"):
+                new_line = f"arg_pe = {current_elements.w}"
+                modified_lines.append((line_num, new_line))
+            if line.startswith("long_asc_node"):
+                new_line = f"long_asc_node = {current_elements.om}"
+                modified_lines.append((line_num, new_line))
+            if line.startswith("mean_anomaly"):
+                new_line = f"mean_anomaly = {current_elements.ma}"
+                modified_lines.append((line_num, new_line))
+
+    # Need to write  
+    todo()
