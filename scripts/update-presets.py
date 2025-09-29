@@ -1,52 +1,30 @@
 #!/usr/bin/env python3
+from dataclasses import dataclass
+from pathlib import Path
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from urllib.parse import urlencode
 
+
+@dataclass
 class Elements:
-    """
-    Describes the elements returned by the API call
-    in its original form.
-    """
+    """Describes the elements returned by the API call in its original form."""
 
     ec: float
-    """
-    Eccentricity, dimensionless.
-    """
-    
+    """Eccentricity, dimensionless"""
     qr: float
-    """
-    Periapsis radius, in km.
-    """
-
+    """Periapsis radius, in km"""
     in_: float
-    """
-    Inclination w.r.t. ecliptic, in degrees.
-    """
-
+    """Inclination w.r.t. ecliptic, in degrees"""
     om: float
-    """
-    Longitude of ascending node w.r.t. ecliptic, in degrees.
-    """
-
+    """Longitude of ascending node w.r.t. ecliptic, in degrees"""
     w: float
-    """
-    Argument of periapsis w.r.t. ecliptic, in degrees.
-    """
-
+    """Argument of periapsis w.r.t. ecliptic, in degrees"""
     ma: float
-    """
-    Mean anomaly, in degrees.
-    """
+    """Mean anomaly, in degrees"""
 
-    def __init__(self, ec: float, qr: float, in_: float, om: float, w: float, ma: float):
-        self.ec = ec
-        self.qr = qr
-        self.in_ = in_
-        self.om = om
-        self.w = w
-        self.ma = ma
-
-TOML_FILE_PATH = "../src/sim/presets.toml" # Relative to script dir root
+TOML_REL_PATH = Path("../src/sim/presets.toml")  # Relative to script dir root
 TDB_TIMESTAMP = 2460946.166666700 # A.D. 2025-Sep-27 16:00:00.0029 TDB 
 API_BASE = "https://ssd.jpl.nasa.gov/api/horizons.api"
 API_BASE_PARAMS = {
@@ -122,6 +100,22 @@ BODY_MAP: dict[str, tuple[str, str] | None] = {
 
 remaining_bodies = set(BODY_MAP.keys())
 
+SESSION = requests.Session()
+SESSION.mount(
+    "https://",
+    HTTPAdapter(
+        max_retries=Retry(
+            total=3,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["GET"],
+            backoff_factor=1,
+        )
+    )
+)
+
+# Default timeout (in seconds) for requests; used as a per-request timeout.
+DEFAULT_TIMEOUT = 10
+
 def get_api_params(name: str) -> dict[str, str] | None:
     value = BODY_MAP.get(name)
     if value is None:
@@ -175,7 +169,10 @@ def get_elements(name: str) -> Elements:
         raise IndexError(f"{name} is not in the known body list")
     
     url = get_api_url(params)
-    response = requests.get(url)
+    try:
+        response = SESSION.get(url, timeout=DEFAULT_TIMEOUT)
+    except Exception as e:
+        raise e
     response.raise_for_status()
     elements = parse_ephemeris(response.text)
     if elements is None:
@@ -187,6 +184,9 @@ def get_elements(name: str) -> Elements:
     
     return elements
     
+def get_toml_file_path() -> str:
+    return str((Path(__file__).resolve().parent / TOML_REL_PATH).resolve())
+
 def todo():
     raise Exception("not implemented yet")
 
@@ -195,7 +195,7 @@ if __name__ == "__main__":
 
     current_body: str | None = None
     current_elements: Elements | None = None
-    with open(TOML_FILE_PATH, "r") as f:
+    with open(get_toml_file_path(), "r") as f:
         for line_num, line in enumerate(f):
             line = line.strip()
             if line.startswith("[") and line.endswith("]"):
