@@ -118,11 +118,13 @@ SESSION.mount(
 DEFAULT_TIMEOUT = 10
 
 def get_api_params(name: str) -> dict[str, str] | None:
-    value = BODY_MAP.get(name)
+    if name not in BODY_MAP:
+        raise Exception(f"Body '{name}' is not in BODY_MAP (unrecognized body)")
+    value = BODY_MAP[name]
     if value is None:
         return None
     this, parent = value
-    
+
     command = f"'{this}'"
     center = f"@{parent}"
 
@@ -182,7 +184,6 @@ def get_elements(name: str) -> Elements | None:
             "Server response:\n" +
             response.text
         )
-    
     return elements
     
 def get_toml_file_path() -> str:
@@ -202,6 +203,7 @@ if __name__ == "__main__":
             line = line.strip()
             if line.startswith("[") and line.endswith("]"):
                 current_body = line[1:-1]
+                remaining_bodies.remove(current_body)
                 current_elements = None
                 try:
                     print(f"Fetching API for {current_body}...")
@@ -230,12 +232,16 @@ if __name__ == "__main__":
             if new_line is not None:
                 modified_lines[line_num] = new_line
 
+    if remaining_bodies:
+        print("ERROR: The following bodies are in BODY_MAP but not present in the TOML file (desynchronization):")
+        for body in sorted(remaining_bodies):
+            print(f"  - {body}")
+
     with open(toml_path, "r") as src, tempfile.NamedTemporaryFile("w", delete=False) as tmp:
         for i, line in enumerate(src):
             if i in modified_lines:
                 tmp.write(modified_lines[i] + "\n")
             else:
                 tmp.write(line)
-    
     shutil.move(tmp.name, toml_path)
         
