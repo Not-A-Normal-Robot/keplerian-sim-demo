@@ -1,12 +1,13 @@
 use std::sync::Arc;
 
-use super::UniverseId;
+use crate::sim::{
+    body::Body,
+    universe::{Id as UniverseId, Universe},
+};
 
 use float_pretty_print::PrettyPrintFloat;
 use keplerian_sim::OrbitTrait;
 use three_d::egui::{Align, Color32, CursorIcon, Label, Layout, RichText, Sense, Ui, WidgetText};
-
-use super::{Body, Universe};
 
 pub(super) fn body_window_info(
     ui: &mut Ui,

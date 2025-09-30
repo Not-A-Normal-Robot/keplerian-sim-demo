@@ -1,4 +1,4 @@
-use super::super::HALT_FLAG;
+use crate::HALT_FLAG;
 use gloo_storage::{LocalStorage, Storage, errors::StorageError};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;

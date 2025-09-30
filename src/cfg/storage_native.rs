@@ -11,7 +11,7 @@ use std::{
     sync::LazyLock,
 };
 
-use super::super::HALT_FLAG;
+use crate::HALT_FLAG;
 
 use serde::{Deserialize, Serialize};
 

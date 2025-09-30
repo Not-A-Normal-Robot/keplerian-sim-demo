@@ -6,7 +6,7 @@ use std::{
 use ordered_float::NotNan;
 use three_d::egui::{Area, Color32, Context, FontId, Label, RichText, TextWrapMode, Ui};
 
-use super::declare_id;
+use crate::gui::declare_id;
 
 declare_id!(FPS_AREA, b"PerfArea");
 

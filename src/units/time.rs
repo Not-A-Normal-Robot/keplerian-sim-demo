@@ -3,7 +3,7 @@ use std::{fmt::Display, str::FromStr};
 use float_pretty_print::PrettyPrintFloat;
 use strum_macros::{EnumCount, EnumIter};
 
-use super::UnitEnum;
+use crate::units::UnitEnum;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, EnumCount, EnumIter)]
 pub(crate) enum TimeUnit {
@@ -224,7 +224,7 @@ impl Display for TimeDisplayMode {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::units::time::TimeDisplayMode;
     use std::collections::HashSet;
 
     const TIME_DISPLAY_ENUM_VARIANTS: usize = 3;

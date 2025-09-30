@@ -8,7 +8,14 @@ use three_d::{
     Mesh, Object, PhysicalMaterial, RenderStates, Srgba, Vec3, Vec4,
 };
 
-use super::{Body, BodyWrapper, Id, PreviewBody, Program, trajectory::Trajectory};
+use crate::{
+    Program,
+    gfx::{PreviewBody, trajectory::Trajectory},
+    sim::{
+        body::Body,
+        universe::{BodyWrapper, Id},
+    },
+};
 
 pub const LOD_LEVEL_COUNT: usize = 8;
 

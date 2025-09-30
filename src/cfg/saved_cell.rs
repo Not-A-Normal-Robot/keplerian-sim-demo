@@ -1,6 +1,6 @@
 use std::cell::Cell;
 
-use super::storage;
+use crate::cfg::storage;
 use serde::{Deserialize, Serialize};
 pub(crate) struct SavedCell<'a, T>
 where

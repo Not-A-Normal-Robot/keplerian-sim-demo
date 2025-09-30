@@ -1,6 +1,6 @@
-use three_d::egui::{Align, Layout, RichText, Ui, Window};
+use three_d::egui::{Align, Context as EguiContext, Layout, RichText, Ui, Window};
 
-use super::{super::assets::BANNER, EguiContext, UiState};
+use crate::{assets::BANNER, gui::UiState};
 
 /// Get the keplerian_sim version from build.rs
 const KEPLERIAN_SIM_VERSION: &str = match option_env!("KEPLERIAN_SIM_VERSION") {

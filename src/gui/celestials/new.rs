@@ -1,7 +1,10 @@
-use super::{
-    PreviewBody, SimState, Universe, UniverseId, declare_id, drag_value_with_unit,
-    info::body_window_info,
-    selectable_body_tree,
+use crate::{
+    gui::{
+        PreviewBody, SimState,
+        celestials::{drag_value_with_unit, info::body_window_info, selectable_body_tree},
+        declare_id,
+    },
+    sim::universe::{Id as UniverseId, Universe},
     units::{AutoUnit, length::LengthUnit, mass::MassUnit},
 };
 use keplerian_sim::{MuSetterMode, Orbit, OrbitTrait};

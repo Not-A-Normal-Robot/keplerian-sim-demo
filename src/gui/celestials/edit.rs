@@ -1,14 +1,12 @@
-use super::{
-    super::{
-        super::{
-            sim::universe::{BodyWrapper, BulkMuSetterMode, Id as UniverseId, Universe},
-            units::{AutoUnit, length::LengthUnit, mass::MassUnit},
-        },
+use crate::{
+    gui::{
+        SimState,
+        celestials::{DisallowedData, info::body_window_info, selectable_body_tree},
+        declare_id,
         unit_dv::drag_value_with_unit,
     },
-    DisallowedData, SimState, declare_id,
-    info::body_window_info,
-    selectable_body_tree,
+    sim::universe::{BodyWrapper, BulkMuSetterMode, Id as UniverseId, Universe},
+    units::{AutoUnit, length::LengthUnit, mass::MassUnit},
 };
 use keplerian_sim::OrbitTrait;
 use three_d::egui::{
@@ -26,11 +24,11 @@ declare_id!(salt_only, EDIT_BODY_PARENT_COMBO_BOX, b"mNoder3l");
 declare_id!(EDIT_BODY_PARENT_TREE, b"m|->N0d3");
 declare_id!(salt_only, EDIT_BODY_PERIAPSIS, b"m|PeDist");
 
-pub(in super::super::super) struct EditBodyWindowState {
+pub(crate) struct EditBodyWindowState {
     mass_unit: AutoUnit<MassUnit>,
     radius_unit: AutoUnit<LengthUnit>,
     periapsis_unit: AutoUnit<LengthUnit>,
-    pub(in super::super::super) window_open: bool,
+    pub(crate) window_open: bool,
 }
 
 impl Default for EditBodyWindowState {

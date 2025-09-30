@@ -3,9 +3,8 @@ use std::collections::HashMap;
 use keplerian_sim::Orbit;
 use three_d::{Event, GUI, Key, Modifiers, Srgba};
 
-use super::{
-    SimState,
-    gui::PreviewBody,
+use crate::{
+    gui::{PreviewBody, SimState},
     sim::{
         body::Body,
         universe::{BodyWrapper, Id, Universe},

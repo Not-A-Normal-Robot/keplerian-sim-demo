@@ -1,8 +1,9 @@
 use three_d::egui::{
-    CollapsingResponse, Color32, Grid, OpenUrl, Response, RichText, Ui, WidgetText, Window,
+    CollapsingResponse, Color32, Context as EguiContext, Grid, OpenUrl, Response, RichText, Ui,
+    WidgetText, Window,
 };
 
-use super::{super::cfg::CONFIG, EguiContext, declare_id};
+use crate::{cfg::CONFIG, gui::declare_id};
 
 declare_id!(salt_only, KEYBINDS_GRID, b"BINGINGS");
 

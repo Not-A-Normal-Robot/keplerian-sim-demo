@@ -8,23 +8,23 @@ use gui::SimState;
 
 use self::control::CameraControl;
 #[path = "assets/mod.rs"]
-mod assets;
+pub mod assets;
 #[path = "cfg/mod.rs"]
-mod cfg;
+pub mod cfg;
 #[path = "control.rs"]
-mod control;
+pub mod control;
 #[path = "gfx/mod.rs"]
-mod gfx;
+pub mod gfx;
 #[path = "gui/mod.rs"]
-mod gui;
+pub mod gui;
 #[path = "keybinds.rs"]
-mod keybinds;
+pub mod keybinds;
 #[path = "sim/mod.rs"]
-mod sim;
+pub mod sim;
 #[path = "units/mod.rs"]
-mod units;
+pub mod units;
 
-static mut HALT_FLAG: bool = false;
+pub static mut HALT_FLAG: bool = false;
 
 #[cfg(not(target_family = "wasm"))]
 fn main() {

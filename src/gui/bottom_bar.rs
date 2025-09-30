@@ -3,15 +3,13 @@ use std::{
     sync::{Arc, LazyLock},
 };
 
-use super::{
-    super::{
-        assets, cfg,
-        sim::{body::Body, universe::BulkMuSetterMode},
-        units::time::{TimeDisplayMode, TimeUnit},
+use crate::{
+    assets, cfg,
+    gui::{
+        MIN_TOUCH_TARGET_LEN, MIN_TOUCH_TARGET_VEC, SimState, celestials::PreviewBody, declare_id,
     },
-    MIN_TOUCH_TARGET_LEN, MIN_TOUCH_TARGET_VEC, SimState,
-    celestials::PreviewBody,
-    declare_id,
+    sim::{body::Body, universe::BulkMuSetterMode},
+    units::time::{TimeDisplayMode, TimeUnit},
 };
 use float_pretty_print::PrettyPrintFloat;
 use keplerian_sim::Orbit;

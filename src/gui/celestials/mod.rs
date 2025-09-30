@@ -6,17 +6,13 @@ use three_d::egui::{
     Response, RichText, Stroke, TextEdit, Ui, Vec2, collapsing_header::CollapsingState,
 };
 
-use super::{
-    super::{
-        assets,
-        sim::{
-            body::Body,
-            universe::{Id as UniverseId, Universe},
-        },
-        units,
+use crate::{
+    assets,
+    gui::{SimState, declare_id, unit_dv::drag_value_with_unit},
+    sim::{
+        body::Body,
+        universe::{Id as UniverseId, Universe},
     },
-    SimState, declare_id,
-    unit_dv::drag_value_with_unit,
 };
 
 declare_id!(RENAME_TEXTEDIT, b"OmgRen??");

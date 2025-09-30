@@ -2,9 +2,9 @@ use float_pretty_print::PrettyPrintFloat;
 use strum::IntoEnumIterator;
 use three_d::egui::{Align, ComboBox, DragValue, Layout, PopupCloseBehavior, Ui};
 
-use super::{
-    super::units::{AutoUnit, UnitEnum},
-    declare_id,
+use crate::{
+    gui::declare_id,
+    units::{AutoUnit, UnitEnum},
 };
 
 declare_id!(salt_only, DRAG_VALUE_WITH_UNIT_PREFIX, b"2ParSecs");

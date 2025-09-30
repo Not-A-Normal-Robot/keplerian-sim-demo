@@ -2,7 +2,7 @@ use std::{fmt::Display, str::FromStr};
 
 use strum_macros::{EnumCount, EnumIter};
 
-use super::UnitEnum;
+use crate::units::UnitEnum;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, EnumCount, EnumIter)]
 pub(crate) enum LengthUnit {

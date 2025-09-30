@@ -1,11 +1,4 @@
-use super::{
-    Program,
-    gui::PreviewBody,
-    sim::{
-        body::Body,
-        universe::{BodyWrapper, Id},
-    },
-};
+use crate::gui::PreviewBody;
 mod autoscaling_sprites;
 mod object_conversion;
 mod trajectory;

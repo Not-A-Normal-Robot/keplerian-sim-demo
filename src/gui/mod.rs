@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use super::sim::universe::{BulkMuSetterMode, Id as UniverseId, Universe};
+use crate::sim::universe::{BulkMuSetterMode, Id as UniverseId, Universe};
 pub(crate) use celestials::PreviewBody;
 use glam::DVec3;
 use ordered_float::NotNan;

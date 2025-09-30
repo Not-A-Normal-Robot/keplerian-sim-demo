@@ -1,8 +1,13 @@
 use std::collections::HashMap;
 
-use super::{
-    super::super::cfg::CONFIG, Body, PreviewBody, RENAME_TEXTEDIT_ID, SimState, UniverseId,
-    declare_id, selectable_body_button,
+use crate::{
+    cfg::CONFIG,
+    gui::{
+        PreviewBody, SimState,
+        celestials::{RENAME_TEXTEDIT_ID, selectable_body_button},
+        declare_id,
+    },
+    sim::{body::Body, universe::Id as UniverseId},
 };
 use glam::DVec3;
 use keplerian_sim::Orbit;

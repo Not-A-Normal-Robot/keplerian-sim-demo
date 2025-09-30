@@ -1,6 +1,7 @@
 #![allow(special_module_name)]
 #![cfg(target_family = "wasm")]
 
+use main::*;
 use wasm_bindgen::prelude::*;
 use web_sys::Document;
 

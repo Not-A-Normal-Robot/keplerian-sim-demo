@@ -5,7 +5,7 @@ use std::f64::INFINITY;
 use std::fmt::{self, Debug, Display};
 use std::{collections::HashMap, error::Error};
 
-use super::body::Body;
+use crate::sim::body::Body;
 use glam::DVec3;
 use keplerian_sim::{MuSetterMode, OrbitTrait};
 use strum_macros::EnumIter;
